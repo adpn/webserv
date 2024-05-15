@@ -3,7 +3,7 @@ NAME		=	webserv
 
 # Compiler, compiler flags
 CC			=	c++
-FLAGS		=	-Wall -Wextra -Werror -std=c++98
+FLAGS		=	-Wall -Wextra -Werror -std=c++98 -Iincludes
 DFLAGS		=	-fsanitize=address -g
 
 # Directories for sources files, object files, and the libft library
