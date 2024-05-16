@@ -14,7 +14,7 @@ SMTH_DIR	=   $(SRCS_DIR)/smth
 SMTH2_DIR	=   $(SRCS_DIR)/smth2
 
 # Define the source files
-MAIN_FILE	=	main.c
+MAIN_FILE	=	main.cpp
 SMTH_FILES	=
 SMTH2_FILES	=
 
