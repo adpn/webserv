@@ -6,26 +6,26 @@ CC			=	c++
 FLAGS		=	-Wall -Wextra -Werror -std=c++98 -Iincludes
 DFLAGS		=	-fsanitize=address -g
 
-# Directories for sources files, object files, and the libft library
+# Directories for sources files, object files
 SRCS_DIR	= 	srcs
 BUILD_DIR 	= 	build
 #replace all smth of course
-SMTH_DIR	=   $(SRCS_DIR)/smth 
+SETUP_DIR	=   $(SRCS_DIR)/setup
 SMTH2_DIR	=   $(SRCS_DIR)/smth2
 
 # Define the source files
 MAIN_FILE	=	main.cpp
-SMTH_FILES	=
+SETUP_FILES	=	Socket.cpp
 SMTH2_FILES	=
 
 # Defining the paths of the sources files
-SRC_MAIN	= 	$(addprefix $(SRCS_DIR)/,$(MAIN_FILE))
-SRC_SMTH  	=	$(addprefix $(SMTH_DIR)/, $(SMTH_FILES))
+SRC_MAIN	= 	$(addprefix $(SRCS_DIR)/, $(MAIN_FILE))
+SRC_SETUP  	=	$(addprefix $(SETUP_DIR)/, $(SETUP_FILES))
 SRC_SMTH2 	=	$(addprefix $(SMTH2_DIR)/, $(SMTH2_FILES))
 
 # Deriving objects from .cpp files in the build directory
 OBJS 		= 	$(patsubst $(SRCS_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRC_MAIN)) \
-				$(patsubst $(SMTH_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRC_SMTH)) \
+				$(patsubst $(SETUP_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRC_SETUP)) \
 				$(patsubst $(SMTH2_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRC_SMTH2))
 
 # Display toolbox
@@ -36,27 +36,27 @@ NO_COLOR	=	\x1b[0m
 BOLD		= 	\x1b[1m
 BOLD_OFF	=	\x1b[21m
 
+# Phony target to build the executable
+all: $(NAME)
+
 # Rules to build the objects from the sources
 $(BUILD_DIR)/%.o: $(SRCS_DIR)/%.cpp
 	@mkdir -p $(BUILD_DIR)
-	@$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(FLAGS) -c $< -o $@
 
-$(BUILD_DIR)/%.o: $(SMTH_DIR)/%.cpp
+$(BUILD_DIR)/%.o: $(SETUP_DIR)/%.cpp
 	@mkdir -p $(BUILD_DIR)
-	@$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(FLAGS) -c $< -o $@
 
 $(BUILD_DIR)/%.o: $(SMTH2_DIR)/%.cpp
 	@mkdir -p $(BUILD_DIR)
-	@$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(FLAGS) -c $< -o $@
 
 # Rule to build the executable from the objects 
 $(NAME): $(OBJS)
 	@echo "$(YELLOW)Creating $(NAME)... $(NO_COLOR)"
-	@$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(FLAGS) -o $@ $^
 	@echo "$(GREEN)$(BOLD)Enjoy!$(BOLD_OFF)$(NO_COLOR)"
-
-# Phony target to build the executable
-all: $(NAME)
 
 # Phony target to clean the object files
 clean:
@@ -72,7 +72,7 @@ fclean: clean
 re: fclean all
 
 # Rule to build with debug flags
-debug: CFLAGS += $(DFLAGS)
+debug: FLAGS += $(DFLAGS)
 debug: re
 
 # Phony targets for make
