@@ -31,3 +31,7 @@
 *.out
 *.app
 webserv
+
+# Other
+.vscode
+*.dSYM
