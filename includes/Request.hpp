@@ -37,6 +37,7 @@ public:
 
 	bool parse(string const& package);
 
+	// debugging
 	void print(bool do_body = true) const;
 };
 

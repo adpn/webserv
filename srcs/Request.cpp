@@ -42,6 +42,7 @@ std::map<string, string> const& Request::getHeaders() const
 bool Request::parse(string const& package)
 {
 	std::istringstream iss(package);
+// maybe add more iss bit checks in here?
 	string token;
 	std::getline(iss, token, ' ');
 	if (!parseMethod(token))
@@ -115,21 +116,25 @@ bool Request::parseVersion(string const& version)
 
 bool Request::parseHeader(string const& header)
 {
-	std::pair<string, string> pair;
-	size_t colon_pos = header.find(':');
-	if (colon_pos == string::npos)
+	if (header.find(':') == string::npos)
 		return false;
-	pair.first = header.substr(0, colon_pos);
-	while (header[colon_pos + 1] == ' ')
-		++colon_pos;
-	pair.second = header.substr(colon_pos + 1, string::npos);
+	std::pair<string, string> pair;
+	std::istringstream iss(header);
 
+	std::getline(iss, pair.first, ':');
+	iss >> std::ws;
+	while (!iss.eof())
+	{
+		std::getline(iss, pair.second, ',');
+		iss >> std::ws;
+		if (pair.second.empty())
+			continue ;
 	// do some parsing and comparing to allowed headers here ...
-
-	std::pair<std::map<string, string>::iterator, bool> ret(this->headers.insert(pair));
-	if (!ret.second)
-		if (ret.first->second.find(pair.second) == string::npos)
-			ret.first->second.append("," + pair.second);
+		std::pair<std::map<string, string>::iterator, bool> ret(this->headers.insert(pair));
+		if (!ret.second)
+			if (ret.first->second.find(pair.second) == string::npos)
+				ret.first->second.append("," + pair.second);
+	}
 	return true;
 }
 
