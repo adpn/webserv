@@ -15,6 +15,7 @@ private:
 
 public:
 	Socket(int port);
+	Socket(const Socket& other);
 	~Socket();
 	int getFd() const;
 	int getPort() const;

@@ -42,20 +42,20 @@ all: $(NAME)
 # Rules to build the objects from the sources
 $(BUILD_DIR)/%.o: $(SRCS_DIR)/%.cpp
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(FLAGS) -c $< -o $@
+	@$(CC) $(FLAGS) -c $< -o $@
 
 $(BUILD_DIR)/%.o: $(SETUP_DIR)/%.cpp
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(FLAGS) -c $< -o $@
+	@$(CC) $(FLAGS) -c $< -o $@
 
 $(BUILD_DIR)/%.o: $(SMTH2_DIR)/%.cpp
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(FLAGS) -c $< -o $@
+	@$(CC) $(FLAGS) -c $< -o $@
 
 # Rule to build the executable from the objects 
 $(NAME): $(OBJS)
 	@echo "$(YELLOW)Creating $(NAME)... $(NO_COLOR)"
-	$(CC) $(FLAGS) -o $@ $^
+	@$(CC) $(FLAGS) -o $@ $^
 	@echo "$(GREEN)$(BOLD)Enjoy!$(BOLD_OFF)$(NO_COLOR)"
 
 # Phony target to clean the object files
