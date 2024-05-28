@@ -1,8 +1,10 @@
 #include <iostream> // cout
 #include <Socket.hpp>
 #include <vector>
+#include <Request.hpp>
 #include <sys/poll.h> //pollfd
 
+//buffer size should be defined with client_max_body_size ????????
 #define BUFFER_SIZE 1024
 
 int managePollin(std::vector<pollfd>& fds, std::vector<Socket>& serverSockets, size_t i)
@@ -35,6 +37,11 @@ int managePollin(std::vector<pollfd>& fds, std::vector<Socket>& serverSockets, s
 			buffer[bytesReceived] = '\0';
 			std::cout << "Received from client: " << buffer << std::endl;
 
+
+			Request request;
+			std::cout << "Request parsed: " << std::endl;
+			request.parse(buffer);
+			request.print();
 			// manage client
 			fds[i].events |= POLLOUT; // Enable POLLOUT to send data
 			// close(fds[i].fd);
