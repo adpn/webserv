@@ -23,6 +23,9 @@ Request& Request::operator=(Request const& rhs)
 }
 
 /* G(/S)ETTERS */
+bool Request::isValid() const
+	{ return valid; }
+
 char Request::getMethod() const
 	{ return method; }
 
@@ -44,13 +47,15 @@ bool Request::parse(string const& package)
 	std::istringstream iss(package);
 // maybe add more iss bit checks in here?
 	string token;
+	valid = false;
 	std::getline(iss, token, ' ');
 	if (!parseMethod(token))
 		return false;
 	std::getline(iss, token, ' ');
 	if (!parseUri(token))
 		return false;
-	std::getline(iss, token);
+	std::getline(iss, token, '\r');
+	iss >> std::ws;
 	if (!parseVersion(token))
 		return false;
 	if (iss.eof())
@@ -58,7 +63,8 @@ bool Request::parse(string const& package)
 		valid = true;
 		return true;
 	}
-	std::getline(iss, token);
+	std::getline(iss, token, '\r');
+	iss >> std::ws;
 	while (!token.empty())
 	{
 		if (!parseHeader(token))
@@ -68,7 +74,8 @@ bool Request::parse(string const& package)
 			valid = true;
 			return true;
 		}
-		std::getline(iss, token);
+		std::getline(iss, token, '\r');
+		iss >> std::ws;
 	}
 	std::ostringstream oss;
 	oss << iss.rdbuf();
@@ -97,7 +104,7 @@ bool Request::parseMethod(string const& method)
 // basic parsing, don't allow general "*" (n/a for GET, POST or DELETE)
 bool Request::parseUri(string const& uri)
 {
-	if (uri.size() < 2)
+	if (uri.empty())
 		return false;
 	if (uri.compare(0, 7, "http://") && uri[0] != '/')
 		return false;

@@ -29,6 +29,7 @@ public:
 	~Request();
 	Request& operator=(Request const& rhs);
 
+	bool isValid() const;
 	char getMethod() const;
 	string const& getUri() const;
 	string const& getVersion() const;
