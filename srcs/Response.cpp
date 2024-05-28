@@ -1,10 +1,15 @@
 #include "Response.hpp"
+#include "Request.hpp"
 #include <sstream>
-
+#include <sys/socket.h>
 
 /* CONSTRUCTORS */
+
 Response::Response()
-	: version("HTTP/1.1"), status(500) {}
+	: version("HTTP/1.1"), status(500), reason("Internal Server Error") {}
+
+Response::Response(Request const& request)
+	: version(request.getVersion()), status(500), reason("Internal Server Error") {}
 
 Response::Response(Response const& src)
 	{ this->operator=(src); }
@@ -23,19 +28,31 @@ Response& Response::operator=(Response const& rhs)
 }
 
 /* G(/S)ETTERS */
+
+// sets 'reason' if available in internal set
 bool Response::setStatus(int status)
 {
+	this->status = 500;
+	this->reason = "Internal Server Error";
+	if (status = 500)
+		return true;
 	if (status < 100 || status > 599)
 		return false;
-	this->status = status;
-	return true;
+	std::pair<int, string> reasons[] = {{100, "Continue"}, {200, "OK"}, {201, "Created"},
+			{400, "Bad Request"}, {404, "Not Found"}, {405, "Method Not Allowed"}, {0, ""}};
+	for (int i = 0; reasons[i].first; ++i)
+	{
+		if (reasons[i].first != status)
+			continue ;
+		this->status = status;
+		this->reason = reasons[i].second;
+		return true;
+	}
+	return false;
 }
 
-void Response::setReason(string const& reason)
-{
-	// maybe some kind of check?
-	this->reason = reason;
-}
+void Response::setCustomReason(string const& reason)
+{ this->reason = reason; }
 
 bool Response::setHeader(string const& header)
 {
@@ -67,21 +84,30 @@ void Response::setBody(string const& body)
 }
 
 /* MEMBERS */
+
+// doesn't handle errors :)
+ssize_t Response::sendResponse(int fd) const
+{
+	string str(wrap_package());
+
+	return send(fd, str.c_str(), str.size(), 0);
+}
+
 string Response::wrap_package() const
 {
 	std::ostringstream package;
 
-	package << version << " " << status << " " << reason << "\n";
+	package << version << " " << status << " " << reason << "\r\n";
 	for (std::map<string, string>::const_iterator it = headers.begin(); it != headers.end(); ++it)
-	{
-		package << (*it).first << ":" << (*it).second << "\n";
-	}
+		package << (*it).first << ":" << (*it).second << "\r\n";
+	package << "\r\n";
 	if (body.size())
-		package << "\n" << body << "\n";
+		package << body;
 	return package.str();
 }
 
 /* DEBUG */
+
 void Response::print(bool do_body) const
 {
 	std::cout << "response package:\n";

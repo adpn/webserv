@@ -5,9 +5,12 @@
 # include <map>
 
 using std::string;
+class Request;
 
 class Response
 {
+	Response(Request const& request);
+
 	string	version;
 	int		status;
 	string	reason;
@@ -21,10 +24,11 @@ public:
 	Response& operator=(Response const& rhs);
 
 	bool setStatus(int status);
-	void setReason(string const& reason);
+	void setCustomReason(string const& reason);
 	bool setHeader(string const& header);
 	void setBody(string const& body);
 
+	ssize_t sendResponse(int fd) const;
 	string wrap_package() const;
 
 	// debugging

@@ -5,6 +5,7 @@
 # include <map>
 
 using std::string;
+class Response;
 
 class Request
 {
@@ -37,6 +38,7 @@ public:
 	std::map<string, string> const& getHeaders() const;
 
 	bool parse(string const& package);
+	Response handle() const;
 
 	// debugging
 	void print(bool do_body = true) const;

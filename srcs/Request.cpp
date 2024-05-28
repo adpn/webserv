@@ -1,7 +1,9 @@
 #include "Request.hpp"
+#include "Response.hpp"
 #include <sstream>
 
 /* CONSTRUCTORS */
+
 Request::Request()
 	: valid(false), method(0) {}
 
@@ -23,6 +25,7 @@ Request& Request::operator=(Request const& rhs)
 }
 
 /* G(/S)ETTERS */
+
 bool Request::isValid() const
 	{ return valid; }
 
@@ -42,6 +45,26 @@ std::map<string, string> const& Request::getHeaders() const
 	{ return headers; }
 
 /* MEMBERS */
+
+Response Request::handle() const
+{
+	Response response;
+
+	switch (method)
+	{
+		case 'G':
+			/* code */
+			break;
+		case 'P':
+			/* code */
+			break;
+		case 'D':
+			/* code */
+			break;
+		default:
+	}
+}
+
 bool Request::parse(string const& package)
 {
 	std::istringstream iss(package);
@@ -112,10 +135,10 @@ bool Request::parseUri(string const& uri)
 	return true;
 }
 
-// only allows HTTP/1.1 (for now)
+// only allows HTTP
 bool Request::parseVersion(string const& version)
 {
-	if (version.compare("HTTP/1.1"))
+	if (version.compare(0, 5, "HTTP/"))
 		return false;
 	this->version = version;
 	return true;
@@ -153,6 +176,7 @@ bool Request::parseBody(string const& body)
 }
 
 /* DEBUG */
+
 void Request::print(bool do_body) const
 {
 	std::cout << "request package:";
