@@ -39,7 +39,7 @@ bool Response::setStatus(int status)
 	if (status < 100 || status > 599)
 		return false;
 	std::pair<int, string> reasons[] = {{100, "Continue"}, {200, "OK"}, {201, "Created"},
-			{400, "Bad Request"}, {404, "Not Found"}, {405, "Method Not Allowed"}, {0, ""}};
+			{400, "Bad Request"}, {404, "Not Found"}, {0, ""}};
 	for (int i = 0; reasons[i].first; ++i)
 	{
 		if (reasons[i].first != status)

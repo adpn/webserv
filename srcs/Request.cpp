@@ -46,23 +46,44 @@ std::map<string, string> const& Request::getHeaders() const
 
 /* MEMBERS */
 
+void Request::handleError(Response& response, int status) const
+{
+	response.setStatus(status);
+	// provide appropriate error page?
+	// alter response further?
+}
+
+void Request::handleGet(Response& response) const
+{
+}
+
+void Request::handlePost(Response& response) const
+{
+}
+
+void Request::handleDelete(Response& response) const
+{
+}
+
 Response Request::handle() const
 {
 	Response response;
 
+	if (!valid)
+		handleError(response, 400);
+		return response;
 	switch (method)
 	{
 		case 'G':
-			/* code */
+			handleGet(response);
 			break;
 		case 'P':
-			/* code */
+			handlePost(response);
 			break;
 		case 'D':
-			/* code */
-			break;
-		default:
+			handleDelete(response);
 	}
+	return response;
 }
 
 bool Request::parse(string const& package)

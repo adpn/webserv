@@ -9,8 +9,6 @@ class Request;
 
 class Response
 {
-	Response(Request const& request);
-
 	string	version;
 	int		status;
 	string	reason;
@@ -20,6 +18,7 @@ class Response
 public:
 	Response();
 	Response(Response const& src);
+	Response(Request const& request);
 	~Response();
 	Response& operator=(Response const& rhs);
 

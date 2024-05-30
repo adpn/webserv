@@ -17,12 +17,17 @@ class Request
 	std::map<string, string> headers; // merge duplicate headers like so [value1], [value2]
 										// exception for 'Set-Cookie' and 'Cookie' headers -> [value1]; [value2]
 
-	// handle errors of these. with (mandatory default) error responses
+	// handle errors of these. with (mandatory default) error pages
 	bool parseMethod(string const& method);
 	bool parseUri(string const& uri);
 	bool parseVersion(string const& version);
 	bool parseBody(string const& body);
 	bool parseHeader(string const& header);
+
+	void handleGet(Response& response) const;
+	void handlePost(Response& response) const;
+	void handleDelete(Response& response) const;
+	void handleError(Response& response, int status) const;
 
 public:
 	Request();
@@ -54,7 +59,7 @@ Request-Line CRLF				->	'Method' SP 'Request-URI' SP 'HTTP-Version' CRLF
 request-header ;
 entity-header ) CRLF)
 CRLF
-[ message-body ] CRLF (i think it has to end with a CRLF ?)
+[ message-body ]
  */
 
  // methods: GET, POST and DELETE
