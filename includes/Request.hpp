@@ -23,6 +23,7 @@ class Request
 	bool parseVersion(string const& version);
 	bool parseBody(string const& body);
 	bool parseHeader(string const& header);
+	bool checkHeaders() const;
 
 	void handleGet(Response& response) const;
 	void handlePost(Response& response) const;

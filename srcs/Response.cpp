@@ -1,6 +1,7 @@
 #include "Response.hpp"
 #include "Request.hpp"
 #include <sstream>
+#include <fstream>
 #include <sys/socket.h>
 
 /* CONSTRUCTORS */
@@ -39,7 +40,7 @@ bool Response::setStatus(int status)
 	if (status < 100 || status > 599)
 		return false;
 	std::pair<int, string> reasons[] = {{100, "Continue"}, {200, "OK"}, {201, "Created"},
-			{400, "Bad Request"}, {404, "Not Found"}, {0, ""}};
+			{400, "Bad Request"}, {404, "Not Found"}, {405, "Method Not Allowed"}, {413, "Request Entity Too Large"}, {0, ""}};
 	for (int i = 0; reasons[i].first; ++i)
 	{
 		if (reasons[i].first != status)
@@ -81,6 +82,27 @@ bool Response::setHeader(string const& header)
 void Response::setBody(string const& body)
 {
 	this->body = body;
+	setContentLength();
+}
+
+bool Response::fileToBody(string const& file)
+{
+	std::ifstream ifs(file.c_str());
+	if (!ifs.good())
+		return false;
+	std::ostringstream oss;
+	oss << ifs.rdbuf();
+	body = oss.str();
+	setContentLength();
+	return true;
+}
+
+void Response::setContentLength()
+{
+	std::ostringstream oss;
+	oss << body.size();
+	headers.erase("Content-Length");
+	headers.insert(std::pair<string, string>("Content-Length", oss.str()));
 }
 
 /* MEMBERS */

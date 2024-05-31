@@ -15,6 +15,8 @@ class Response
 	std::map<string, string> headers;
 	string	body;
 
+	void setContentLength();
+
 public:
 	Response();
 	Response(Response const& src);
@@ -26,6 +28,7 @@ public:
 	void setCustomReason(string const& reason);
 	bool setHeader(string const& header);
 	void setBody(string const& body);
+	bool fileToBody(string const& file);
 
 	ssize_t sendResponse(int fd) const;
 	string wrap_package() const;

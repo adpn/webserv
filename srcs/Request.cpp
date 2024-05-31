@@ -55,14 +55,17 @@ void Request::handleError(Response& response, int status) const
 
 void Request::handleGet(Response& response) const
 {
+	// check if method is allowed on this resource
 }
 
 void Request::handlePost(Response& response) const
 {
+	// check if method is allowed on this resource
 }
 
 void Request::handleDelete(Response& response) const
 {
+	// check if method is allowed on this resource
 }
 
 Response Request::handle() const
@@ -86,6 +89,7 @@ Response Request::handle() const
 	return response;
 }
 
+// a 'Host' header is required
 bool Request::parse(string const& package)
 {
 	std::istringstream iss(package);
@@ -103,10 +107,7 @@ bool Request::parse(string const& package)
 	if (!parseVersion(token))
 		return false;
 	if (iss.eof())
-	{
-		valid = true;
-		return true;
-	}
+		return false;
 	std::getline(iss, token, '\r');
 	iss >> std::ws;
 	while (!token.empty())
@@ -114,16 +115,18 @@ bool Request::parse(string const& package)
 		if (!parseHeader(token))
 			return false;
 		if (iss.eof())
-		{
-			valid = true;
-			return true;
-		}
+			break ;
 		std::getline(iss, token, '\r');
 		iss >> std::ws;
 	}
-	std::ostringstream oss;
-	oss << iss.rdbuf();
-	if (!parseBody(oss.str()))
+	if (!iss.eof())
+	{
+		std::ostringstream oss;
+		oss << iss.rdbuf();
+		if (!parseBody(oss.str()))
+			return false;
+	}
+	if (!checkHeaders())
 		return false;
 	valid = true;
 	return true;
@@ -180,7 +183,7 @@ bool Request::parseHeader(string const& header)
 		iss >> std::ws;
 		if (pair.second.empty())
 			continue ;
-	// do some parsing and comparing to allowed headers here ...
+
 		std::pair<std::map<string, string>::iterator, bool> ret(this->headers.insert(pair));
 		if (!ret.second)
 			if (ret.first->second.find(pair.second) == string::npos)
@@ -193,6 +196,13 @@ bool Request::parseHeader(string const& header)
 bool Request::parseBody(string const& body)
 {
 	this->body = body;
+	return true;
+}
+
+bool Request::checkHeaders() const
+{
+	if (headers.find("Host") == headers.end())
+		return false;
 	return true;
 }
 
