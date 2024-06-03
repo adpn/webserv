@@ -5,6 +5,7 @@
 # include <map>
 
 using std::string;
+class Request;
 
 class Response
 {
@@ -14,17 +15,22 @@ class Response
 	std::map<string, string> headers;
 	string	body;
 
+	void setContentLength();
+
 public:
 	Response();
 	Response(Response const& src);
+	Response(Request const& request);
 	~Response();
 	Response& operator=(Response const& rhs);
 
 	bool setStatus(int status);
-	void setReason(string const& reason);
+	void setCustomReason(string const& reason);
 	bool setHeader(string const& header);
 	void setBody(string const& body);
+	bool fileToBody(string const& file);
 
+	ssize_t sendResponse(int fd) const;
 	string wrap_package() const;
 
 	// debugging

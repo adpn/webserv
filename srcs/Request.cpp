@@ -1,7 +1,9 @@
 #include "Request.hpp"
+#include "Response.hpp"
 #include <sstream>
 
 /* CONSTRUCTORS */
+
 Request::Request()
 	: valid(false), method(0) {}
 
@@ -23,6 +25,7 @@ Request& Request::operator=(Request const& rhs)
 }
 
 /* G(/S)ETTERS */
+
 bool Request::isValid() const
 	{ return valid; }
 
@@ -42,6 +45,51 @@ std::map<string, string> const& Request::getHeaders() const
 	{ return headers; }
 
 /* MEMBERS */
+
+void Request::handleError(Response& response, int status) const
+{
+	response.setStatus(status);
+	// provide appropriate error page?
+	// alter response further?
+}
+
+void Request::handleGet(Response& response) const
+{
+	// check if method is allowed on this resource
+}
+
+void Request::handlePost(Response& response) const
+{
+	// check if method is allowed on this resource
+}
+
+void Request::handleDelete(Response& response) const
+{
+	// check if method is allowed on this resource
+}
+
+Response Request::handle() const
+{
+	Response response;
+
+	if (!valid)
+		handleError(response, 400);
+		return response;
+	switch (method)
+	{
+		case 'G':
+			handleGet(response);
+			break;
+		case 'P':
+			handlePost(response);
+			break;
+		case 'D':
+			handleDelete(response);
+	}
+	return response;
+}
+
+// a 'Host' header is required
 bool Request::parse(string const& package)
 {
 	std::istringstream iss(package);
@@ -59,10 +107,7 @@ bool Request::parse(string const& package)
 	if (!parseVersion(token))
 		return false;
 	if (iss.eof())
-	{
-		valid = true;
-		return true;
-	}
+		return false;
 	std::getline(iss, token, '\r');
 	iss >> std::ws;
 	while (!token.empty())
@@ -70,16 +115,18 @@ bool Request::parse(string const& package)
 		if (!parseHeader(token))
 			return false;
 		if (iss.eof())
-		{
-			valid = true;
-			return true;
-		}
+			break ;
 		std::getline(iss, token, '\r');
 		iss >> std::ws;
 	}
-	std::ostringstream oss;
-	oss << iss.rdbuf();
-	if (!parseBody(oss.str()))
+	if (!iss.eof())
+	{
+		std::ostringstream oss;
+		oss << iss.rdbuf();
+		if (!parseBody(oss.str()))
+			return false;
+	}
+	if (!checkHeaders())
 		return false;
 	valid = true;
 	return true;
@@ -112,10 +159,10 @@ bool Request::parseUri(string const& uri)
 	return true;
 }
 
-// only allows HTTP/1.1 (for now)
+// only allows HTTP
 bool Request::parseVersion(string const& version)
 {
-	if (version.compare("HTTP/1.1"))
+	if (version.compare(0, 5, "HTTP/"))
 		return false;
 	this->version = version;
 	return true;
@@ -136,7 +183,7 @@ bool Request::parseHeader(string const& header)
 		iss >> std::ws;
 		if (pair.second.empty())
 			continue ;
-	// do some parsing and comparing to allowed headers here ...
+
 		std::pair<std::map<string, string>::iterator, bool> ret(this->headers.insert(pair));
 		if (!ret.second)
 			if (ret.first->second.find(pair.second) == string::npos)
@@ -152,7 +199,15 @@ bool Request::parseBody(string const& body)
 	return true;
 }
 
+bool Request::checkHeaders() const
+{
+	if (headers.find("Host") == headers.end())
+		return false;
+	return true;
+}
+
 /* DEBUG */
+
 void Request::print(bool do_body) const
 {
 	std::cout << "request package:";
