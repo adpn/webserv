@@ -1,8 +1,9 @@
 #include <iostream> // cout
-#include <Socket.hpp>
 #include <vector>
-#include <Request.hpp>
 #include <sys/poll.h> //pollfd
+#include <Socket.hpp>
+#include <Request.hpp>
+#include <Response.hpp>
 
 //buffer size should be defined with client_max_body_size ????????
 #define BUFFER_SIZE 1024
@@ -35,11 +36,8 @@ int managePollin(std::vector<pollfd>& fds, std::vector<Socket>& serverSockets, s
 		ssize_t bytesReceived = recv(fds[i].fd, buffer, sizeof(buffer) - 1, 0);
 		if (bytesReceived > 0) {
 			buffer[bytesReceived] = '\0';
-			std::cout << "Received from client: " << buffer << std::endl;
-
-
 			Request request;
-			std::cout << "Request parsed: " << std::endl;
+			std::cout << "Received from client: " << std::endl;
 			request.parse(buffer);
 			request.print();
 			// manage client
@@ -75,6 +73,7 @@ int managePollout(std::vector<pollfd>& fds, size_t i) {
 		"<meta charset=\"UTF-8\">"
 		"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
 		"<title>Hello Bert</title>"
+		"<link rel=\"icon\" href=\"./favicon.ico\"/>"
 		"<!-- <style>"
 		"</style> -->"
 		"</head>"
@@ -101,12 +100,16 @@ int managePollout(std::vector<pollfd>& fds, size_t i) {
 		"</body>"
 		"</html>";
 
-	std::string httpResponse =
-		"HTTP/1.1 200 OK\r\n"
+	std::string httpHeader =
 		"Content-Type: text/html\r\n"
-		"Content-Length: " + std::to_string(strlen(htmlPage)) + "\r\n"
-		"\r\n" + htmlPage;
+		"Content-Length: " + std::to_string(strlen(htmlPage)) + "\r\n";
+	Response response;
+	response.setStatus(200);
+	response.setReason("OK");
+	response.setHeader(httpHeader);
+	response.setBody(htmlPage);
 
+	std::string httpResponse = response.wrap_package(); 
 	ssize_t bytesSent = send(fds[i].fd, httpResponse.c_str(), httpResponse.size(), 0);
 	if (bytesSent < 0) {
 		std::cout << "Send error" << std::endl;
