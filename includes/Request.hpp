@@ -10,6 +10,9 @@ class Response;
 class Request
 {
 	bool valid;
+	bool fin_headers;
+	long content_left;
+	int fd;
 	char method;		// 'G' or 'P' or 'D'
 	string uri;
 	string version;
@@ -22,8 +25,11 @@ class Request
 	bool parseUri(string const& uri);
 	bool parseVersion(string const& version);
 	bool parseBody(string const& body);
+	bool loopHeaders(std::istringstream& iss);
 	bool parseHeader(string const& header);
+	void getline_crlf(std::istringstream& iss, string& buf) const;
 	bool checkHeaders() const;
+	void manageSpecialHeader(std::pair<string, string> const& pair);
 
 	void handleGet(Response& response) const;
 	void handlePost(Response& response) const;
@@ -36,7 +42,11 @@ public:
 	~Request();
 	Request& operator=(Request const& rhs);
 
+	static bool loopRequests(int fd, string const& package);
+
 	bool isValid() const;
+	bool isFin() const;
+	int getFd() const;
 	char getMethod() const;
 	string const& getUri() const;
 	string const& getVersion() const;
@@ -44,7 +54,7 @@ public:
 	std::map<string, string> const& getHeaders() const;
 
 	bool parse(string const& package);
-	Response handle() const;
+	void handle() const;
 
 	// debugging
 	void print(bool do_body = true) const;

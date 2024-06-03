@@ -5,7 +5,7 @@
 /* CONSTRUCTORS */
 
 Request::Request()
-	: valid(false), method(0) {}
+	: valid(false), fin_headers(false), content_left(0), method(0) {}
 
 Request::Request(Request const& src)
 	{ this->operator=(src); }
@@ -16,6 +16,9 @@ Request::~Request()
 Request& Request::operator=(Request const& rhs)
 {
 	valid = rhs.valid;
+	fin_headers = rhs.fin_headers;
+	content_left = rhs.content_left;
+	fd = rhs.fd;
 	method = rhs.method;
 	uri = rhs.uri;
 	version = rhs.version;
@@ -28,6 +31,12 @@ Request& Request::operator=(Request const& rhs)
 
 bool Request::isValid() const
 	{ return valid; }
+
+bool Request::isFin() const
+	{ return (fin_headers && content_left <= 0); }
+
+int Request::getFd() const
+	{ return fd; }
 
 char Request::getMethod() const
 	{ return method; }
@@ -43,6 +52,30 @@ string const& Request::getBody() const
 
 std::map<string, string> const& Request::getHeaders() const
 	{ return headers; }
+
+/* STATIC MEMBERS */
+
+// returns true if all requests are finished (call with fd == 0 to check)
+// handles finished requests and sends back a response
+bool Request::loopRequests(int fd, string const& package)
+{
+	static std::map<int, Request> requests;
+
+	if (!fd)
+		return requests.empty();
+	std::map<int, Request>::iterator it = (requests.insert(std::pair<int, Request>(fd, Request()))).first;
+	Request& instance = (*it).second;
+	instance.parse(package);
+//debug
+// std::cout << ">> parsed a packet[" << fd << "], " << instance.content_left << "b left\n";
+	if (!instance.isFin())
+		return false;
+//debug
+// std::cout << ">> "; instance.print();
+	instance.handle();
+	requests.erase(it);
+	return requests.empty();
+}
 
 /* MEMBERS */
 
@@ -71,14 +104,14 @@ void Request::handleDelete(Response& response) const
 	// check if method is allowed on this resource
 }
 
-Response Request::handle() const
+void Request::handle() const
 {
 	Response response;
+	char todo = 0;
 
-	if (!valid)
-		handleError(response, 400);
-		return response;
-	switch (method)
+	if (valid)
+		todo = method;
+	switch (todo)
 	{
 		case 'G':
 			handleGet(response);
@@ -88,55 +121,66 @@ Response Request::handle() const
 			break;
 		case 'D':
 			handleDelete(response);
+			break;
+		default:
+			handleError(response, 400);
 	}
-	return response;
+	response.sendResponse(fd);
+}
+
+void Request::getline_crlf(std::istringstream& iss, string& buf) const
+{
+	std::getline(iss, buf, '\r');
+	while (iss.peek() != '\n')
+	{
+		string temp;
+		std::getline(iss, temp, '\r');
+		buf.append(temp);
+	}
+	iss.get();
+	if (iss.peek() == '\r')
+		return ;
+	iss >> std::ws;
 }
 
 // a 'Host' header is required
 bool Request::parse(string const& package)
 {
-	std::istringstream iss(package);
+	if (fin_headers && content_left)
+		return parseBody(package);
+
 // maybe add more iss bit checks in here?
-	string token;
-	valid = false;
-	std::getline(iss, token, ' ');
-	if (!parseMethod(token))
-		return false;
-	std::cout << "After method" << std::endl;
-	std::getline(iss, token, ' ');
-	if (!parseUri(token))
-		return false;
-	std::getline(iss, token, '\r');
-	iss >> std::ws;
-	if (!parseVersion(token))
-		return false;
-	std::cout << "After version" << std::endl;
-	if (iss.eof())
-		return false;
-	std::getline(iss, token, '\r');
-	iss >> std::ws;
-	while (!token.empty())
+	std::istringstream iss(package);
+	if (!method)
 	{
-		if (!parseHeader(token)){
-			std::cout << "HERE" << std::endl;
+		string token;
+		std::getline(iss, token, ' ');
+		if (!parseMethod(token))
 			return false;
-		}
+		std::getline(iss, token, ' ');
+		if (!parseUri(token))
+			return false;
+		getline_crlf(iss, token);
+		if (!parseVersion(token))
+			return false;
 		if (iss.eof())
-			break ;
-		std::getline(iss, token, '\r');
-		iss >> std::ws;
-	}
-	if (!iss.eof())
-	{
-		std::ostringstream oss;
-		oss << iss.rdbuf();
-		if (!parseBody(oss.str()))
 			return false;
+			// what is this check ?
 	}
-	if (!checkHeaders())
+	if (!fin_headers)
+	{
+		if (!loopHeaders(iss))
+			return false;
+		if (!fin_headers)
+			return true;
+		if (!checkHeaders())
+			return false;
+		valid = true;
+	}
+	std::ostringstream oss;
+	oss << iss.rdbuf();
+	if (!parseBody(oss.str()))
 		return false;
-	std::cout << "After body" << std::endl;
-	valid = true;
 	return true;
 }
 
@@ -176,9 +220,38 @@ bool Request::parseVersion(string const& version)
 	return true;
 }
 
+bool Request::loopHeaders(std::istringstream& iss)
+{
+	string token;
+	static string leftover;
+
+	if (leftover.empty())
+		getline_crlf(iss, token);
+	else
+	{
+		token = leftover;
+		getline_crlf(iss, leftover);
+		token.append(leftover);
+	}
+	while (!token.empty())
+	{
+		if (iss.eof())
+		{
+			leftover = token;
+			return true;
+		}
+		if (!parseHeader(token)){
+			return false;
+		}
+		getline_crlf(iss, token);
+	}
+	leftover.clear();
+	fin_headers = true;
+	return true;
+}
+
 bool Request::parseHeader(string const& header)
 {
-	std::cout << "Header:\n" << header << std::endl;
 	if (header.find(':') == string::npos)
 		return false;
 	std::pair<string, string> pair;
@@ -193,6 +266,7 @@ bool Request::parseHeader(string const& header)
 		if (pair.second.empty())
 			continue ;
 
+		manageSpecialHeader(pair);
 		std::pair<std::map<string, string>::iterator, bool> ret(this->headers.insert(pair));
 		if (!ret.second)
 			if (ret.first->second.find(pair.second) == string::npos)
@@ -201,10 +275,15 @@ bool Request::parseHeader(string const& header)
 	return true;
 }
 
-// doesn't check anything
+// doesn't really check anything
 bool Request::parseBody(string const& body)
 {
-	this->body = body;
+// check if a request is finished with content-length
+// (or an empty chunk at the end IF it is chunked (chunked in Transfer-Encoding header))
+	if (isFin())
+		return false;
+	this->body.append(body);
+	content_left -= body.size();
 	return true;
 }
 
@@ -213,6 +292,18 @@ bool Request::checkHeaders() const
 	if (headers.find("Host") == headers.end())
 		return false;
 	return true;
+}
+
+void Request::manageSpecialHeader(std::pair<string, string> const& pair)
+{
+	// if (!pair.first.compare("Content-Type"))
+	// {
+	// 	if (pair.second.find("multipart") != string::npos)
+	// 		boundary = pair.second.substr(pair.second.find("boundary") + 9, string::npos);
+	// 		// maybe replace the string::npos with a check for delimiters?
+	// }
+	if (!pair.first.compare("Content-Length"))
+		content_left = atol(pair.second.c_str());
 }
 
 /* DEBUG */

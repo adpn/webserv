@@ -36,11 +36,12 @@ int managePollin(std::vector<pollfd>& fds, std::vector<Socket>& serverSockets, s
 		ssize_t bytesReceived = recv(fds[i].fd, buffer, sizeof(buffer) - 1, 0);
 		if (bytesReceived > 0) {
 			buffer[bytesReceived] = '\0';
-			// Request request;
+			Request request;
 			std::cout << "Received from client: " << std::endl;
 			std::cout << buffer << std::endl;
-			// if (!request.parse(buffer))
-			// 	exit(1);
+			Request::loopRequests(fds[i].fd, buffer);
+			// if (!request.parse(buffer)) [DEPRECATED]
+			// 	exit(1); [DEPRECATED]
 			// request.print();
 			// manage client
 			fds[i].events |= POLLOUT; // Enable POLLOUT to send data
@@ -68,7 +69,7 @@ int managePollout(std::vector<pollfd>& fds, size_t i) {
 	std::cout << "Ready to send data to client on fd " << fds[i].fd << std::endl;
 	// Send data to client
 	// const char *msg = "Hello from server";
-	const char *htmlPage = 
+	const char *htmlPage =
 		"<!DOCTYPE html>"
 		"<html lang=\"en\">"
 		"<head>"
@@ -117,7 +118,7 @@ int managePollout(std::vector<pollfd>& fds, size_t i) {
 	response.setHeader(httpHeader);
 	response.setBody(htmlPage);
 
-	std::string httpResponse = response.wrap_package(); 
+	std::string httpResponse = response.wrap_package();
 	ssize_t bytesSent = send(fds[i].fd, httpResponse.c_str(), httpResponse.size(), 0);
 	if (bytesSent < 0) {
 		std::cout << "Send error" << std::endl;
