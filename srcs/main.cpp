@@ -38,7 +38,9 @@ int managePollin(std::vector<pollfd>& fds, std::vector<Socket>& serverSockets, s
 			buffer[bytesReceived] = '\0';
 			Request request;
 			std::cout << "Received from client: " << std::endl;
-			request.parse(buffer);
+			std::cout << buffer << std::endl;
+			if (!request.parse(buffer))
+				exit(1);
 			request.print();
 			// manage client
 			fds[i].events |= POLLOUT; // Enable POLLOUT to send data
@@ -93,6 +95,13 @@ int managePollout(std::vector<pollfd>& fds, size_t i) {
 		"<!-- <h2>Section 2</h2> -->"
 		"<p>You should commit more.</p>"
 		"</section>"
+		"<h2>Upload a File</h2>"
+   		"<form action=\"/upload\" method=\"post\" enctype=\"multipart/form-data\">"
+        "<label for=\"file\">Choose a file:</label>"
+        "<input type=\"file\" id=\"file\" name=\"file\">"
+        "<br><br>"
+        "<input type=\"submit\" value=\"Upload\">"
+    	"</form>"
 		"</main>"
 		"<footer>"
 		"<p>&copy; I don't care</p>"

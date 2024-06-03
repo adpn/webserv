@@ -51,6 +51,7 @@ bool Request::parse(string const& package)
 	std::getline(iss, token, ' ');
 	if (!parseMethod(token))
 		return false;
+	std::cout << "After method" << std::endl;
 	std::getline(iss, token, ' ');
 	if (!parseUri(token))
 		return false;
@@ -58,29 +59,36 @@ bool Request::parse(string const& package)
 	iss >> std::ws;
 	if (!parseVersion(token))
 		return false;
+	std::cout << "After version" << std::endl;
 	if (iss.eof())
 	{
 		valid = true;
+		std::cout << "After eof1 return" << std::endl;
 		return true;
 	}
 	std::getline(iss, token, '\r');
 	iss >> std::ws;
 	while (!token.empty())
 	{
-		if (!parseHeader(token))
+		if (!parseHeader(token)){
+			std::cout << "HERE" << std::endl;
 			return false;
+		}
 		if (iss.eof())
 		{
 			valid = true;
+			std::cout << "After eof2 return" << std::endl;
 			return true;
 		}
 		std::getline(iss, token, '\r');
 		iss >> std::ws;
 	}
+	std::cout << "After tokens" << std::endl;
 	std::ostringstream oss;
 	oss << iss.rdbuf();
 	if (!parseBody(oss.str()))
 		return false;
+	std::cout << "After body" << std::endl;
 	valid = true;
 	return true;
 }
