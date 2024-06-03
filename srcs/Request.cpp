@@ -55,16 +55,19 @@ void Request::handleError(Response& response, int status) const
 
 void Request::handleGet(Response& response) const
 {
+	(void)response;
 	// check if method is allowed on this resource
 }
 
 void Request::handlePost(Response& response) const
 {
+	(void)response;
 	// check if method is allowed on this resource
 }
 
 void Request::handleDelete(Response& response) const
 {
+	(void)response;
 	// check if method is allowed on this resource
 }
 
@@ -175,6 +178,7 @@ bool Request::parseVersion(string const& version)
 
 bool Request::parseHeader(string const& header)
 {
+	std::cout << "Header:\n" << header << std::endl;
 	if (header.find(':') == string::npos)
 		return false;
 	std::pair<string, string> pair;

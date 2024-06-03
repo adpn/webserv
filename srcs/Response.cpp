@@ -35,12 +35,19 @@ bool Response::setStatus(int status)
 {
 	this->status = 500;
 	this->reason = "Internal Server Error";
-	if (status = 500)
+	if (status == 500)
 		return true;
 	if (status < 100 || status > 599)
 		return false;
-	std::pair<int, string> reasons[] = {{100, "Continue"}, {200, "OK"}, {201, "Created"},
-			{400, "Bad Request"}, {404, "Not Found"}, {405, "Method Not Allowed"}, {413, "Request Entity Too Large"}, {0, ""}};
+	std::pair<int, string> reasons[] = {
+		std::pair<int, string>(100, "Continue"),
+		std::pair<int, string>(200, "OK"),
+		std::pair<int, string>(201, "Created"),
+		std::pair<int, string>(400, "Bad Request"),
+		std::pair<int, string>(404, "Not Found"),
+		std::pair<int, string>(405, "Method Not Allowed"),
+		std::pair<int, string>(413, "Request Entity Too Large"),
+		std::pair<int, string>(0, "")};
 	for (int i = 0; reasons[i].first; ++i)
 	{
 		if (reasons[i].first != status)

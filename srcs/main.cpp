@@ -36,12 +36,12 @@ int managePollin(std::vector<pollfd>& fds, std::vector<Socket>& serverSockets, s
 		ssize_t bytesReceived = recv(fds[i].fd, buffer, sizeof(buffer) - 1, 0);
 		if (bytesReceived > 0) {
 			buffer[bytesReceived] = '\0';
-			Request request;
+			// Request request;
 			std::cout << "Received from client: " << std::endl;
 			std::cout << buffer << std::endl;
-			if (!request.parse(buffer))
-				exit(1);
-			request.print();
+			// if (!request.parse(buffer))
+			// 	exit(1);
+			// request.print();
 			// manage client
 			fds[i].events |= POLLOUT; // Enable POLLOUT to send data
 			// close(fds[i].fd);
@@ -114,7 +114,6 @@ int managePollout(std::vector<pollfd>& fds, size_t i) {
 		"Content-Length: " + std::to_string(strlen(htmlPage)) + "\r\n";
 	Response response;
 	response.setStatus(200);
-	response.setReason("OK");
 	response.setHeader(httpHeader);
 	response.setBody(htmlPage);
 
