@@ -119,7 +119,8 @@ ssize_t Response::sendResponse(int fd) const
 {
 	string str(wrap_package());
 
-	return send(fd, str.c_str(), str.size(), 0);
+	return send(fd, str.c_str(), str.size(), 0); 
+	//not return but throw Response::SendFailException
 }
 
 string Response::wrap_package() const

@@ -12,7 +12,7 @@ class Request
 	bool valid;
 	bool fin_headers;
 	long content_left;
-	int fd;
+	int _fd;
 	char method;		// 'G' or 'P' or 'D'
 	string uri;
 	string version;
@@ -42,11 +42,12 @@ public:
 	~Request();
 	Request& operator=(Request const& rhs);
 
-	static bool loopRequests(int fd, string const& package);
+	static bool manageRequests(int fd, string const& package, int execute = 0);
 
 	bool isValid() const;
 	bool isFin() const;
 	int getFd() const;
+	void setFd(int fd);
 	char getMethod() const;
 	string const& getUri() const;
 	string const& getVersion() const;

@@ -18,7 +18,7 @@ Request& Request::operator=(Request const& rhs)
 	valid = rhs.valid;
 	fin_headers = rhs.fin_headers;
 	content_left = rhs.content_left;
-	fd = rhs.fd;
+	_fd = rhs._fd;
 	method = rhs.method;
 	uri = rhs.uri;
 	version = rhs.version;
@@ -36,7 +36,10 @@ bool Request::isFin() const
 	{ return (fin_headers && content_left <= 0); }
 
 int Request::getFd() const
-	{ return fd; }
+	{ return _fd; }
+
+void Request::setFd(int fd)
+	{ _fd = fd; }
 
 char Request::getMethod() const
 	{ return method; }
@@ -57,24 +60,34 @@ std::map<string, string> const& Request::getHeaders() const
 
 // returns true if all requests are finished (call with fd == 0 to check)
 // handles finished requests and sends back a response
-bool Request::loopRequests(int fd, string const& package)
+bool Request::manageRequests(int fd, string const& package, int execute)
 {
-	static std::map<int, Request> requests;
+	static std::map<int, Request> requests;	
 
 	if (!fd)
-		return requests.empty();
-	std::map<int, Request>::iterator it = (requests.insert(std::pair<int, Request>(fd, Request()))).first;
-	Request& instance = (*it).second;
-	instance.parse(package);
-//debug
-// std::cout << ">> parsed a packet[" << fd << "], " << instance.content_left << "b left\n";
-	if (!instance.isFin())
 		return false;
-//debug
-// std::cout << ">> "; instance.print();
+	if (!execute) {
+		std::map<int, Request>::iterator it = (requests.insert(std::pair<int, Request>(fd, Request()))).first;
+		Request& instance = (*it).second;
+		instance.parse(package);
+		instance.setFd(fd);
+		//debug
+		//std::cout << ">> parsed a packet[" << fd << "], " << instance.content_left << "b left\n";
+		if (!instance.isFin())
+			return false;
+		return true;
+	}
+	std::map<int, Request>::iterator it = requests.find(fd);
+	if (it == requests.end())
+		return false;
+	Request& instance = (*it).second; 
+	//debug
+	//std::cout << ">> "; instance.print();
+	if (!instance.isFin())
+			return false;
 	instance.handle();
 	requests.erase(it);
-	return requests.empty();
+	return true;
 }
 
 /* MEMBERS */
@@ -88,7 +101,14 @@ void Request::handleError(Response& response, int status) const
 
 void Request::handleGet(Response& response) const
 {
-	(void)response;
+	//(void)response;
+	// std::cout << "HERE" << std::endl;
+	std::string httpHeader = "Content-Type: text/html\r\n";
+	response.setStatus(200);
+	response.setHeader(httpHeader);
+	response.fileToBody("website/index.html");
+	//if not allowed
+	//
 	// check if method is allowed on this resource
 }
 
@@ -111,6 +131,7 @@ void Request::handle() const
 
 	if (valid)
 		todo = method;
+	//std::cout << "todo: " << todo << std::endl;
 	switch (todo)
 	{
 		case 'G':
@@ -125,7 +146,7 @@ void Request::handle() const
 		default:
 			handleError(response, 400);
 	}
-	response.sendResponse(fd);
+	response.sendResponse(_fd);
 }
 
 void Request::getline_crlf(std::istringstream& iss, string& buf) const
@@ -144,6 +165,7 @@ void Request::getline_crlf(std::istringstream& iss, string& buf) const
 }
 
 // a 'Host' header is required
+//maybe take an fd as input also to not use setFd
 bool Request::parse(string const& package)
 {
 	if (fin_headers && content_left)
