@@ -7,6 +7,9 @@
 Request::Request()
 	: valid(false), fin_headers(false), content_left(0), method(0) {}
 
+Request::Request(int fd)
+	: valid(false), fin_headers(false), content_left(0), fd(fd), method(0) {}
+
 Request::Request(Request const& src)
 	{ this->operator=(src); }
 
@@ -64,7 +67,7 @@ bool Request::loopRequests(int fd, char const* buffer, ssize_t size)
 	if (!fd)
 		return requests.empty();
 	std::string package(buffer, buffer + size);
-	std::map<int, Request>::iterator it = (requests.insert(std::pair<int, Request>(fd, Request()))).first;
+	std::map<int, Request>::iterator it = (requests.insert(std::pair<int, Request>(fd, Request(fd)))).first;
 	Request& instance = (*it).second;
 	instance.parse(package);
 //debug

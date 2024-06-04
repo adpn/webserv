@@ -38,6 +38,7 @@ class Request
 
 public:
 	Request();
+	Request(int fd);
 	Request(Request const& src);
 	~Request();
 	Request& operator=(Request const& rhs);
