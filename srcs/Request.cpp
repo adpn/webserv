@@ -57,12 +57,13 @@ std::map<string, string> const& Request::getHeaders() const
 
 // returns true if all requests are finished (call with fd == 0 to check)
 // handles finished requests and sends back a response
-bool Request::loopRequests(int fd, string const& package)
+bool Request::loopRequests(int fd, char const* buffer, ssize_t size)
 {
 	static std::map<int, Request> requests;
 
 	if (!fd)
 		return requests.empty();
+	std::string package(buffer, buffer + size);
 	std::map<int, Request>::iterator it = (requests.insert(std::pair<int, Request>(fd, Request()))).first;
 	Request& instance = (*it).second;
 	instance.parse(package);
