@@ -127,7 +127,6 @@ string Response::wrap_package() const
 	std::ostringstream package;
 
 	package << version << " " << status << " " << reason << "\r\n";
-	package << version << " " << status << " " << reason << "\r\n";
 	for (std::map<string, string>::const_iterator it = headers.begin(); it != headers.end(); ++it)
 		package << (*it).first << ":" << (*it).second << "\r\n";
 	package << "\r\n";
