@@ -38,11 +38,12 @@ class Request
 
 public:
 	Request();
+	Request(int fd);
 	Request(Request const& src);
 	~Request();
 	Request& operator=(Request const& rhs);
 
-	static bool loopRequests(int fd, string const& package);
+	static bool loopRequests(int fd, char const* buffer, ssize_t size);
 
 	bool isValid() const;
 	bool isFin() const;

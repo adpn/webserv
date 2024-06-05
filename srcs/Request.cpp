@@ -7,6 +7,9 @@
 Request::Request()
 	: valid(false), fin_headers(false), content_left(0), method(0) {}
 
+Request::Request(int fd)
+	: valid(false), fin_headers(false), content_left(0), fd(fd), method(0) {}
+
 Request::Request(Request const& src)
 	{ this->operator=(src); }
 
@@ -57,13 +60,14 @@ std::map<string, string> const& Request::getHeaders() const
 
 // returns true if all requests are finished (call with fd == 0 to check)
 // handles finished requests and sends back a response
-bool Request::loopRequests(int fd, string const& package)
+bool Request::loopRequests(int fd, char const* buffer, ssize_t size)
 {
 	static std::map<int, Request> requests;
 
 	if (!fd)
 		return requests.empty();
-	std::map<int, Request>::iterator it = (requests.insert(std::pair<int, Request>(fd, Request()))).first;
+	std::string package(buffer, buffer + size);
+	std::map<int, Request>::iterator it = (requests.insert(std::pair<int, Request>(fd, Request(fd)))).first;
 	Request& instance = (*it).second;
 	instance.parse(package);
 //debug

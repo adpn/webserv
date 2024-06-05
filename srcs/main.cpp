@@ -1,5 +1,6 @@
 #include <iostream> // cout
 #include <vector>
+#include <cstring>
 #include <sys/poll.h> //pollfd
 #include <Socket.hpp>
 #include <Request.hpp>
@@ -39,7 +40,7 @@ int managePollin(std::vector<pollfd>& fds, std::vector<Socket>& serverSockets, s
 			Request request;
 			std::cout << "Received from client: " << std::endl;
 			std::cout << buffer << std::endl;
-			Request::loopRequests(fds[i].fd, buffer);
+			Request::loopRequests(fds[i].fd, buffer, bytesReceived);
 			// if (!request.parse(buffer)) [DEPRECATED]
 			// 	exit(1); [DEPRECATED]
 			// request.print();
