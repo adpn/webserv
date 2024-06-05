@@ -79,6 +79,8 @@ int managePollout(std::vector<pollfd>& fds, size_t i) {
 
 int main(int argc, char **argv)
 {
+	if (argc != 2)
+		return 1;
 	std::vector<Socket> serverSockets;
 	std::vector<pollfd> fds;
 	(void)argc;

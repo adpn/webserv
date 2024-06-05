@@ -60,48 +60,38 @@ std::map<string, string> const& Request::getHeaders() const
 
 std::map<int, Request> Request::_requests;
 
-// returns true if request added or executed correctly
-// return false if request doesn't exist, or is not finished
-bool Request::manageRequests(int fd, char const* buffer, ssize_t size, bool execute)
+// returns true if request is finished
+// return false if request is not finished or fd is bad
+bool Request::manageRequests(int fd, char const* buffer, ssize_t size)
 {
-	if (!fd)
+	if (fd < 3)
 		return false;
 	std::string package(buffer, buffer + size);
-	if (!execute) {
-		std::map<int, Request>::iterator it = (_requests.insert(std::pair<int, Request>(fd, Request(fd)))).first;
-		Request& instance = (*it).second;
-		instance.parse(package);
-		//debug
-		//std::cout << ">> parsed a packet[" << fd << "], " << instance.content_left << "b left\n";
-		if (!instance.isFin())
-			return false;
-		return true;
-	}
+	std::map<int, Request>::iterator it = (_requests.insert(std::pair<int, Request>(fd, Request(fd)))).first;
+	Request& instance = (*it).second;
+	instance.parse(package);
+//debug
+//std::cout << ">> parsed a packet[" << fd << "], " << instance.content_left << "b left\n";
+	if (!instance.isFin())
+		return false;
+//debug
+//std::cout << ">> finished a packet[" << fd << "]:\n"; instance.print();
+	return true;
+}
+
+// returns true if execution was a success
+// else fd was not found or request is unfinished
+bool Request::executeRequest(int fd)
+{
 	std::map<int, Request>::iterator it = _requests.find(fd);
 	if (it == _requests.end())
 		return false;
 	Request& instance = (*it).second;
-	//debug
-	//std::cout << ">> "; instance.print();
 	if (!instance.isFin())
-			return false;
+		return false;
 	instance.handle();
 	_requests.erase(it);
 	return true;
-}
-
-Request* Request::manageRequests(int fd)
-{
-	std::map<int, Request>::iterator it = _requests.find(fd);
-	if (!(*it).first)
-		return NULL;
-	return &(*it).second;
-}
-
-// clears the map
-void Request::manageRequests()
-{
-	_requests.clear();
 }
 
 /* MEMBERS */
@@ -160,7 +150,7 @@ void Request::handleDelete(Response& response) const
 	handleError(response, 405);
 }
 
-Response Request::handle() const
+void Request::handle() const
 {
 	Response response;
 	char expr = 0;
@@ -180,7 +170,7 @@ Response Request::handle() const
 		default:
 			handleError(response, 400);
 	}
-	return response;
+	response.sendResponse(_fd);
 }
 
 string Request::uritowebsite() const

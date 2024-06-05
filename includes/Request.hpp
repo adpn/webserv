@@ -44,9 +44,8 @@ public:
 	~Request();
 	Request& operator=(Request const& rhs);
 
-	static bool manageRequests(int fd, char const* buffer, ssize_t size, bool execute = 0);
-	static Request* manageRequests(int fd);
-	static void manageRequests();
+	static bool manageRequests(int fd, char const* buffer, ssize_t size);
+	static bool executeRequest(int fd);
 
 	bool isValid() const;
 	bool isFin() const;
@@ -58,7 +57,7 @@ public:
 	std::map<string, string> const& getHeaders() const;
 
 	bool parse(string const& package);
-	Response handle() const;
+	void handle() const;
 	string uritowebsite() const;
 	string uritoupload() const;
 
