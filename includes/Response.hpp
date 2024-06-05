@@ -9,11 +9,11 @@ class Request;
 
 class Response
 {
-	string	version;
-	int		status;
-	string	reason;
-	std::map<string, string> headers;
-	string	body;
+	string	_version;
+	int		_status;
+	string	_reason;
+	std::map<string, string> _headers;
+	string	_body;
 
 	void setContentLength();
 

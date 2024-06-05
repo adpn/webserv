@@ -41,10 +41,8 @@ int managePollin(std::vector<pollfd>& fds, std::vector<Socket>& serverSockets, s
 			Request request;
 			std::cout << "Received from client: " << std::endl;
 			std::cout << buffer << std::endl;
-			Request::loopRequests(fds[i].fd, buffer, bytesReceived);
-			// if (!request.parse(buffer)) [DEPRECATED]
-			// 	exit(1); [DEPRECATED]
-			// request.print();
+			Request::manageRequests(fds[i].fd, buffer);
+
 			// manage client
 			fds[i].events |= POLLOUT; // Enable POLLOUT to send data
 			// close(fds[i].fd);
@@ -70,27 +68,17 @@ int managePollin(std::vector<pollfd>& fds, std::vector<Socket>& serverSockets, s
 int managePollout(std::vector<pollfd>& fds, size_t i) {
 	std::cout << "Ready to send data to client on fd " << fds[i].fd << std::endl;
 	// Send data to client
-
-	std::string httpHeader = "Content-Type: text/html\r\n";
-	Response response;
-	response.setStatus(200);
-	response.setHeader(httpHeader);
-	response.fileToBody("website/index.html");
-	response.sendResponse(fds[i].fd);
-
-	ssize_t bytesSent = response.sendResponse(fds[i].fd);;
-	if (bytesSent < 0) {
-		std::cout << "Send error" << std::endl;
-		return 1; //should I stop the program if send fails ????
-	}
-	// After sending data, disable POLLOUT until more data needs to be sent
+	Request::manageRequests(fds[i].fd, "", 1);
+	std::cout << "Client disconnected after sending a response: " << fds[i].fd <<std::endl;
 	fds[i].events = POLLIN;
+	close(fds[i].fd);
+	fds.erase(fds.begin() + i);
+	--i;
 	return 0;
 }
 
 int main(int argc, char **argv)
 {
-
 	std::vector<Socket> serverSockets;
 	std::vector<pollfd> fds;
 	(void)argc;
@@ -100,7 +88,7 @@ int main(int argc, char **argv)
 	serverSockets.reserve(2); // number of sockets
 	std::cout << "Capacity: " << serverSockets.capacity() << std::endl;
 	Socket sock1(8080);
-	Socket sock2(8081);
+	Socket sock2(8082);
 	serverSockets.push_back(sock1);
 	serverSockets.push_back(sock2);
 
@@ -117,8 +105,7 @@ int main(int argc, char **argv)
 	while (true)
 	{
 		// Last argument is timeout time
-		if (poll(&fds[0], fds.size(), 10000) == -1)
-		{
+		if (poll(&fds[0], fds.size(), 10000) == -1) {
 			std::cout << "Error poll";
 			return 1;
 		}
