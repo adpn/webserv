@@ -79,21 +79,27 @@ int managePollout(std::vector<pollfd>& fds, size_t i) {
 
 int main(int argc, char **argv)
 {
-	if (argc != 2)
+	if (argc > 2)
 		return 1;
+
+	std::string conf_path;
+	if (argc == 1)
+		conf_path = "configuration_files/something.conf";
+	else
+		conf_path = argv[1];
+
+	Config config(conf_path);
+	config.bufferize();
+
+	std::vector<Server> servers;
+	servers = config.get_servers();
+
 	std::vector<Socket> serverSockets;
+	serverSockets = servers[0].get_sockets();
+	
+	std::cout << "Server: " << servers[0] << std::endl;
+	
 	std::vector<pollfd> fds;
-	(void)argc;
-	Config config(argv[1]);
-	std::cout << "Server: " << config.get_servers()[0] << std::endl;
-
-	serverSockets.reserve(2); // number of sockets
-	std::cout << "Capacity: " << serverSockets.capacity() << std::endl;
-	Socket sock1(8080);
-	Socket sock2(8082);
-	serverSockets.push_back(sock1);
-	serverSockets.push_back(sock2);
-
 	std::cout << "For loop start:" << std::endl;
 	for (size_t i = 0; i < serverSockets.size(); i++)
 	{

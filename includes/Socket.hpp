@@ -11,7 +11,7 @@
 class Socket {
 private:
 	int _fd;
-	const int _port;
+	int _port;
 
 public:
 	Socket(int port);
