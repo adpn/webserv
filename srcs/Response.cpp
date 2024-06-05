@@ -3,14 +3,17 @@
 #include <sstream>
 #include <fstream>
 #include <sys/socket.h>
+#include <ctime>
 
 /* CONSTRUCTORS */
 
 Response::Response()
-	: _version("HTTP/1.1"), _status(500), _reason("Internal Server Error") {}
+	: _version("HTTP/1.1"), _status(500), _reason("Internal Server Error")
+	{ setHDate(); }
 
 Response::Response(Request const& request)
-	: _version(request.getVersion()), _status(500), _reason("Internal Server Error") {}
+	: _version(request.getVersion()), _status(500), _reason("Internal Server Error")
+	{ setHDate(); }
 
 Response::Response(Response const& src)
 	{ this->operator=(src); }
@@ -29,6 +32,12 @@ Response& Response::operator=(Response const& rhs)
 }
 
 /* G(/S)ETTERS */
+
+bool Response::isGood() const
+	{ return _status < 300; }
+
+string const& Response::getReason() const
+	{ return _reason; }
 
 // sets 'reason' if available in internal set
 bool Response::setStatus(int status)
@@ -89,7 +98,6 @@ bool Response::setHeader(string const& header)
 void Response::setBody(string const& body)
 {
 	_body = body;
-	setContentLength();
 }
 
 bool Response::fileToBody(string const& file)
@@ -100,30 +108,22 @@ bool Response::fileToBody(string const& file)
 	std::ostringstream oss;
 	oss << ifs.rdbuf();
 	_body = oss.str();
-	setContentLength();
 	return true;
-}
-
-void Response::setContentLength()
-{
-	std::ostringstream oss;
-	oss << _body.size();
-	_headers.erase("Content-Length");
-	_headers.insert(std::pair<string, string>("Content-Length", oss.str()));
 }
 
 /* MEMBERS */
 
 // doesn't handle errors :)
-ssize_t Response::sendResponse(int fd) const
+ssize_t Response::sendResponse(int fd)
 {
-	string str(wrap_package());
+	addHeaders();
+	string str(wrapPackage());
 
-	return send(fd, str.c_str(), str.size(), 0); 
+	return send(fd, str.c_str(), str.size(), 0);
 	//not return but throw Response::SendFailException
 }
 
-string Response::wrap_package() const
+string Response::wrapPackage() const
 {
 	std::ostringstream package;
 
@@ -134,6 +134,37 @@ string Response::wrap_package() const
 	if (_body.size())
 		package << _body;
 	return package.str();
+}
+
+void Response::addHeaders()
+{
+	setHContentLength();
+	setHServer();
+	// maybe content-type if not yet specified i guess
+}
+
+void Response::setHContentLength()
+{
+	std::ostringstream oss;
+	oss << _body.size();
+	_headers.erase("Content-Length");
+	_headers.insert(std::pair<string, string>("Content-Length", oss.str()));
+}
+
+//HTTP format example: "Tue, 15 Nov 1994 08:12:31 GMT"
+void Response::setHDate()
+{
+	std::time_t time = std::time(NULL);
+	std::tm* tm = std::gmtime(&time);
+	char str[30];
+	strftime(str, 29, "%a, %d %b %Y %H:%M:%S GMT", tm);
+	str[29] = 0;
+	_headers.insert(std::pair<string, string>("Date", str));
+}
+
+void Response::setHServer()
+{
+	_headers.insert(std::pair<string, string>("Server", "WebServ"));
 }
 
 /* DEBUG */

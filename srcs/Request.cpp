@@ -5,7 +5,7 @@
 /* CONSTRUCTORS */
 
 Request::Request()
-	: _valid(false), _fin_headers(false), _content_left(0), _method(0) {}
+	: _valid(false), _fin_headers(false), _content_left(0), _fd(-1), _method(0) {}
 
 Request::Request(int fd)
 	: _valid(false), _fin_headers(false), _content_left(0), _fd(fd), _method(0) {}
@@ -41,9 +41,6 @@ bool Request::isFin() const
 int Request::getFd() const
 	{ return _fd; }
 
-void Request::setFd(int fd)
-	{ _fd = fd; }
-
 char Request::getMethod() const
 	{ return _method; }
 
@@ -61,35 +58,50 @@ std::map<string, string> const& Request::getHeaders() const
 
 /* STATIC MEMBERS */
 
+std::map<int, Request> Request::_requests;
+
 // returns true if request added or executed correctly
 // return false if request doesn't exist, or is not finished
-bool Request::manageRequests(int fd, string const& package, int execute)
+bool Request::manageRequests(int fd, char const* buffer, ssize_t size, bool execute)
 {
-	static std::map<int, Request> requests;	
-
 	if (!fd)
 		return false;
+	std::string package(buffer, buffer + size);
 	if (!execute) {
-		std::map<int, Request>::iterator it = (requests.insert(std::pair<int, Request>(fd, Request()))).first;
+		std::map<int, Request>::iterator it = (_requests.insert(std::pair<int, Request>(fd, Request(fd)))).first;
 		Request& instance = (*it).second;
-		instance.parse(package, fd);
+		instance.parse(package);
 		//debug
 		//std::cout << ">> parsed a packet[" << fd << "], " << instance.content_left << "b left\n";
 		if (!instance.isFin())
 			return false;
 		return true;
 	}
-	std::map<int, Request>::iterator it = requests.find(fd);
-	if (it == requests.end())
+	std::map<int, Request>::iterator it = _requests.find(fd);
+	if (it == _requests.end())
 		return false;
-	Request& instance = (*it).second; 
+	Request& instance = (*it).second;
 	//debug
 	//std::cout << ">> "; instance.print();
 	if (!instance.isFin())
 			return false;
 	instance.handle();
-	requests.erase(it);
+	_requests.erase(it);
 	return true;
+}
+
+Request* Request::manageRequests(int fd)
+{
+	std::map<int, Request>::iterator it = _requests.find(fd);
+	if (!(*it).first)
+		return NULL;
+	return &(*it).second;
+}
+
+// clears the map
+void Request::manageRequests()
+{
+	_requests.clear();
 }
 
 /* MEMBERS */
@@ -98,42 +110,63 @@ void Request::handleError(Response& response, int status) const
 {
 	response.setStatus(status);
 	// provide appropriate error page?
+	std::ostringstream oss;
+	oss << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n";
+	oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
+	oss << "    <link rel=\"icon\" href=\"./favicon.ico\" />\n	<title></title>\n    <!-- <style>\n";
+	oss << "        /* Add your CSS styles here */\n    </style> -->\n</head>\n<body>\n    <br><b>ERROR: ";
+	oss << status << " " << response.getReason() << "\n</b></body>\n</html>\n";
+	response.setBody(oss.str());
 	// alter response further?
 }
 
 void Request::handleGet(Response& response) const
 {
-	//(void)response;
-	// std::cout << "HERE" << std::endl;
-	std::string httpHeader = "Content-Type: text/html\r\n";
 	response.setStatus(200);
-	response.setHeader(httpHeader);
-	response.fileToBody("website/index.html");
-	//if not allowed
-	//
-	// check if method is allowed on this resource
+	response.setHeader("Content-Type: text/html");
+	// check below if method is allowed on this resource
+	if (!true)
+		handleError(response, 405);
+	else if (!response.fileToBody(uritowebsite()))
+		handleError(response, 404);
 }
 
 void Request::handlePost(Response& response) const
 {
 	(void)response;
 	// check if method is allowed on this resource
+	// temp error
+	handleError(response, 405);
+
+	/* multipart;
+		header: Content-Type: multipart/form-data;boundary="boundary"
+		body:	--boundary
+				Content-Disposition: form-data; name="field1"
+
+				value1
+				--boundary
+				Content-Disposition: form-data; name="field2"; filename="example.txt"
+
+				value2
+				--boundary--
+	*/
 }
 
 void Request::handleDelete(Response& response) const
 {
 	(void)response;
 	// check if method is allowed on this resource
+	// temp error
+	handleError(response, 405);
 }
 
-void Request::handle() const
+Response Request::handle() const
 {
 	Response response;
-	char todo = 0;
-
+	char expr = 0;
 	if (_valid)
-		todo = _method;
-	switch (todo)
+		expr = _method;
+	switch (expr)
 	{
 		case 'G':
 			handleGet(response);
@@ -147,7 +180,20 @@ void Request::handle() const
 		default:
 			handleError(response, 400);
 	}
-	response.sendResponse(_fd);
+	return response;
+}
+
+string Request::uritowebsite() const
+{
+	if (!_uri.compare("/"))
+		return "website/index.html";
+	return string("website") + _uri;
+}
+
+string Request::uritoupload() const
+{
+	// translate uri to a filepath
+	return string();
 }
 
 void Request::getline_crlf(std::istringstream& iss, string& buf) const
@@ -166,10 +212,8 @@ void Request::getline_crlf(std::istringstream& iss, string& buf) const
 }
 
 // a 'Host' header is required
-//maybe take an fd as input also to not use setFd
-bool Request::parse(string const& package, int fd)
+bool Request::parse(string const& package)
 {
-	_fd = fd;
 	if (_fin_headers && _content_left)
 		return parseBody(package);
 

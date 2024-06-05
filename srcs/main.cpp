@@ -41,7 +41,7 @@ int managePollin(std::vector<pollfd>& fds, std::vector<Socket>& serverSockets, s
 			Request request;
 			std::cout << "Received from client: " << std::endl;
 			std::cout << buffer << std::endl;
-			Request::manageRequests(fds[i].fd, buffer);
+			Request::manageRequests(fds[i].fd, buffer, bytesReceived);
 
 			// manage client
 			fds[i].events |= POLLOUT; // Enable POLLOUT to send data
@@ -68,7 +68,7 @@ int managePollin(std::vector<pollfd>& fds, std::vector<Socket>& serverSockets, s
 int managePollout(std::vector<pollfd>& fds, size_t i) {
 	std::cout << "Ready to send data to client on fd " << fds[i].fd << std::endl;
 	// Send data to client
-	Request::manageRequests(fds[i].fd, "", 1);
+	Request::executeRequest(fds[i].fd);
 	std::cout << "Client disconnected after sending a response: " << fds[i].fd <<std::endl;
 	fds[i].events = POLLIN;
 	close(fds[i].fd);

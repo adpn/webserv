@@ -9,6 +9,8 @@ class Response;
 
 class Request
 {
+	static std::map<int, Request> _requests;
+
 	bool _valid;
 	bool _fin_headers;
 	long _content_left;
@@ -17,8 +19,7 @@ class Request
 	string _uri;
 	string _version;
 	string _body;
-	std::map<string, string> _headers; // merge duplicate headers like so [value1], [value2]
-										// exception for 'Set-Cookie' and 'Cookie' headers -> [value1]; [value2]
+	std::map<string, string> _headers; // merge duplicate headers like so [value1],[value2]
 
 	// handle errors of these. with (mandatory default) error pages
 	bool parseMethod(string const& method);
@@ -43,20 +44,23 @@ public:
 	~Request();
 	Request& operator=(Request const& rhs);
 
-	static bool manageRequests(int fd, string const& package, int execute = 0);
+	static bool manageRequests(int fd, char const* buffer, ssize_t size, bool execute = 0);
+	static Request* manageRequests(int fd);
+	static void manageRequests();
 
 	bool isValid() const;
 	bool isFin() const;
 	int getFd() const;
-	void setFd(int fd);
 	char getMethod() const;
 	string const& getUri() const;
 	string const& getVersion() const;
 	string const& getBody() const;
 	std::map<string, string> const& getHeaders() const;
 
-	bool parse(string const& package, int fd);
-	void handle() const;
+	bool parse(string const& package);
+	Response handle() const;
+	string uritowebsite() const;
+	string uritoupload() const;
 
 	// debugging
 	void print(bool do_body = true) const;

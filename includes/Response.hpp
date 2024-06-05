@@ -15,7 +15,10 @@ class Response
 	std::map<string, string> _headers;
 	string	_body;
 
-	void setContentLength();
+	void addHeaders();
+	void setHContentLength();
+	void setHDate();
+	void setHServer();
 
 public:
 	Response();
@@ -24,14 +27,17 @@ public:
 	~Response();
 	Response& operator=(Response const& rhs);
 
+	bool isGood() const;
+	string const& getReason() const;
+
 	bool setStatus(int status);
 	void setCustomReason(string const& reason);
 	bool setHeader(string const& header);
 	void setBody(string const& body);
 	bool fileToBody(string const& file);
 
-	ssize_t sendResponse(int fd) const;
-	string wrap_package() const;
+	ssize_t sendResponse(int fd);
+	string wrapPackage() const;
 
 	// debugging
 	void print(bool do_body = true) const;
