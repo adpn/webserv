@@ -31,7 +31,7 @@ class Config {
 		void	add_server(std::string server_block);
 		bool	server_approved(Server server);
 
-		std::vector<Server> get_servers();
+		std::vector<Server>& get_servers();
 
 		//--- Error management ---//
 		class Error : public std::exception {

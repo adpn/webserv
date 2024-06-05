@@ -5,6 +5,7 @@
 #include <Socket.hpp>
 #include <Request.hpp>
 #include <Response.hpp>
+#include <Config.hpp>
 
 //buffer size should be defined with client_max_body_size ????????
 #define BUFFER_SIZE 1024
@@ -87,11 +88,14 @@ int managePollout(std::vector<pollfd>& fds, size_t i) {
 	return 0;
 }
 
-int main()
+int main(int argc, char **argv)
 {
 
 	std::vector<Socket> serverSockets;
 	std::vector<pollfd> fds;
+	(void)argc;
+	Config config(argv[1]);
+	std::cout << "Server: " << config.get_servers()[0] << std::endl;
 
 	serverSockets.reserve(2); // number of sockets
 	std::cout << "Capacity: " << serverSockets.capacity() << std::endl;

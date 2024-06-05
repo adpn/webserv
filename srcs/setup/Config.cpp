@@ -14,7 +14,7 @@ Config::~Config(){
 
 
 //--------------- Getters ---------------//
-std::vector<Server> Config::get_servers(){
+std::vector<Server>& Config::get_servers() {
 	return this->_servers;
 }
 

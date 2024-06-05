@@ -17,7 +17,10 @@ SMTH2_DIR	=   $(SRCS_DIR)/smth2
 MAIN_FILE	=	main.cpp \
 				Request.cpp \
 				Response.cpp
-SETUP_FILES	=	Socket.cpp
+SETUP_FILES	=	Socket.cpp \
+				Config.cpp \
+				Location.cpp \
+				Server.cpp
 SMTH2_FILES	=
 
 # Defining the paths of the sources files
