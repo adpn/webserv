@@ -1,4 +1,4 @@
-# include "Config.hpp"
+#include "Config.hpp"
 
 //--------------- Orthodox Canonical Form ---------------//
 Config::Config( std::string filename ) : _brackets(0), _fd(filename){
