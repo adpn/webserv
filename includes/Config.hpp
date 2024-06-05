@@ -42,42 +42,6 @@ class Config {
 				virtual ~Error() throw();
 				virtual const char *what() const throw();
 		} ;
-		// class FailToOpen : public std::exception {
-		// 	public:
-		// 		virtual const char *what() const throw();
-		// } ;
-		// class DirectiveError : public std::exception {
-		// 	public:
-		// 		virtual const char *what() const throw();
-		// } ;
-		// class FoundWeirdStuff : public std::exception {
-		// 	public:
-		// 		virtual const char *what() const throw();
-		// } ;
-		// class NoServerFound : public std::exception {
-		// 	public:
-		// 		virtual const char *what() const throw();
-		// } ;
-		// class CommonPort : public std::exception {
-		// 	public:
-		// 		virtual const char *what() const throw();
-		// } ;
-		// class DataMissing : public std::exception {
-		// 	public:
-		// 		virtual const char *what() const throw();
-		// } ;
-		// class BracketError : public std::exception {
-		// 	public:
-		// 		virtual const char *what() const throw();
-		// } ;
-		// class WrongMethod : public std::exception {
-		// 	public:
-		// 		virtual const char *what() const throw();
-		// } ;
-		// class LocationError : public std::exception {
-		// 	public:
-		// 		virtual const char *what() const throw();
-		// } ;
 } ;
 
 std::vector< std::string > tokenizer( std::string string, std::string delimiters);

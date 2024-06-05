@@ -2,9 +2,9 @@
 
 //--------------- Orthodox Canonical Form ---------------//
 Location::Location(){
-	this->_limit_except["GET"] = true;
-	this->_limit_except["POST"] = true;
-	this->_limit_except["DELETE"] = true;
+	this->_limit_except["GET"] = false;
+	this->_limit_except["POST"] = false;
+	this->_limit_except["DELETE"] = false;
 	this->_autoindex = false;
 }
 Location::Location(const Location &other){
@@ -33,7 +33,7 @@ void	Location::set_limit_except(std::vector<std::string> s){
 			if (i == 3)
 				throw Location::Error("Directive format not respected.");
 			if (authorized_method[i] == s[j]){
-				this->_limit_except[authorized_method[i]] = false;
+				this->_limit_except[authorized_method[i]] = true;
 				break ;
 			}
 		}
