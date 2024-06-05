@@ -12,6 +12,7 @@ Server & Server::operator=(const Server & other){
 	_name = other._name;
 	_error_page = other._error_page;
 	_location = other._location;
+	_sockets = other._sockets;
 	return (*this);
 }
 Server::~Server(){}
@@ -70,6 +71,24 @@ void	Server::set_location( std::string s, Location loc_block){
 	this->_location[s] = loc_block;
 }
 
+void	Server::initSockets() {
+	std::cout << "Init sockets:" << std::endl;
+	//_sockets.reserve(_port.size());
+	for (size_t i = 0; i < _port.size(); i++) {
+		Socket socket(_port[i]);
+		_sockets.push_back(socket);
+		std::cout << "Successfully added:" << _sockets[i].getPort() << std::endl;
+	}
+	std::cout << _sockets.size() << std::endl;
+	std::cout << "End of init sockets." << std::endl << std::endl;
+}
+
+void	Server::closeSockets() {
+	for (size_t i = 0; i < _sockets.size(); i++) {
+		std::cout << "Closing port: " << _sockets[i].getPort() << " with socket fd: " << _sockets[i] << std::endl;
+		close(_sockets[i]);
+	}
+}
 
 //--------------- Getters ---------------//
 std::vector<unsigned int> Server::get_port(){
@@ -88,6 +107,9 @@ std::map<std::string, Location>	Server::get_location(){
 	return this->_location;
 }
 
+std::vector<Socket>& Server::get_sockets() {
+	return _sockets;
+}
 
 //--------------- Output debug ---------------//
 std::ostream& operator<<( std::ostream& o, Server & S){

@@ -9,9 +9,9 @@ Config::Config( std::string filename ) : _brackets(0), _fd(filename){
 };
 Config::~Config(){
 	this->_fd.close();
+	for (size_t i = 0; i < _servers.size(); i++)
+		_servers[i].closeSockets();
 };
-
-
 
 //--------------- Getters ---------------//
 std::vector<Server>& Config::get_servers() {
@@ -151,9 +151,11 @@ void	Config::add_server(std::string server_block){
 			case '}':	// end of bloc server
 				if (server_block.find_first_not_of(" 	}") != NOTFOUND)
 					throw Config::Error("Found weird stuff..");
-				if (server_approved(server))
+				if (server_approved(server)) {
+					server.initSockets();
 					this->_servers.push_back(server);
-				return ;
+					return ;
+				}
 
 		}
 	}

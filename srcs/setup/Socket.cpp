@@ -50,9 +50,9 @@ Socket::Socket(const Socket& other) : _port(other._port) {
 }
 
 Socket::~Socket() {
-	close(_fd);
-	std::cout << "Destructor socket: " << _fd << std::endl;
-	std::cout << "DESTRUCTOR CLOSES FD !!! SHOULD NOT BE CALLED BEFORE THE END OF THE PROGRAM" << std::endl;
+	// close(_fd);
+	// std::cout << "Destructor socket: " << _fd << std::endl;
+	// std::cout << "DESTRUCTOR CLOSES FD !!! SHOULD NOT BE CALLED BEFORE THE END OF THE PROGRAM" << std::endl;
 }
 
 Socket::operator int() const {
