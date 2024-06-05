@@ -54,7 +54,7 @@ public:
 	string const& getBody() const;
 	std::map<string, string> const& getHeaders() const;
 
-	bool parse(string const& package);
+	bool parse(string const& package, int fd);
 	void handle() const;
 
 	// debugging

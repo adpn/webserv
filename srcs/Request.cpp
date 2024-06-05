@@ -69,8 +69,7 @@ bool Request::manageRequests(int fd, string const& package, int execute)
 	if (!execute) {
 		std::map<int, Request>::iterator it = (requests.insert(std::pair<int, Request>(fd, Request()))).first;
 		Request& instance = (*it).second;
-		instance.parse(package);
-		instance.setFd(fd);
+		instance.parse(package, fd);
 		//debug
 		//std::cout << ">> parsed a packet[" << fd << "], " << instance.content_left << "b left\n";
 		if (!instance.isFin())
@@ -131,7 +130,6 @@ void Request::handle() const
 
 	if (_valid)
 		todo = _method;
-	//std::cout << "todo: " << todo << std::endl;
 	switch (todo)
 	{
 		case 'G':
@@ -166,8 +164,9 @@ void Request::getline_crlf(std::istringstream& iss, string& buf) const
 
 // a 'Host' header is required
 //maybe take an fd as input also to not use setFd
-bool Request::parse(string const& package)
+bool Request::parse(string const& package, int fd)
 {
+	_fd = fd;
 	if (_fin_headers && _content_left)
 		return parseBody(package);
 

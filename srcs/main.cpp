@@ -67,10 +67,11 @@ int managePollout(std::vector<pollfd>& fds, size_t i) {
 	std::cout << "Ready to send data to client on fd " << fds[i].fd << std::endl;
 	// Send data to client
 	Request::manageRequests(fds[i].fd, "", 1);
+	std::cout << "Client disconnected after sending a response: " << fds[i].fd <<std::endl;
 	fds[i].events = POLLIN;
-	// close(fds[i].fd);
-	// fds.erase(fds.begin() + i);
-	// --i;
+	close(fds[i].fd);
+	fds.erase(fds.begin() + i);
+	--i;
 	return 0;
 }
 
