@@ -5,7 +5,7 @@
 /* CONSTRUCTORS */
 
 Request::Request()
-	: valid(false), fin_headers(false), content_left(0), method(0) {}
+	: _valid(false), _fin_headers(false), _content_left(0), _method(0) {}
 
 Request::Request(Request const& src)
 	{ this->operator=(src); }
@@ -15,25 +15,25 @@ Request::~Request()
 
 Request& Request::operator=(Request const& rhs)
 {
-	valid = rhs.valid;
-	fin_headers = rhs.fin_headers;
-	content_left = rhs.content_left;
+	_valid = rhs._valid;
+	_fin_headers = rhs._fin_headers;
+	_content_left = rhs._content_left;
 	_fd = rhs._fd;
-	method = rhs.method;
-	uri = rhs.uri;
-	version = rhs.version;
-	body = rhs.body;
-	headers = rhs.headers;
+	_method = rhs._method;
+	_uri = rhs._uri;
+	_version = rhs._version;
+	_body = rhs._body;
+	_headers = rhs._headers;
 	return *this;
 }
 
 /* G(/S)ETTERS */
 
 bool Request::isValid() const
-	{ return valid; }
+	{ return _valid; }
 
 bool Request::isFin() const
-	{ return (fin_headers && content_left <= 0); }
+	{ return (_fin_headers && _content_left <= 0); }
 
 int Request::getFd() const
 	{ return _fd; }
@@ -42,24 +42,24 @@ void Request::setFd(int fd)
 	{ _fd = fd; }
 
 char Request::getMethod() const
-	{ return method; }
+	{ return _method; }
 
 string const& Request::getUri() const
-	{ return uri; }
+	{ return _uri; }
 
 string const& Request::getVersion() const
-	{ return version; }
+	{ return _version; }
 
 string const& Request::getBody() const
-	{ return body; }
+	{ return _body; }
 
 std::map<string, string> const& Request::getHeaders() const
-	{ return headers; }
+	{ return _headers; }
 
 /* STATIC MEMBERS */
 
-// returns true if all requests are finished (call with fd == 0 to check)
-// handles finished requests and sends back a response
+// returns true if request added or executed correctly
+// return false if request doesn't exist, or is not finished
 bool Request::manageRequests(int fd, string const& package, int execute)
 {
 	static std::map<int, Request> requests;	
@@ -129,8 +129,8 @@ void Request::handle() const
 	Response response;
 	char todo = 0;
 
-	if (valid)
-		todo = method;
+	if (_valid)
+		todo = _method;
 	//std::cout << "todo: " << todo << std::endl;
 	switch (todo)
 	{
@@ -168,12 +168,12 @@ void Request::getline_crlf(std::istringstream& iss, string& buf) const
 //maybe take an fd as input also to not use setFd
 bool Request::parse(string const& package)
 {
-	if (fin_headers && content_left)
+	if (_fin_headers && _content_left)
 		return parseBody(package);
 
 // maybe add more iss bit checks in here?
 	std::istringstream iss(package);
-	if (!method)
+	if (!_method)
 	{
 		string token;
 		std::getline(iss, token, ' ');
@@ -189,15 +189,15 @@ bool Request::parse(string const& package)
 			return false;
 			// what is this check ?
 	}
-	if (!fin_headers)
+	if (!_fin_headers)
 	{
 		if (!loopHeaders(iss))
 			return false;
-		if (!fin_headers)
+		if (!_fin_headers)
 			return true;
 		if (!checkHeaders())
 			return false;
-		valid = true;
+		_valid = true;
 	}
 	std::ostringstream oss;
 	oss << iss.rdbuf();
@@ -218,7 +218,7 @@ bool Request::parseMethod(string const& method)
 			break ;
 	if (size < 0)
 		return false;
-	this->method = method[0];
+	_method = method[0];
 	return true;
 }
 
@@ -229,7 +229,7 @@ bool Request::parseUri(string const& uri)
 		return false;
 	if (uri.compare(0, 7, "http://") && uri[0] != '/')
 		return false;
-	this->uri = uri;
+	_uri = uri;
 	return true;
 }
 
@@ -238,7 +238,7 @@ bool Request::parseVersion(string const& version)
 {
 	if (version.compare(0, 5, "HTTP/"))
 		return false;
-	this->version = version;
+	_version = version;
 	return true;
 }
 
@@ -268,7 +268,7 @@ bool Request::loopHeaders(std::istringstream& iss)
 		getline_crlf(iss, token);
 	}
 	leftover.clear();
-	fin_headers = true;
+	_fin_headers = true;
 	return true;
 }
 
@@ -289,7 +289,7 @@ bool Request::parseHeader(string const& header)
 			continue ;
 
 		manageSpecialHeader(pair);
-		std::pair<std::map<string, string>::iterator, bool> ret(this->headers.insert(pair));
+		std::pair<std::map<string, string>::iterator, bool> ret(_headers.insert(pair));
 		if (!ret.second)
 			if (ret.first->second.find(pair.second) == string::npos)
 				ret.first->second.append("," + pair.second);
@@ -304,14 +304,14 @@ bool Request::parseBody(string const& body)
 // (or an empty chunk at the end IF it is chunked (chunked in Transfer-Encoding header))
 	if (isFin())
 		return false;
-	this->body.append(body);
-	content_left -= body.size();
+	_body.append(body);
+	_content_left -= body.size();
 	return true;
 }
 
 bool Request::checkHeaders() const
 {
-	if (headers.find("Host") == headers.end())
+	if (_headers.find("Host") == _headers.end())
 		return false;
 	return true;
 }
@@ -325,7 +325,7 @@ void Request::manageSpecialHeader(std::pair<string, string> const& pair)
 	// 		// maybe replace the string::npos with a check for delimiters?
 	// }
 	if (!pair.first.compare("Content-Length"))
-		content_left = atol(pair.second.c_str());
+		_content_left = atol(pair.second.c_str());
 }
 
 /* DEBUG */
@@ -333,14 +333,14 @@ void Request::manageSpecialHeader(std::pair<string, string> const& pair)
 void Request::print(bool do_body) const
 {
 	std::cout << "request package:";
-	if (!valid)
+	if (!_valid)
 		std::cout << " INVALID";
 	std::cout << "\n";
-	if (!method)
+	if (!_method)
 		return ;
-	std::cout << "\t" << method << " " << uri << " " << version << "\n";
-	for (std::map<string, string>::const_iterator it = headers.begin(); it != headers.end(); ++it)
+	std::cout << "\t" << _method << " " << _uri << " " << _version << "\n";
+	for (std::map<string, string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
 		std::cout << "\t" << (*it).first << ":" << (*it).second << "\n";
-	if (do_body && body.size())
-		std::cout << "\n\t" << body << "\n";
+	if (do_body && _body.size())
+		std::cout << "\n\t" << _body << "\n";
 }

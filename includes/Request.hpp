@@ -9,15 +9,15 @@ class Response;
 
 class Request
 {
-	bool valid;
-	bool fin_headers;
-	long content_left;
+	bool _valid;
+	bool _fin_headers;
+	long _content_left;
 	int _fd;
-	char method;		// 'G' or 'P' or 'D'
-	string uri;
-	string version;
-	string body;
-	std::map<string, string> headers; // merge duplicate headers like so [value1], [value2]
+	char _method;		// 'G' or 'P' or 'D'
+	string _uri;
+	string _version;
+	string _body;
+	std::map<string, string> _headers; // merge duplicate headers like so [value1], [value2]
 										// exception for 'Set-Cookie' and 'Cookie' headers -> [value1]; [value2]
 
 	// handle errors of these. with (mandatory default) error pages

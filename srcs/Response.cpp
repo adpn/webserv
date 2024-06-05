@@ -7,10 +7,10 @@
 /* CONSTRUCTORS */
 
 Response::Response()
-	: version("HTTP/1.1"), status(500), reason("Internal Server Error") {}
+	: _version("HTTP/1.1"), _status(500), _reason("Internal Server Error") {}
 
 Response::Response(Request const& request)
-	: version(request.getVersion()), status(500), reason("Internal Server Error") {}
+	: _version(request.getVersion()), _status(500), _reason("Internal Server Error") {}
 
 Response::Response(Response const& src)
 	{ this->operator=(src); }
@@ -20,11 +20,11 @@ Response::~Response()
 
 Response& Response::operator=(Response const& rhs)
 {
-	version = rhs.version;
-	status = rhs.status;
-	reason = rhs.reason;
-	headers = rhs.headers;
-	body = rhs.body;
+	_version = rhs._version;
+	_status = rhs._status;
+	_reason = rhs._reason;
+	_headers = rhs._headers;
+	_body = rhs._body;
 	return *this;
 }
 
@@ -33,8 +33,8 @@ Response& Response::operator=(Response const& rhs)
 // sets 'reason' if available in internal set
 bool Response::setStatus(int status)
 {
-	this->status = 500;
-	this->reason = "Internal Server Error";
+	_status = 500;
+	_reason = "Internal Server Error";
 	if (status == 500)
 		return true;
 	if (status < 100 || status > 599)
@@ -52,15 +52,15 @@ bool Response::setStatus(int status)
 	{
 		if (reasons[i].first != status)
 			continue ;
-		this->status = status;
-		this->reason = reasons[i].second;
+		_status = status;
+		_reason = reasons[i].second;
 		return true;
 	}
 	return false;
 }
 
 void Response::setCustomReason(string const& reason)
-{ this->reason = reason; }
+{ _reason = reason; }
 
 bool Response::setHeader(string const& header)
 {
@@ -78,7 +78,7 @@ bool Response::setHeader(string const& header)
 		if (pair.second.empty())
 			continue ;
 	// do some parsing and comparing to allowed headers here?
-		std::pair<std::map<string, string>::iterator, bool> ret(this->headers.insert(pair));
+		std::pair<std::map<string, string>::iterator, bool> ret(_headers.insert(pair));
 		if (!ret.second)
 			if (ret.first->second.find(pair.second) == string::npos)
 				ret.first->second.append("," + pair.second);
@@ -88,7 +88,7 @@ bool Response::setHeader(string const& header)
 
 void Response::setBody(string const& body)
 {
-	this->body = body;
+	_body = body;
 	setContentLength();
 }
 
@@ -99,7 +99,7 @@ bool Response::fileToBody(string const& file)
 		return false;
 	std::ostringstream oss;
 	oss << ifs.rdbuf();
-	body = oss.str();
+	_body = oss.str();
 	setContentLength();
 	return true;
 }
@@ -107,9 +107,9 @@ bool Response::fileToBody(string const& file)
 void Response::setContentLength()
 {
 	std::ostringstream oss;
-	oss << body.size();
-	headers.erase("Content-Length");
-	headers.insert(std::pair<string, string>("Content-Length", oss.str()));
+	oss << _body.size();
+	_headers.erase("Content-Length");
+	_headers.insert(std::pair<string, string>("Content-Length", oss.str()));
 }
 
 /* MEMBERS */
@@ -127,12 +127,12 @@ string Response::wrap_package() const
 {
 	std::ostringstream package;
 
-	package << version << " " << status << " " << reason << "\r\n";
-	for (std::map<string, string>::const_iterator it = headers.begin(); it != headers.end(); ++it)
+	package << _version << " " << _status << " " << _reason << "\r\n";
+	for (std::map<string, string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
 		package << (*it).first << ":" << (*it).second << "\r\n";
 	package << "\r\n";
-	if (body.size())
-		package << body;
+	if (_body.size())
+		package << _body;
 	return package.str();
 }
 
@@ -141,9 +141,9 @@ string Response::wrap_package() const
 void Response::print(bool do_body) const
 {
 	std::cout << "response package:\n";
-	std::cout << "\t" << version << " " << status << " " << reason << "\n";
-	for (std::map<string, string>::const_iterator it = headers.begin(); it != headers.end(); ++it)
+	std::cout << "\t" << _version << " " << _status << " " << _reason << "\n";
+	for (std::map<string, string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
 		std::cout << "\t" << (*it).first << ":" << (*it).second << "\n";
-	if (do_body && body.size())
-		std::cout << "\n\t" << body << "\n";
+	if (do_body && _body.size())
+		std::cout << "\n\t" << _body << "\n";
 }

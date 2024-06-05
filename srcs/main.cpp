@@ -67,20 +67,10 @@ int managePollout(std::vector<pollfd>& fds, size_t i) {
 	std::cout << "Ready to send data to client on fd " << fds[i].fd << std::endl;
 	// Send data to client
 	Request::manageRequests(fds[i].fd, "", 1);
-	//std::string httpHeader = "Content-Type: text/html\r\n";
-	//Response response;
-	// response.setStatus(200);
-	// response.setHeader(httpHeader);
-	// response.fileToBody("website/index.html");
-	// response.sendResponse(fds[i].fd);
-
-	// ssize_t bytesSent = response.sendResponse(fds[i].fd);;
-	// if (bytesSent < 0) {
-	// 	std::cout << "Send error" << std::endl;
-	// 	return 1; //should I stop the program if send fails ????
-	// }
-	// After sending data, disable POLLOUT until more data needs to be sent
 	fds[i].events = POLLIN;
+	// close(fds[i].fd);
+	// fds.erase(fds.begin() + i);
+	// --i;
 	return 0;
 }
 
