@@ -70,14 +70,13 @@ int managePollout(std::vector<pollfd>& fds, size_t i) {
 	std::cout << "Ready to send data to client on fd " << fds[i].fd << std::endl;
 	// Send data to client
 
-	std::string httpHeader = "Content-Type: text/html\r\n";
-	Response response;
-	response.setStatus(200);
-	response.setHeader(httpHeader);
-	response.fileToBody("website/index.html");
-	response.sendResponse(fds[i].fd);
+	Request* request = Request::loopRequests(fds[i].fd);
+	if (!request)
+		return 1; // LMAO WE REAAALLY FUCKED UP SOMEWHERE
+	Response response = (*request).handle();
 
 	ssize_t bytesSent = response.sendResponse(fds[i].fd);;
+	Request::loopRequests(); // temp clearing of static map in request:
 	if (bytesSent < 0) {
 		std::cout << "Send error" << std::endl;
 		return 1; //should I stop the program if send fails ????

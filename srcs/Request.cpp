@@ -58,12 +58,12 @@ std::map<string, string> const& Request::getHeaders() const
 
 /* STATIC MEMBERS */
 
+std::map<int, Request> Request::requests;
+
 // returns true if all requests are finished (call with fd == 0 to check)
 // handles finished requests and sends back a response
 bool Request::loopRequests(int fd, char const* buffer, ssize_t size)
 {
-	static std::map<int, Request> requests;
-
 	if (!fd)
 		return requests.empty();
 	std::string package(buffer, buffer + size);
@@ -72,13 +72,27 @@ bool Request::loopRequests(int fd, char const* buffer, ssize_t size)
 	instance.parse(package);
 //debug
 // std::cout << ">> parsed a packet[" << fd << "], " << instance.content_left << "b left\n";
-	if (!instance.isFin())
-		return false;
+	// if (!instance.isFin())
+	// 	return false;
 //debug
 // std::cout << ">> "; instance.print();
-	instance.handle();
-	requests.erase(it);
+	// instance.handle();
+	// requests.erase(it);
 	return requests.empty();
+}
+
+Request* Request::loopRequests(int fd)
+{
+	std::map<int, Request>::iterator it = requests.find(fd);
+	if (!(*it).first)
+		return NULL;
+	return &(*it).second;
+}
+
+// clears the map
+void Request::loopRequests()
+{
+	requests.clear();
 }
 
 /* MEMBERS */
@@ -87,35 +101,63 @@ void Request::handleError(Response& response, int status) const
 {
 	response.setStatus(status);
 	// provide appropriate error page?
+	std::ostringstream oss;
+	oss << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n";
+	oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
+	oss << "    <link rel=\"icon\" href=\"./favicon.ico\" />\n	<title></title>\n    <!-- <style>\n";
+	oss << "        /* Add your CSS styles here */\n    </style> -->\n</head>\n<body>\n    <br><b>ERROR: ";
+	oss << status << " " << response.getReason() << "\n</b></body>\n</html>\n";
+	response.setBody(oss.str());
 	// alter response further?
 }
 
 void Request::handleGet(Response& response) const
 {
-	(void)response;
-	// check if method is allowed on this resource
+	response.setStatus(200);
+	response.setHeader("Content-Type: text/html");
+	// check below if method is allowed on this resource
+	if (!true)
+		handleError(response, 405);
+	else if (!response.fileToBody(uritowebsite()))
+		handleError(response, 404);
 }
 
 void Request::handlePost(Response& response) const
 {
 	(void)response;
 	// check if method is allowed on this resource
+	// temp error
+	handleError(response, 405);
+
+	/* multipart;
+		header: Content-Type: multipart/form-data;boundary="boundary"
+		body:	--boundary
+				Content-Disposition: form-data; name="field1"
+
+				value1
+				--boundary
+				Content-Disposition: form-data; name="field2"; filename="example.txt"
+
+				value2
+				--boundary--
+	*/
 }
 
 void Request::handleDelete(Response& response) const
 {
 	(void)response;
 	// check if method is allowed on this resource
+	// temp error
+	handleError(response, 405);
 }
 
-void Request::handle() const
+Response Request::handle() const
 {
 	Response response;
-	char todo = 0;
-
+	char expr = 0;
 	if (valid)
-		todo = method;
-	switch (todo)
+		expr = method;
+	switch (expr)
 	{
 		case 'G':
 			handleGet(response);
@@ -129,7 +171,20 @@ void Request::handle() const
 		default:
 			handleError(response, 400);
 	}
-	response.sendResponse(fd);
+	return response;
+}
+
+string Request::uritowebsite() const
+{
+	if (!uri.compare("/"))
+		return "website/index.html";
+	return string("website") + uri;
+}
+
+string Request::uritoupload() const
+{
+	// translate uri to a filepath
+	return string();
 }
 
 void Request::getline_crlf(std::istringstream& iss, string& buf) const

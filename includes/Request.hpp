@@ -9,6 +9,8 @@ class Response;
 
 class Request
 {
+	static std::map<int, Request> requests;
+
 	bool valid;
 	bool fin_headers;
 	long content_left;
@@ -44,6 +46,8 @@ public:
 	Request& operator=(Request const& rhs);
 
 	static bool loopRequests(int fd, char const* buffer, ssize_t size);
+	static Request* loopRequests(int fd);
+	static void loopRequests();
 
 	bool isValid() const;
 	bool isFin() const;
@@ -55,7 +59,9 @@ public:
 	std::map<string, string> const& getHeaders() const;
 
 	bool parse(string const& package);
-	void handle() const;
+	Response handle() const;
+	string uritowebsite() const;
+	string uritoupload() const;
 
 	// debugging
 	void print(bool do_body = true) const;
