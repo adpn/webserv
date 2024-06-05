@@ -49,8 +49,12 @@ class Location {
 		std::vector<std::string>				get_index();
 
 		//--- Error management ---//
-		class DirectiveError : public std::exception {
+		class Error : public std::exception {
+			private:
+				std::string	_msg;
 			public:
+				Error(std::string message);
+				virtual ~Error() throw();
 				virtual const char *what() const throw();
 		} ;
 };

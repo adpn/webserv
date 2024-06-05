@@ -3,7 +3,7 @@
 //--------------- Orthodox Canonical Form ---------------//
 Config::Config( std::string filename ) : _brackets(0), _fd(filename){
 	if (!_fd)
-		throw Config::FailToOpen();
+		throw Config::Error("Open input file failed.");
 	this->_example_server_bloc.push_back("server");
 	this->_example_server_bloc.push_back("{");
 };
@@ -20,33 +20,11 @@ std::vector<Server> Config::get_servers(){
 
 
 
-//--------------- Error management ---------------//
-const char *Config::FailToOpen::what() const throw(){
-	return "Fail to open input file.";
-}
-const char *Config::DirectiveError::what() const throw(){
-	return "Directive format not respected.";
-}
-const char *Config::FoundWeirdStuff::what() const throw(){
-	return "Found weird stuff.";
-}
-const char *Config::NoServerFound::what() const throw(){
-	return "No server found.";
-}
-const char *Config::CommonPort::what() const throw(){
-	return "Common port.";
-}
-const char *Config::DataMissing::what() const throw(){
-	return "Data is missing.";
-}
-const char *Config::BracketError::what() const throw(){
-	return "Something went wrong with a bracket.";
-}
-const char *Config::WrongMethod::what() const throw(){
-	return "Method not known or not allowed.";
-}
-const char *Config::LocationError::what() const throw(){
-	return "Location block failed.";
+// //--------------- Error management ---------------//
+Config::Error::Error(std::string message) : _msg(message){}
+Config::Error::~Error() throw(){};
+const char *Config::Error::what() const throw(){
+	return this->_msg.c_str();
 }
 
 
@@ -67,7 +45,7 @@ void	add_location_directive(Location &LocationBlock, std::string loc_dir){
 	
 	std::vector< std::string > VectorDirective = tokenizer(loc_dir, DELIMITERS);
 	if (VectorDirective.size() < 1)
-		throw Config::DirectiveError();
+		throw Config::Error("Directive format not respected.");
 	for (int i = 0; i < 5; i++){
 		if (DirectivesName[i] == VectorDirective[0]){
 			VectorDirective.erase(VectorDirective.begin());
@@ -75,7 +53,7 @@ void	add_location_directive(Location &LocationBlock, std::string loc_dir){
 			return ;
 		}
 	}
-	throw Config::DirectiveError();
+	throw Config::Error("Directive format not respected.");
 }
 void	add_location(Server & server, std::string RawStr){
 	//	keep location path
@@ -85,7 +63,7 @@ void	add_location(Server & server, std::string RawStr){
 	std::vector<std::string>	VectorDirectives = tokenizer(RawStr.substr(0, FirstBracket), DELIMITERS);
 
 	if (VectorDirectives.size() != 2 || VectorDirectives.front() != "location")
-		throw Config::DirectiveError();
+		throw Config::Error("Directive format not respected.");
 	RawStr.erase(0, FirstBracket + 1);
 	for (int i = 0; RawStr[i]; i++){
 		next_sep = RawStr.find_first_of(";}");
@@ -96,7 +74,7 @@ void	add_location(Server & server, std::string RawStr){
 				break ;
 			case '}':
 				if (RawStr.find_first_not_of(" 	}") != NOTFOUND)
-					throw Config::FoundWeirdStuff();
+					throw Config::Error("Found weird stuff..");
 				server.set_location(VectorDirectives[1], LocationBlock);
 				return ;
 		}
@@ -120,7 +98,7 @@ void	add_server_directive(Server & server, std::string directive){
 
 	std::vector< std::string > vect_dir	= tokenizer(directive, DELIMITERS);
 	if (vect_dir.size() < 1)
-		throw Config::DirectiveError();
+		throw Config::Error("Directive format not respected.");
 	for (int i = 0; i < 4; i++){
 		if (directives_name[i] == vect_dir[0]){
 			vect_dir.erase(vect_dir.begin());
@@ -128,7 +106,7 @@ void	add_server_directive(Server & server, std::string directive){
 			return ;
 		}
 	}
-	throw Config::DirectiveError();
+	throw Config::Error("Directive format not respected.");
 }
 bool	Config::server_approved(Server server){
 	std::vector<unsigned int> open_ports;
@@ -136,7 +114,7 @@ bool	Config::server_approved(Server server){
 
 	if (!server.get_port().size()
 		|| !server.get_request_size().first)
-		throw Config::DataMissing();
+		throw Config::Error("Data's missing.");
 	for (size_t i = 0; i < this->_servers.size(); i++){
 		open_ports = this->_servers[i].get_port();
 		for (size_t j = 0; j < open_ports.size(); j++){
@@ -172,7 +150,7 @@ void	Config::add_server(std::string server_block){
 				break;
 			case '}':	// end of bloc server
 				if (server_block.find_first_not_of(" 	}") != NOTFOUND)
-					throw Config::FoundWeirdStuff();
+					throw Config::Error("Found weird stuff..");
 				if (server_approved(server))
 					this->_servers.push_back(server);
 				return ;
@@ -209,7 +187,7 @@ size_t	Config::count_brackets(std::string line){
 		switch (line[i]){
 			case '{':
 				if (this->_brackets > 2)
-					throw Config::BracketError();
+					throw Config::Error("Something went wrong with a bracket.");
 				this->_brackets++;
 				break;
 			case '}':
@@ -246,5 +224,5 @@ void	Config::bufferize(){
 			_brackets++;
 	}
 	if (this->_servers.empty())
-		throw Config::NoServerFound();
+		throw Config::Error("No server found.");
 }

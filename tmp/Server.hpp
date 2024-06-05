@@ -39,20 +39,13 @@ class Server {
 		std::map<unsigned int, std::string>	get_error_page();
 		std::map<std::string, Location>		get_location();
 
-		class PortError : public std::exception {
+		//--- Error management ---//
+		class Error : public std::exception {
+			private:
+				std::string	_msg;
 			public:
-				virtual const char *what() const throw();
-		} ;
-		class RequestedSizeError : public std::exception {
-			public:
-				virtual const char *what() const throw();
-		} ;
-		class NameError : public std::exception {
-			public:
-				virtual const char *what() const throw();
-		} ;
-		class ErrorPageError : public std::exception {
-			public:
+				Error(std::string message);
+				virtual ~Error() throw();
 				virtual const char *what() const throw();
 		} ;
 

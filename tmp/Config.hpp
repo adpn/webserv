@@ -16,12 +16,8 @@ class Config {
 		unsigned int				_brackets;
 		std::ifstream				_fd;
 		std::vector<std::string> 	_example_server_bloc;
-
 		std::vector<Server>			_servers;
 
-		// Config();
-		// Config(const Config &other);
-		// Config &operator=(const Config &other);
 	public:
 		//--- Orthodox Canonical Form ---//
 		Config(std::string filename);
@@ -38,46 +34,50 @@ class Config {
 		std::vector<Server> get_servers();
 
 		//--- Error management ---//
-		// class ConfigError : public std::exception {
+		class Error : public std::exception {
+			private:
+				std::string	_msg;
+			public:
+				Error(std::string message);
+				virtual ~Error() throw();
+				virtual const char *what() const throw();
+		} ;
+		// class FailToOpen : public std::exception {
 		// 	public:
-		// 		virtual const char *Error(char *str) const throw();
+		// 		virtual const char *what() const throw();
 		// } ;
-		class FailToOpen : public std::exception {
-			public:
-				virtual const char *what() const throw();
-		} ;
-		class DirectiveError : public std::exception {
-			public:
-				virtual const char *what() const throw();
-		} ;
-		class FoundWeirdStuff : public std::exception {
-			public:
-				virtual const char *what() const throw();
-		} ;
-		class NoServerFound : public std::exception {
-			public:
-				virtual const char *what() const throw();
-		} ;
-		class CommonPort : public std::exception {
-			public:
-				virtual const char *what() const throw();
-		} ;
-		class DataMissing : public std::exception {
-			public:
-				virtual const char *what() const throw();
-		} ;
-		class BracketError : public std::exception {
-			public:
-				virtual const char *what() const throw();
-		} ;
-		class WrongMethod : public std::exception {
-			public:
-				virtual const char *what() const throw();
-		} ;
-		class LocationError : public std::exception {
-			public:
-				virtual const char *what() const throw();
-		} ;
+		// class DirectiveError : public std::exception {
+		// 	public:
+		// 		virtual const char *what() const throw();
+		// } ;
+		// class FoundWeirdStuff : public std::exception {
+		// 	public:
+		// 		virtual const char *what() const throw();
+		// } ;
+		// class NoServerFound : public std::exception {
+		// 	public:
+		// 		virtual const char *what() const throw();
+		// } ;
+		// class CommonPort : public std::exception {
+		// 	public:
+		// 		virtual const char *what() const throw();
+		// } ;
+		// class DataMissing : public std::exception {
+		// 	public:
+		// 		virtual const char *what() const throw();
+		// } ;
+		// class BracketError : public std::exception {
+		// 	public:
+		// 		virtual const char *what() const throw();
+		// } ;
+		// class WrongMethod : public std::exception {
+		// 	public:
+		// 		virtual const char *what() const throw();
+		// } ;
+		// class LocationError : public std::exception {
+		// 	public:
+		// 		virtual const char *what() const throw();
+		// } ;
 } ;
 
 std::vector< std::string > tokenizer( std::string string, std::string delimiters);

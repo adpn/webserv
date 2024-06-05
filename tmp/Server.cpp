@@ -18,17 +18,10 @@ Server::~Server(){}
 
 
 //--------------- Error management ---------------//
-const char *Server::PortError::what() const throw(){
-	return "Port format not respected.";
-}
-const char *Server::RequestedSizeError::what() const throw(){
-	return "Requested size format not respected.";
-}
-const char *Server::NameError::what() const throw(){
-	return "Name format not respected.";
-}
-const char *Server::ErrorPageError::what() const throw(){
-	return "Error page format not respected.";
+Server::Error::Error(std::string message) : _msg(message){}
+Server::Error::~Error() throw(){};
+const char *Server::Error::what() const throw(){
+	return this->_msg.c_str();
 }
 
 
@@ -37,7 +30,8 @@ void	Server::set_port( std::vector< std::string > s ){
 	for (size_t i = 0; i < s.size(); i++){
 		if (s[i].find_first_not_of("0123456789") != NOTFOUND
 			|| atof(s[i].c_str()) > 65535)
-			throw Server::PortError();
+			throw Server::Error("Port format invalid.");
+		// common port
 		for (size_t j = 0; j < this->_port.size(); j++){
 			if (this->_port[j] == static_cast<unsigned int>(atoi(s[i].c_str())))
 				return ;
@@ -51,24 +45,24 @@ void	Server::set_request_size( std::vector< std::string > s ){
 		|| atof(s.front().c_str()) > INT_MAX
 		|| s.front().find_first_not_of("0123456789") != s.front().size() - 1
 		|| authorized_units.find_first_of(s[0].back()) == NOTFOUND)
-		throw Server::RequestedSizeError();
+		throw Server::Error("Request size format invalid.");
 	this->_request_size.first = atoi(s.front().c_str());
 	this->_request_size.second = s[0].back();
 }
 void	Server::set_name( std::vector< std::string > s ){
 	if (!s.size())
-		throw Server::NameError();
+		throw Server::Error("No name found.");
 	for (size_t i = 0; i < s.size(); i++)
 		this->_name.push_back(s[i]);
 }
 void	Server::set_error_page( std::vector< std::string > s ){
 	if (s.size() < 2)
-		throw Server::ErrorPageError();
+		throw Server::Error("No error page found");
 	for (size_t i = 0; i < s.size() - 1; i++){
 		if (s.size() < 2
 			|| s[i].find_first_not_of("0123456789") != NOTFOUND
 			|| atof(s[i].c_str()) > 599)
-			throw Server::ErrorPageError();
+			throw Server::Error("Error page number invalid.");
 		this->_error_page[atoi(s[i].c_str())] = s.back();
 	}
 }
