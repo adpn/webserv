@@ -24,20 +24,31 @@ Location::~Location(){}
 
 //--------------- Setters ---------------//
 void	Location::set_limit_except(std::vector<std::string> s){
+	// std::cout << "Location configuration :";
+	// for (size_t i = 0; i < s.size(); i++){
+	// 	std::cout << " " << s[i];
+	// }
+	std::cout << std::endl;
 	std::string	authorized_method[3] = {"GET", "POST", "DELETE"};
 	size_t i;
 	
 	for (size_t j = 0; j < s.size(); j++){
-		for (i = 0; i < 3; i++){
+		for (i = 0; i < 4; i++){
+			if (i == 3)
+				throw Location::DirectiveError();
 			if (authorized_method[i] == s[j]){
 				this->_limit_except[authorized_method[i]] = false;
-				return ;
+				break ;
 			}
 		}
-		throw Location::DirectiveError();
 	}
 }
 void	Location::set_return(std::vector<std::string> s){
+	// std::cout << "Location configuration :";
+	// for (size_t i = 0; i < s.size(); i++){
+	// 	std::cout << " " << s[i];
+	// }
+	std::cout << std::endl;
 	std::string status;
 	std::string path;
 
@@ -50,6 +61,11 @@ void	Location::set_return(std::vector<std::string> s){
 	this->_return = std::make_pair(atoi(s[0].c_str()), s[1]);
 }
 void	Location::set_autoindex(std::vector<std::string> s ){
+	// std::cout << "Location configuration :";
+	// for (size_t i = 0; i < s.size(); i++){
+	// 	std::cout << " " << s[i];
+	// }
+	std::cout << std::endl;
 	if (s.size() != 1)
 		throw Location::DirectiveError();
 	std::string	authorized_value[2] = {"off", "on"};
@@ -63,11 +79,21 @@ void	Location::set_autoindex(std::vector<std::string> s ){
 	throw Location::DirectiveError();
 }
 void	Location::set_alias(std::vector< std::string > s){
+	// std::cout << "Location configuration :";
+	// for (size_t i = 0; i < s.size(); i++){
+	// 	std::cout << " " << s[i];
+	// }
+	std::cout << std::endl;
 	if (!s.size())
 		throw Location::DirectiveError();
 	this->_alias = s;
 }
 void	Location::set_index(std::vector< std::string > s){
+	// std::cout << "Location configuration :";
+	// for (size_t i = 0; i < s.size(); i++){
+	// 	std::cout << " " << s[i];
+	// }
+	std::cout << std::endl;
 	if (!s.size())
 		throw Location::DirectiveError();
 	this->_index = s;
@@ -97,11 +123,11 @@ const char *Location::DirectiveError::what() const throw(){
 }
 
 
-std::ostream& operator<<(std::ostream& o, Location& S){
-	o << "Location :";
-	std::string methods[3] = {"GET", "POST", "DELETE"};
-	for (int i = 0; i < 3; i++){
-		o << "\n	" << methods[i] << " : " << S.get_limit_except()[methods[i]];
-	}
-	return o;
-}
+// std::ostream& operator<<(std::ostream& o, Location& S){
+// 	o << "Location :";
+// 	std::string methods[3] = {"GET", "POST", "DELETE"};
+// 	for (size_t i = 0; i < 3; i++){
+// 		o << "\n	" << methods[i] << " : " << S.get_limit_except()[methods[i]];
+// 	}
+// 	return o;
+// }

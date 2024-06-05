@@ -118,7 +118,16 @@ std::ostream& operator<<( std::ostream& o, Server & S){
 	}
 	std::map<std::string, Location> location_map = S.get_location(); 
 	for (std::map<std::string, Location>::iterator it = location_map.begin(); it != location_map.end(); it++){
-		o << *it << std::endl;
+		o << "\n	Location : " << (*it).first << "\n		";
+		std::string methods[3] = {"GET", "POST", "DELETE"};
+		for (int i = 0; i < 3; i++){
+			o << methods[i] << " : " << std::boolalpha << (*it).second.get_limit_except()[methods[i]] << " ";
+		}
+		o << "\n		return : " << (*it).second.get_return().first << " " << (*it).second.get_return().second << "\n";
+		o << "		alias :";
+		for (size_t i = 0; i < (*it).second.get_alias().size(); i++){
+			o << " " << (*it).second.get_alias()[i];
+		}
 	}
 	o << std::endl;
 	return o;
