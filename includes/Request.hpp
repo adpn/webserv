@@ -3,6 +3,7 @@
 
 # include <iostream>
 # include <map>
+# include <Server.hpp>
 
 using std::string;
 class Response;
@@ -20,6 +21,7 @@ class Request
 	string _version;
 	string _body;
 	std::map<string, string> _headers; // merge duplicate headers like so [value1],[value2]
+	//Server& _server;
 
 	// handle errors of these. with (mandatory default) error pages
 	bool parseMethod(string const& method);

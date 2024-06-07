@@ -27,6 +27,7 @@ Request& Request::operator=(Request const& rhs)
 	_version = rhs._version;
 	_body = rhs._body;
 	_headers = rhs._headers;
+	//_server = rhs._server;
 	return *this;
 }
 

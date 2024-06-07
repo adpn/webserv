@@ -45,8 +45,7 @@ Socket::Socket(int port) : _port(port) {
 
 Socket::Socket(const Socket& other) : _port(other._port) {
 	_fd = other._fd;
-	std::cout << "Copy constructor socket " << _fd;
-	std::cout << " with port: " << _port << std::endl; 
+	//std::cout << "Copy constructor socket " << _fd << " with port: " << _port << std::endl;
 }
 
 Socket::~Socket() {
