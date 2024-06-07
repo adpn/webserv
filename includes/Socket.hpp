@@ -6,7 +6,7 @@
 # include <unistd.h> 
 # include <exception>
 
-# define MAX_CLIENTS 2000
+# define MAX_CLIENTS 2000 
 
 class Socket {
 private:

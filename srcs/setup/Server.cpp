@@ -77,9 +77,7 @@ void	Server::initSockets() {
 	for (size_t i = 0; i < _port.size(); i++) {
 		Socket socket(_port[i]);
 		_sockets.push_back(socket);
-		std::cout << "Successfully added:" << _sockets[i].getPort() << std::endl;
 	}
-	std::cout << _sockets.size() << std::endl;
 	std::cout << "End of init sockets." << std::endl << std::endl;
 }
 
