@@ -3,6 +3,7 @@
 
 # include <iostream>
 # include <map>
+# include <Server.hpp>
 
 using std::string;
 class Response;
