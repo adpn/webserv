@@ -123,12 +123,13 @@ void Request::handleGet(Response& response) const
 
 void Request::handlePost(Response& response) const
 {
-	(void)response;
-	// check if method is allowed on this resource
-	// temp error
-	handleError(response, 405);
+// temp error
+handleError(response, 405);
+	// check if method is allowed on this resource (405)
+	// check if resource already exists, if yes, overwrite (200)
+	// if not, create new resource (201)
 
-	/* multipart;
+	/* multipart;	or... keep it intact and send it back the same way ? (with correct headers)
 		header: Content-Type: multipart/form-data;boundary="boundary"
 		body:	--boundary
 				Content-Disposition: form-data; name="field1"
@@ -144,10 +145,14 @@ void Request::handlePost(Response& response) const
 
 void Request::handleDelete(Response& response) const
 {
-	(void)response;
-	// check if method is allowed on this resource
-	// temp error
-	handleError(response, 405);
+// temp error
+handleError(response, 405);
+	// we should probably be VERY careful with deleting stuff ...
+	// check if resource exists? (404)
+	// check if resource is part of server (403 or 404 if we're not doing the last step)
+	// check if method is allowed on this resource (405)
+	// if (!std::remove(uritoupload().c_str()))
+		// response.setStatus(204);
 }
 
 void Request::handle() const
@@ -336,6 +341,8 @@ bool Request::parseHeader(string const& header)
 // doesn't really check anything
 bool Request::parseBody(string const& body)
 {
+	if (_method != 'P')
+		return false;
 // check if a request is finished with content-length
 // (or an empty chunk at the end IF it is chunked (chunked in Transfer-Encoding header))
 	if (isFin())
@@ -343,6 +350,7 @@ bool Request::parseBody(string const& body)
 	_body.append(body);
 	_content_left -= body.size();
 	return true;
+// complain if method is post but there's no Content-Length? (411 Length Required)
 }
 
 bool Request::checkHeaders() const
