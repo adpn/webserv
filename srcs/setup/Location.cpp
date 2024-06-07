@@ -27,7 +27,7 @@ void	Location::set_limit_except(std::vector<std::string> s){
 	std::cout << std::endl;
 	std::string	authorized_method[3] = {"GET", "POST", "DELETE"};
 	size_t i;
-	
+
 	for (size_t j = 0; j < s.size(); j++){
 		for (i = 0; i < 4; i++){
 			if (i == 3)
@@ -96,6 +96,18 @@ bool Location::get_autoindex(){
 }
 std::vector<std::string> Location::get_index(){
 	return this->_index;
+}
+
+
+
+//--------------- Members ---------------//
+bool Location::is_allowed(std::string const& method) const
+{
+	std::map<std::string, bool>::const_iterator it = _limit_except.find(method);
+	if (it == _limit_except.end())
+		return false;
+// @Dennis does this seem right to you?
+	return (*it).second;
 }
 
 

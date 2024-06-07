@@ -1,17 +1,19 @@
 #include "Request.hpp"
 #include "Response.hpp"
+#include "Server.hpp"
+#include "Location.hpp"
 #include <sstream>
 
 /* CONSTRUCTORS */
 
 Request::Request()
-	: _valid(false), _fin_headers(false), _content_left(0), _fd(-1), _method(0) {}
+	: _valid(false), _fin_headers(false), _content_left(0), _fd(-1), _server(Server()) {}
 
-Request::Request(int fd)
-	: _valid(false), _fin_headers(false), _content_left(0), _fd(fd), _method(0) {}
+Request::Request(int fd, Server const& server)
+	: _valid(false), _fin_headers(false), _content_left(0), _fd(fd), _server(server) {}
 
 Request::Request(Request const& src)
-	{ this->operator=(src); }
+	: _server(src._server) { this->operator=(src); }
 
 Request::~Request()
 	{}
@@ -41,7 +43,7 @@ bool Request::isFin() const
 int Request::getFd() const
 	{ return _fd; }
 
-char Request::getMethod() const
+string const& Request::getMethod() const
 	{ return _method; }
 
 string const& Request::getUri() const
@@ -62,12 +64,12 @@ std::map<int, Request> Request::_requests;
 
 // returns true if request is finished
 // return false if request is not finished or fd is bad
-bool Request::manageRequests(int fd, char const* buffer, ssize_t size)
+bool Request::manageRequests(int fd, Server const& server, char const* buffer, ssize_t size)
 {
 	if (fd < 3)
 		return false;
 	std::string package(buffer, buffer + size);
-	std::map<int, Request>::iterator it = (_requests.insert(std::pair<int, Request>(fd, Request(fd)))).first;
+	std::map<int, Request>::iterator it = (_requests.insert(std::pair<int, Request>(fd, Request(fd, server)))).first;
 	Request& instance = (*it).second;
 	instance.parse(package);
 //debug
@@ -115,6 +117,7 @@ void Request::handleGet(Response& response) const
 	response.setStatus(200);
 	response.setHeader("Content-Type: text/html");
 	// check below if method is allowed on this resource
+	// if (!location.is_allowed(_method))
 	if (!true)
 		handleError(response, 405);
 	else if (!response.fileToBody(uritowebsite()))
@@ -160,7 +163,7 @@ void Request::handle() const
 	Response response;
 	char expr = 0;
 	if (_valid)
-		expr = _method;
+		expr = _method[0];
 	switch (expr)
 	{
 		case 'G':
@@ -178,17 +181,11 @@ void Request::handle() const
 	response.sendResponse(_fd);
 }
 
-string Request::uritowebsite() const
+string Request::uritowebsite() const // do location instead ??
 {
 	if (!_uri.compare("/"))
 		return "website/index.html";
 	return string("website") + _uri;
-}
-
-string Request::uritoupload() const
-{
-	// translate uri to a filepath
-	return string();
 }
 
 void Request::getline_crlf(std::istringstream& iss, string& buf) const
@@ -214,7 +211,7 @@ bool Request::parse(string const& package)
 
 // maybe add more iss bit checks in here?
 	std::istringstream iss(package);
-	if (!_method)
+	if (_method.empty())
 	{
 		string token;
 		std::getline(iss, token, ' ');
@@ -259,7 +256,7 @@ bool Request::parseMethod(string const& method)
 			break ;
 	if (size < 0)
 		return false;
-	_method = method[0];
+	_method = method;
 	return true;
 }
 
@@ -341,7 +338,7 @@ bool Request::parseHeader(string const& header)
 // doesn't really check anything
 bool Request::parseBody(string const& body)
 {
-	if (_method != 'P')
+	if (_method[0] != 'P')
 		return false;
 // check if a request is finished with content-length
 // (or an empty chunk at the end IF it is chunked (chunked in Transfer-Encoding header))
@@ -380,7 +377,7 @@ void Request::print(bool do_body) const
 	if (!_valid)
 		std::cout << " INVALID";
 	std::cout << "\n";
-	if (!_method)
+	if (_method.empty())
 		return ;
 	std::cout << "\t" << _method << " " << _uri << " " << _version << "\n";
 	for (std::map<string, string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)

@@ -2,7 +2,6 @@
 # define LOCATION_HPP
 
 # include <iostream>
-
 # include <vector>
 # include <map>
 # include <string>
@@ -16,7 +15,7 @@ Class Location
 		_autoindex;		 ->	directory_listing, default value : false
 		_index;			 ->	default_file
 
-	/!\ missing /!\ 
+	/!\ missing /!\
 		Make the route able to accept uploaded files and configure where they should be saved.
 		Execute CGI based on certain file extension (for example .php).
 */
@@ -48,6 +47,9 @@ class Location {
 		bool									get_autoindex();
 		std::vector<std::string>				get_index();
 
+		//--- Members ---//
+		bool is_allowed(std::string const& method) const;
+
 		//--- Error management ---//
 		class Error : public std::exception {
 			private:
@@ -56,7 +58,7 @@ class Location {
 				Error(std::string message);
 				virtual ~Error() throw();
 				virtual const char *what() const throw();
-		} ;
+		};
 };
 
 #endif
