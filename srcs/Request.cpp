@@ -6,9 +6,6 @@
 
 /* CONSTRUCTORS */
 
-Request::Request()
-	: _valid(false), _fin_headers(false), _content_left(0), _fd(-1), _server(Server()) {}
-
 Request::Request(int fd, Server const& server)
 	: _valid(false), _fin_headers(false), _content_left(0), _fd(fd), _server(server) {}
 

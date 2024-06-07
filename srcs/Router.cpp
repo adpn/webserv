@@ -3,6 +3,7 @@
 
 //buffer size should be defined with client_max_body_size ????????
 #define BUFFER_SIZE 1024
+
 /* Exceptions*/
 const char* Router::WrongFdException::what() const throw() {
 	return "wrong fd received";
@@ -32,14 +33,12 @@ Server& Router::getServerWithClientFd(size_t clientFd) {
 // REAL FD AS INPUT NOT FDS INDEX
 void	Router::setServer(size_t fd, Server& server) {
 	_servers.insert(std::pair<size_t, Server&>(fd, server));
-	// _servers[fd] = server;
 }
 
 // REAL FD AS INPUT NOT FDS INDEX
 void	Router::setClient(size_t clientFd, size_t serverFd) {
 	if (clientFd < 3)
 		throw WrongFdException();
-	// _clients[clientFd] = getServer(serverFd);
 	_clients.insert(std::pair<size_t, Server&>(clientFd, getServer(serverFd)));
 }
 
@@ -114,10 +113,9 @@ int Router::managePollin(size_t fdIndex)
 		ssize_t bytesReceived = recv(_fds[fdIndex].fd, buffer, sizeof(buffer) - 1, 0);
 		if (bytesReceived > 0) {
 			buffer[bytesReceived] = '\0';
-			Request request;
 			std::cout << "Received from client: " << std::endl;
 			std::cout << buffer << std::endl;
-			Request::manageRequests(_fds[fdIndex].fd, buffer, bytesReceived);
+			Request::manageRequests(_fds[fdIndex].fd, getServerWithClientFd(_fds[fdIndex].fd), buffer, bytesReceived);
 
 			// manage client
 			_fds[fdIndex].events |= POLLOUT; // Enable POLLOUT to send data

@@ -24,7 +24,6 @@ class Request
 		std::map<string, string> _headers; // merge duplicate headers like so [value1],[value2]
 		Server const& _server;
 
-		Request();
 		Request& operator=(Request const& rhs);
 
 		// handle errors of these with (mandatory default) error pages
