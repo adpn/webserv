@@ -138,8 +138,9 @@ std::ostream& operator<<( std::ostream& o, Server & S){
 		for (int i = 0; i < 3; i++){
 			o << methods[i] << " : " << std::boolalpha << (*it).second.get_limit_except()[methods[i]] << " ";
 		}
-		o << "\n		return : " << (*it).second.get_return().first << " " << (*it).second.get_return().second << "\n";
-		o << "		alias :";
+		o << "\n		return : " << (*it).second.get_return().first << " " << (*it).second.get_return().second;
+		o << "\n		root : " << (*it).second.get_root();
+		o << "\n		alias :";
 		for (size_t i = 0; i < (*it).second.get_alias().size(); i++){
 			o << " " << (*it).second.get_alias()[i];
 		}

@@ -24,6 +24,7 @@ class Location {
 		std::map<std::string, bool>						_limit_except;
 		std::pair<unsigned int, std::string>			_return;
 		std::vector<std::string>						_alias;
+		std::string										_root;
 		bool											_autoindex;
 		std::vector<std::string>						_index;
 	public:
@@ -37,6 +38,7 @@ class Location {
 		void	set_limit_except(std::vector< std::string > rawString);
 		void	set_return(std::vector< std::string > rawString);
 		void	set_alias(std::vector< std::string > rawString);
+		void	set_root(std::vector< std::string > rawString);
 		void	set_autoindex(std::vector< std::string > rawString);
 		void	set_index(std::vector< std::string > rawString);
 
@@ -45,6 +47,7 @@ class Location {
 		std::pair<unsigned int, std::string>	get_return();
 		std::vector<std::string>				get_alias();
 		bool									get_autoindex();
+		std::string								get_root();
 		std::vector<std::string>				get_index();
 
 		//--- Members ---//

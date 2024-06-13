@@ -16,6 +16,7 @@ Location &Location::operator=(const Location &other){
 	this->_alias = other._alias;
 	this->_autoindex = other._autoindex;
 	this->_index = other._index;
+	this->_root = other._root;
 	return *this;
 }
 Location::~Location(){}
@@ -73,6 +74,11 @@ void	Location::set_index(std::vector< std::string > s){
 		throw Location::Error("Directive format not respected.");
 	this->_index = s;
 }
+void	Location::set_root(std::vector< std::string > s){
+	if (s.size() != 1)
+		throw Location::Error("Directive format not respected.");
+	this->_root = s.front();
+}
 
 
 
@@ -92,6 +98,9 @@ bool Location::get_autoindex(){
 std::vector<std::string> Location::get_index(){
 	return this->_index;
 }
+std::string	Location::get_root(){
+	return this->_root;
+}
 
 
 
@@ -107,9 +116,13 @@ bool Location::is_allowed(std::string const& method) const
 
 
 
-// //--------------- Error management ---------------//
+//--------------- Error management ---------------//
 Location::Error::Error(std::string message) : _msg(message){}
 Location::Error::~Error() throw(){};
 const char *Location::Error::what() const throw(){
 	return this->_msg.c_str();
 }
+
+
+// //--------------- Output debug ---------------//
+// std::ostream& operator<<( std::ostream& o, Location& location)
