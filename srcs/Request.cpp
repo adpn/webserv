@@ -116,16 +116,36 @@ void Request::handleGet(Response& response) const
 	response.setHeader("Content-Type: text/html");
 	// check below if method is allowed on this resource
 	// if (!location.is_allowed(_method))
-	if (!true)
+	if (/* Location autoindex true*/true)
+		handleAutoindex(response);
+	if (/* Method not in location */!true)
 		handleError(response, 405);
 	else if (!response.fileToBody(uritowebsite()))
 		handleError(response, 404);
 }
 
+void Request::handleAutoindex(Response &response) const {
+	std::ostringstream oss;
+	oss << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n";
+	oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
+	oss << "    <link rel=\"icon\" href=\"./favicon.ico\" />\n	<title>Index of ???????</title>\n  </head>";
+	oss << "<body>\n";
+	std::vector <Entry> entries;
+	for (size_t i = 0; i < entries.size(); i++) {
+		oss << "<a href=\"" << entries[i].jsp <<  "\">" << entries[i].jsp2 << "<\a>\n";
+	}
+	oss << "</body>\n";
+	oss << "</html>\n";
+	response.setBody(oss.str());
+}
+
 void Request::handlePost(Response& response) const
 {
+	(void)response;
+	if (/* Method not in location */!true)
+		handleError(response, 405);
 // temp error
-handleError(response, 405);
+//handleError(response, 405);
 	// check if method is allowed on this resource (405)
 	// check if resource already exists, if yes, overwrite (200)
 	// if not, create new resource (201)
@@ -146,6 +166,8 @@ handleError(response, 405);
 
 void Request::handleDelete(Response& response) const
 {
+	if (/* Method not in location */!true)
+		handleError(response, 405);
 // temp error
 handleError(response, 405);
 	// we should probably be VERY careful with deleting stuff ...
@@ -263,7 +285,7 @@ bool Request::parseUri(string const& uri)
 {
 	if (uri.empty())
 		return false;
-	if (uri.compare(0, 7, "http://") && uri[0] != '/')
+	if (uri.compare(0, 7, "http://") && uri[0] != '/') //wtf is that supposed to do ???
 		return false;
 	_uri = uri;
 	return true;

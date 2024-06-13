@@ -9,11 +9,14 @@
 /*
 Class Location
 	private members:
-		_limit_except[3] -> accepted_HTTP_methods(); default value : true
+		_limit_except[3] -> accepted_HTTP_methods(); default value : false
 		_return;		 ->	HTTP_redirections
 		_alias;			 ->	directory_to_search
 		_autoindex;		 ->	directory_listing, default value : false
 		_index;			 ->	default_file
+
+	Either _autoindex is true or/and _index is set
+	_autoindex takes over if true
 
 	/!\ missing /!\
 		Make the route able to accept uploaded files and configure where they should be saved.
