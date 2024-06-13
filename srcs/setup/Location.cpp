@@ -1,4 +1,7 @@
+#include <dirent.h>
+
 #include "Location.hpp"
+#include "Entry.hpp"
 
 //--------------- Orthodox Canonical Form ---------------//
 Location::Location(){
@@ -112,6 +115,27 @@ bool Location::is_allowed(std::string const& method) const
 		return false;
 // @Dennis does this seem right to you?
 	return (*it).second;
+}
+
+std::string Location::full_root() const {
+	// DO STUFF HERE WHEN WE GET THE ROOT VARIABLE
+	return std::string();
+}
+
+std::vector<Entry> Location::create_entries() const {
+	DIR* dirp = opendir(full_root().c_str());
+	if (!dirp)
+		throw Location::Error("couldn't open location root: " + full_root());
+	std::vector<Entry> res;
+	struct dirent* entry;
+	entry = readdir(dirp);
+	while (entry)
+	{
+		res.push_back(Entry(entry));
+		entry = readdir(dirp);
+	}
+	closedir(dirp);
+	return res;
 }
 
 
