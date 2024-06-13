@@ -6,6 +6,8 @@
 # include <map>
 # include <string>
 
+class Entry;
+
 /*
 Class Location
 	private members:
@@ -21,11 +23,12 @@ Class Location
 */
 class Location {
 	private:
-		std::map<std::string, bool>						_limit_except;
-		std::pair<unsigned int, std::string>			_return;
-		std::vector<std::string>						_alias;
-		bool											_autoindex;
-		std::vector<std::string>						_index;
+		std::map<std::string, bool>				_limit_except;
+		std::pair<unsigned int, std::string>	_return;
+		std::vector<std::string>				_alias;
+		bool									_autoindex;
+		std::vector<std::string>				_index;
+
 	public:
 		//--- Orthodox Canonical Form ---//
 		Location();
@@ -48,7 +51,9 @@ class Location {
 		std::vector<std::string>				get_index();
 
 		//--- Members ---//
-		bool is_allowed(std::string const& method) const;
+		bool				is_allowed(std::string const& method) const;
+		std::string			full_root() const;
+		std::vector<Entry>	create_entries() const;
 
 		//--- Error management ---//
 		class Error : public std::exception {
