@@ -6,6 +6,7 @@ Config::Config( std::string filename ) : _brackets(0), _fd(filename){
 		throw Config::Error("Open input file failed.");
 	this->_example_server_bloc.push_back("server");
 	this->_example_server_bloc.push_back("{");
+	bufferize();
 };
 Config::~Config(){
 	this->_fd.close();
@@ -31,22 +32,24 @@ const char *Config::Error::what() const throw(){
 
 //--------------- Location ---------------//
 void	add_location_directive(Location &LocationBlock, std::string loc_dir){
-	std::string	DirectivesName[5] = {"limit_except",
+	std::string	DirectivesName[6] = {"limit_except",
 										"return",
 										"alias",
 										"autoindex",
-										"index"};
-	void (Location::*DirectivesFonction[5])
+										"index",
+										"root"};
+	void (Location::*DirectivesFonction[6])
 		(std::vector< std::string > rawString) = {&Location::set_limit_except,
 											&Location::set_return,
 											&Location::set_alias,
 											&Location::set_autoindex,
-											&Location::set_index};
+											&Location::set_index,
+											&Location::set_root};
 	
 	std::vector< std::string > VectorDirective = tokenizer(loc_dir, DELIMITERS);
 	if (VectorDirective.size() < 1)
 		throw Config::Error("Directive format not respected.");
-	for (int i = 0; i < 5; i++){
+	for (int i = 0; i < 6; i++){
 		if (DirectivesName[i] == VectorDirective[0]){
 			VectorDirective.erase(VectorDirective.begin());
 			(LocationBlock.*DirectivesFonction[i])(VectorDirective);
@@ -85,21 +88,23 @@ void	add_location(Server & server, std::string RawStr){
 
 //--------------- Server ---------------//
 void	add_server_directive(Server & server, std::string directive){
-	std::string	directives_name[4] = {"listen",
+	std::string	directives_name[5] = {"listen",
 									"client_max_body_size",
 									"server_name",
-									"error_page"};
-	void (Server::*directives_fonction[4])
+									"error_page",
+									"generic_root"};
+	void (Server::*directives_fonction[5])
 		(std::vector< std::string > s) = {&Server::set_port,
 											&Server::set_request_size,
 											&Server::set_name,
-											&Server::set_error_page};
+											&Server::set_error_page,
+											&Server::set_generic_root};
 
 
 	std::vector< std::string > vect_dir	= tokenizer(directive, DELIMITERS);
 	if (vect_dir.size() < 1)
 		throw Config::Error("Directive format not respected.");
-	for (int i = 0; i < 4; i++){
+	for (int i = 0; i < 5; i++){
 		if (directives_name[i] == vect_dir[0]){
 			vect_dir.erase(vect_dir.begin());
 			(server.*directives_fonction[i])( vect_dir );
@@ -165,7 +170,6 @@ void	Config::add_server(std::string server_block){
 
 //--------------- Configuration ---------------//
 std::vector< std::string > tokenizer( std::string string, std::string delimiters){
-
 	int							ln_w = 0;
 	std::vector< std::string >	vector;
 
@@ -207,7 +211,7 @@ void	Config::bufferize(){
 	size_t		end;
 
 	while (getline(this->_fd, buffer)){
-		if (_brackets){	// add new line to current server content
+		if (_brackets){ // add new line to current server content
 			end = count_brackets(buffer);
 			if (buffer.find_first_of('#') < end) // ignore comment
 				end = buffer.find_first_of('#');
@@ -216,6 +220,7 @@ void	Config::bufferize(){
 		if (!_brackets && server_block.size()){	// if server content not empty, add it
 			try {
 				add_server(server_block);
+				std::cout << this->_servers.back() << std::endl;
 			}
 			catch (std::exception & e){
 				std::cout << "Server block rejected: " << e.what() << std::endl;

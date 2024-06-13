@@ -18,22 +18,16 @@ class Config {
 		std::vector<std::string> 	_example_server_bloc;
 		std::vector<Server>			_servers;
 
-	public:
-		//--- Orthodox Canonical Form ---//
-		Config(std::string filename);
-		~Config();
-
-		//--- Configuration ---//
-		void	bufferize();
-		size_t	count_brackets(std::string buffer);
-		
-		//--- Server ---//
 		void	add_server(std::string server_block);
 		bool	server_approved(Server server);
+		size_t	count_brackets(std::string buffer);
+		void	bufferize();
 
+	public:
+		Config(std::string filename);
+		~Config();
 		std::vector<Server>& get_servers();
 
-		//--- Error management ---//
 		class Error : public std::exception {
 			private:
 				std::string	_msg;

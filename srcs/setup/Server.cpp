@@ -1,18 +1,20 @@
 #include "Server.hpp"
 
 //--------------- Orthodox Canonical Form ---------------//
+// default _request_size
 Server::Server() : _request_size(100, 'M') {
 }
 Server::Server( const Server & other ){
 	*this = other;
 }
 Server & Server::operator=(const Server & other){
-	_port = other._port;
-	_request_size = other._request_size;
-	_name = other._name;
-	_error_page = other._error_page;
-	_location = other._location;
-	_sockets = other._sockets;
+	this->_port = other._port;
+	this->_request_size = other._request_size;
+	this->_name = other._name;
+	this->_error_page = other._error_page;
+	this->_location = other._location;
+	this->_sockets = other._sockets;
+	this->_generic_root = other._generic_root;
 	return (*this);
 }
 Server::~Server(){}
@@ -70,6 +72,11 @@ void	Server::set_error_page( std::vector< std::string > s ){
 void	Server::set_location( std::string s, Location loc_block){
 	this->_location[s] = loc_block;
 }
+void	Server::set_generic_root( std::vector< std::string > s ){
+	if (s.size() != 1)
+		throw Server::Error("Generic root invalid.");
+	this->_generic_root = s.front();
+}
 
 void	Server::initSockets() {
 	std::cout << "Init sockets:" << std::endl;
@@ -101,6 +108,9 @@ std::vector<std::string> Server::get_name(){
 std::map<unsigned int, std::string> Server::get_error_page(){
 	return this->_error_page;
 }
+std::string Server::get_generic_root(){
+	return this->_generic_root;
+}
 std::map<std::string, Location>	Server::get_location(){
 	return this->_location;
 }
@@ -125,24 +135,15 @@ std::ostream& operator<<( std::ostream& o, Server & S){
 		if (it + 1 != port.end())
 			o << ", ";
 	}
-	o << "\n" << "Request size : " << S.get_request_size().first << S.get_request_size().second << "\nError page :\n";
+	o << "\n" << "Request size : " << S.get_request_size().first << S.get_request_size().second << "\nError page :";
 	std::map<unsigned int, std::string>	errors_page = S.get_error_page();
 	for (std::map<unsigned int, std::string>::iterator it = errors_page.begin(); it != errors_page.end(); it++){
-		o << "	" << *it;
+		o << " " << *it;
 	}
+	o << "\nGeneric root : " << S.get_generic_root();
 	std::map<std::string, Location> location_map = S.get_location(); 
 	for (std::map<std::string, Location>::iterator it = location_map.begin(); it != location_map.end(); it++){
-		o << "\n	Location : " << (*it).first << "\n		";
-		std::string methods[3] = {"GET", "POST", "DELETE"};
-		for (int i = 0; i < 3; i++){
-			o << methods[i] << " : " << std::boolalpha << (*it).second.get_limit_except()[methods[i]] << " ";
-		}
-		o << "\n		return : " << (*it).second.get_return().first << " " << (*it).second.get_return().second << "\n";
-		o << "		alias :";
-		for (size_t i = 0; i < (*it).second.get_alias().size(); i++){
-			o << " " << (*it).second.get_alias()[i];
-		}
+		o << "\nLocation : " << (*it).first << "\n" << (*it).second;
 	}
-	o << std::endl;
 	return o;
 }

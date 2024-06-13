@@ -19,6 +19,7 @@ class Server {
 		std::vector<std::string>				_name;
 		std::vector<Socket>						_sockets;
 		std::map<unsigned int, std::string>		_error_page;
+		std::string								_generic_root;
 		std::map<std::string, Location>			_location;
 	public:
 		//--- Orthodox Canonical Form ---//
@@ -32,6 +33,7 @@ class Server {
 		void	set_request_size( std::vector< std::string > s );
 		void	set_name( std::vector< std::string > s );
 		void	set_error_page( std::vector< std::string > s );
+		void	set_generic_root( std::vector< std::string > s );
 		void	set_location( std::string s, Location loc_block);
 		void	initSockets();
 
@@ -40,6 +42,7 @@ class Server {
 		std::pair<unsigned int, char>		get_request_size();
 		std::vector<unsigned int>			get_port();
 		std::map<unsigned int, std::string>	get_error_page();
+		std::string							get_generic_root();
 		std::map<std::string, Location>		get_location();
 		std::vector<Socket>&				get_sockets();
 

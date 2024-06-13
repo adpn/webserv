@@ -10,25 +10,12 @@ Request::Request(int fd, Server const& server)
 	: _valid(false), _fin_headers(false), _content_left(0), _fd(fd), _server(server) {}
 
 Request::Request(Request const& src)
-	: _server(src._server) { this->operator=(src); }
+	: _valid(src._valid), _fin_headers(src._fin_headers), _content_left(src._content_left),
+		_fd(src._fd), _method(src._method), _uri(src._uri),
+		_version(src._version), _body(src._body), _headers(src._headers), _server(src._server) {}
 
 Request::~Request()
 	{}
-
-Request& Request::operator=(Request const& rhs)
-{
-	_valid = rhs._valid;
-	_fin_headers = rhs._fin_headers;
-	_content_left = rhs._content_left;
-	_fd = rhs._fd;
-	_method = rhs._method;
-	_uri = rhs._uri;
-	_version = rhs._version;
-	_body = rhs._body;
-	_headers = rhs._headers;
-	//_server = rhs._server;
-	return *this;
-}
 
 /* G(/S)ETTERS */
 

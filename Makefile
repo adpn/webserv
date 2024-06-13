@@ -11,28 +11,25 @@ SRCS_DIR	= 	srcs
 BUILD_DIR 	= 	build
 #replace all smth of course
 SETUP_DIR	=   $(SRCS_DIR)/setup
-SMTH2_DIR	=   $(SRCS_DIR)/smth2
 
 # Define the source files
 MAIN_FILE	=	main.cpp \
 				Request.cpp \
 				Response.cpp \
-				Router.cpp
+				Router.cpp \
+				Entry.cpp
 SETUP_FILES	=	Socket.cpp \
 				Config.cpp \
 				Location.cpp \
 				Server.cpp
-SMTH2_FILES	=
 
 # Defining the paths of the sources files
 SRC_MAIN	= 	$(addprefix $(SRCS_DIR)/, $(MAIN_FILE))
 SRC_SETUP  	=	$(addprefix $(SETUP_DIR)/, $(SETUP_FILES))
-SRC_SMTH2 	=	$(addprefix $(SMTH2_DIR)/, $(SMTH2_FILES))
 
 # Deriving objects from .cpp files in the build directory
 OBJS 		= 	$(patsubst $(SRCS_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRC_MAIN)) \
-				$(patsubst $(SETUP_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRC_SETUP)) \
-				$(patsubst $(SMTH2_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRC_SMTH2))
+				$(patsubst $(SETUP_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRC_SETUP))
 
 # Display toolbox
 RED			=	\x1b[31m
@@ -54,11 +51,7 @@ $(BUILD_DIR)/%.o: $(SETUP_DIR)/%.cpp
 	@mkdir -p $(BUILD_DIR)
 	@$(CC) $(FLAGS) -c $< -o $@
 
-$(BUILD_DIR)/%.o: $(SMTH2_DIR)/%.cpp
-	@mkdir -p $(BUILD_DIR)
-	@$(CC) $(FLAGS) -c $< -o $@
-
-# Rule to build the executable from the objects 
+# Rule to build the executable from the objects
 $(NAME): $(OBJS)
 	@echo "$(YELLOW)Creating $(NAME)... $(NO_COLOR)"
 	@$(CC) $(FLAGS) -o $@ $^

@@ -6,6 +6,8 @@
 # include <map>
 # include <string>
 
+class Entry;
+
 /*
 Class Location
 	private members:
@@ -24,11 +26,13 @@ Class Location
 */
 class Location {
 	private:
-		std::map<std::string, bool>						_limit_except;
-		std::pair<unsigned int, std::string>			_return;
-		std::vector<std::string>						_alias;
-		bool											_autoindex;
-		std::vector<std::string>						_index;
+		std::map<std::string, bool>				_limit_except;
+		std::pair<unsigned int, std::string>	_return;
+		std::vector<std::string>				_alias;
+		std::string								_root;
+		bool									_autoindex;
+		std::vector<std::string>				_index;
+
 	public:
 		//--- Orthodox Canonical Form ---//
 		Location();
@@ -40,6 +44,7 @@ class Location {
 		void	set_limit_except(std::vector< std::string > rawString);
 		void	set_return(std::vector< std::string > rawString);
 		void	set_alias(std::vector< std::string > rawString);
+		void	set_root(std::vector< std::string > rawString);
 		void	set_autoindex(std::vector< std::string > rawString);
 		void	set_index(std::vector< std::string > rawString);
 
@@ -48,10 +53,13 @@ class Location {
 		std::pair<unsigned int, std::string>	get_return();
 		std::vector<std::string>				get_alias();
 		bool									get_autoindex();
+		std::string								get_root();
 		std::vector<std::string>				get_index();
 
 		//--- Members ---//
-		bool is_allowed(std::string const& method) const;
+		bool				is_allowed(std::string const& method) const;
+		std::string			full_root() const;
+		std::vector<Entry>	create_entries() const;
 
 		//--- Error management ---//
 		class Error : public std::exception {
@@ -63,5 +71,7 @@ class Location {
 				virtual const char *what() const throw();
 		};
 };
+
+std::ostream& operator<<( std::ostream& o, Location& location);
 
 #endif
