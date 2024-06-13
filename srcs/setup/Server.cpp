@@ -1,6 +1,7 @@
 #include "Server.hpp"
 
 //--------------- Orthodox Canonical Form ---------------//
+// default _request_size
 Server::Server() : _request_size(100, 'M') {
 }
 Server::Server( const Server & other ){

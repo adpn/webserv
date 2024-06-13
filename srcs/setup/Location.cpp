@@ -24,7 +24,6 @@ Location::~Location(){}
 
 //--------------- Setters ---------------//
 void	Location::set_limit_except(std::vector<std::string> s){
-	std::cout << std::endl;
 	std::string	authorized_method[3] = {"GET", "POST", "DELETE"};
 	size_t i;
 
@@ -40,7 +39,6 @@ void	Location::set_limit_except(std::vector<std::string> s){
 	}
 }
 void	Location::set_return(std::vector<std::string> s){
-	std::cout << std::endl;
 	std::string status;
 	std::string path;
 
@@ -53,7 +51,6 @@ void	Location::set_return(std::vector<std::string> s){
 	this->_return = std::make_pair(atoi(s[0].c_str()), s[1]);
 }
 void	Location::set_autoindex(std::vector<std::string> s ){
-	std::cout << std::endl;
 	if (s.size() != 1)
 		throw Location::Error("Directive format not respected.");
 	std::string	authorized_value[2] = {"off", "on"};
@@ -67,13 +64,11 @@ void	Location::set_autoindex(std::vector<std::string> s ){
 	throw Location::Error("Directive format not respected.");
 }
 void	Location::set_alias(std::vector< std::string > s){
-	std::cout << std::endl;
 	if (!s.size())
 		throw Location::Error("Directive format not respected.");
 	this->_alias = s;
 }
 void	Location::set_index(std::vector< std::string > s){
-	std::cout << std::endl;
 	if (!s.size())
 		throw Location::Error("Directive format not respected.");
 	this->_index = s;

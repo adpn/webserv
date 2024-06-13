@@ -6,6 +6,7 @@ Config::Config( std::string filename ) : _brackets(0), _fd(filename){
 		throw Config::Error("Open input file failed.");
 	this->_example_server_bloc.push_back("server");
 	this->_example_server_bloc.push_back("{");
+	bufferize();
 };
 Config::~Config(){
 	this->_fd.close();
@@ -165,7 +166,6 @@ void	Config::add_server(std::string server_block){
 
 //--------------- Configuration ---------------//
 std::vector< std::string > tokenizer( std::string string, std::string delimiters){
-
 	int							ln_w = 0;
 	std::vector< std::string >	vector;
 
@@ -207,7 +207,7 @@ void	Config::bufferize(){
 	size_t		end;
 
 	while (getline(this->_fd, buffer)){
-		if (_brackets){	// add new line to current server content
+		if (_brackets){ // add new line to current server content
 			end = count_brackets(buffer);
 			if (buffer.find_first_of('#') < end) // ignore comment
 				end = buffer.find_first_of('#');
@@ -216,6 +216,7 @@ void	Config::bufferize(){
 		if (!_brackets && server_block.size()){	// if server content not empty, add it
 			try {
 				add_server(server_block);
+				std::cout << this->_servers.back() << std::endl;
 			}
 			catch (std::exception & e){
 				std::cout << "Server block rejected: " << e.what() << std::endl;
