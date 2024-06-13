@@ -148,5 +148,26 @@ const char *Location::Error::what() const throw(){
 }
 
 
-// //--------------- Output debug ---------------//
-// std::ostream& operator<<( std::ostream& o, Location& location)
+//--------------- Output debug ---------------//
+std::ostream& operator<<( std::ostream& o, Location& location){
+	std::string methods[3] = {"GET", "POST", "DELETE"};
+	o << "	";
+	for (int i = 0; i < 3; i++){
+		o << methods[i] << " : " << std::boolalpha << location.get_limit_except()[methods[i]] << " ";
+	}
+	o << std::endl;
+	o << "	return : " << location.get_return().first << " " << location.get_return().second << std::endl;
+	o << "	root : " << location.get_root() << std::endl;
+	o << "	alias :";
+	for (size_t i = 0; i < location.get_alias().size(); i++){
+		o << " " << location.get_alias()[i];
+	}
+	o << std::endl;
+	o << "	autoindex : " << location.get_autoindex() << std::endl;
+	o << "	index : ";
+	for (size_t i = 0; i < location.get_index().size(); i++){
+		o << " " << location.get_index()[i];
+	}
+	o << std::endl;
+	return o;
+}

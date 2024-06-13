@@ -69,4 +69,6 @@ class Location {
 		};
 };
 
+std::ostream& operator<<( std::ostream& o, Location& location);
+
 #endif

@@ -88,21 +88,23 @@ void	add_location(Server & server, std::string RawStr){
 
 //--------------- Server ---------------//
 void	add_server_directive(Server & server, std::string directive){
-	std::string	directives_name[4] = {"listen",
+	std::string	directives_name[5] = {"listen",
 									"client_max_body_size",
 									"server_name",
-									"error_page"};
-	void (Server::*directives_fonction[4])
+									"error_page",
+									"generic_root"};
+	void (Server::*directives_fonction[5])
 		(std::vector< std::string > s) = {&Server::set_port,
 											&Server::set_request_size,
 											&Server::set_name,
-											&Server::set_error_page};
+											&Server::set_error_page,
+											&Server::set_generic_root};
 
 
 	std::vector< std::string > vect_dir	= tokenizer(directive, DELIMITERS);
 	if (vect_dir.size() < 1)
 		throw Config::Error("Directive format not respected.");
-	for (int i = 0; i < 4; i++){
+	for (int i = 0; i < 5; i++){
 		if (directives_name[i] == vect_dir[0]){
 			vect_dir.erase(vect_dir.begin());
 			(server.*directives_fonction[i])( vect_dir );
