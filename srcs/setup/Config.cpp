@@ -71,7 +71,8 @@ void	add_location(Server & server, std::string RawStr){
 		throw Config::Error("Directive format not respected.");
 	LocationBlock.set_name(VectorDirectives[1]);
 	RawStr.erase(0, FirstBracket + 1);
-	for (int i = 0; RawStr[i]; i++){
+
+	while (RawStr.size()){
 		next_sep = RawStr.find_first_of(";}");
 		switch (RawStr[next_sep]){
 			case ';':
@@ -79,6 +80,7 @@ void	add_location(Server & server, std::string RawStr){
 				RawStr.erase(0, next_sep + 1);
 				break ;
 			case '}':
+				std::cout << "b" << std::endl;
 				if (RawStr.find_first_not_of(" 	}") != NOTFOUND)
 					throw Config::Error("Found weird stuff..");
 				server.set_location(LocationBlock);
