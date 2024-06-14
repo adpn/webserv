@@ -6,8 +6,9 @@
 // default _request_size
 Server::Server() : _request_size(100, 'M') {
 }
-Server::Server( const Server & other )
-	: _locations(other._locations) {
+Server::Server( const Server & other ) {
+	for (std::list<Location>::const_iterator it = other.get_locations().begin(); it != other.get_locations().end(); ++it)
+		_locations.push_back(Location(*it, *this));
 	for (std::map<std::string, Location&>::const_iterator it_alias = other._aliases.begin(); it_alias != other._aliases.end(); ++it_alias)
 	{
 		std::list<Location>::iterator it_loc;
