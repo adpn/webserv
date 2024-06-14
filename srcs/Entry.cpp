@@ -12,10 +12,13 @@ Entry::~Entry()
 
 Entry& Entry::operator=(Entry const& rhs)
 {
-	_name = rhs._name;
-	_type = rhs._type;
+	name = rhs.name;
+	type = rhs.type;
 	return *this;
 }
 
 Entry::Entry(struct dirent* input)
-	:_name(input->d_name, input->d_name + input->d_namlen), _type(input->d_type) {}
+	:name(input->d_name, input->d_name + input->d_namlen), type(input->d_type) {}
+
+Entry::Entry(string n, char t) : name(n), type(t) {
+}
