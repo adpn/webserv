@@ -209,12 +209,51 @@ void Request::handle() const
 Location const* Request::getLocation() const
 {
 	// special uri's ?
-	string directory = _uri.substr(0, _uri.rfind('/'));
+	Location const* ret = NULL;
+	string search = _uri;
+	while (!ret && !search.empty())
+	{
+		ret = find_location(search);
+		next_search_string(search);
+	}
+// debug
+// std::cout << "location search for " << _uri << ": found ";
+// if (ret)
+// std::cout << ret->get_name() << "\n";
+// else
+// std::cout << "NULL\n";
+// debug end
+	return ret;
+}
+
+Location const* Request::find_location(string const& search) const
+{
 	std::map<string, Location&>::const_iterator it;
-	it = _server.get_aliases().find(directory);
+	it = _server.get_aliases().find(search);
 	if (it == _server.get_aliases().end())
-		return NULL;
+	{
+		if (search.back() == '/')
+			it = _server.get_aliases().find(search.substr(0, search.size() - 1));
+		else
+			it = _server.get_aliases().find(search + "/");
+		if (it == _server.get_aliases().end())
+			return NULL;
+	}
 	return &it->second;
+}
+
+void Request::next_search_string(string& search) const
+{
+	size_t slash_pos = search.size() - 1;
+	while (slash_pos && search[slash_pos] == '/')
+		--slash_pos;
+	slash_pos = search.rfind('/', slash_pos);
+	if (slash_pos == string::npos)
+	{
+		search = '/';
+		return ;
+	}
+	search.erase(slash_pos + 1);
 }
 
 // returns empty string if file not found
@@ -223,10 +262,9 @@ string Request::getFile(Location const* location) const
 	if (_uri.back() == '/')
 		// return default (or autoindex?)
 		// what if no default and no autoindex ?
-		return location->get_index()[0];
+		return location->get_root() + "/" + location->get_index()[0];
 
-	string name = _uri.substr(_uri.rfind('/'));
-	return location->get_name() + name; // do this with root instead of name
+	return location->get_root() + _uri;
 }
 
 void Request::getline_crlf(std::istringstream& iss, string& buf) const

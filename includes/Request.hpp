@@ -41,6 +41,9 @@ class Request
 		void handleError(Response& response, int status) const;
 		void handleAutoindex(Response &response) const;
 
+		Location const* find_location(string const& search) const;
+		void			next_search_string(string& search) const;
+
 	public:
 		Request(int fd, Server const& server);
 		Request(Request const& src);

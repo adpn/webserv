@@ -96,7 +96,10 @@ void	Location::set_index(std::vector< std::string > s){
 void	Location::set_root(std::vector< std::string > s){
 	if (s.size() != 1)
 		throw Location::Error("Directive format not respected.");
-	this->_root = s.front();
+	if (s.front().front() == '/')
+		this->_root = s.front().substr(1);
+	else
+		this->_root = s.front();
 }
 
 
