@@ -39,6 +39,7 @@ class Request
 		void handlePost(Response& response) const;
 		void handleDelete(Response& response) const;
 		void handleError(Response& response, int status) const;
+		void handleAutoindex(Response &response) const;
 
 	public:
 		Request(int fd, Server const& server);

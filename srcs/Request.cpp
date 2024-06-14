@@ -2,6 +2,7 @@
 #include "Response.hpp"
 #include "Server.hpp"
 #include "Location.hpp"
+#include "Entry.hpp"
 #include <sstream>
 #include <dirent.h>
 
@@ -91,7 +92,7 @@ void Request::handleError(Response& response, int status) const
 	std::ostringstream oss;
 	oss << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n";
 	oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
-	oss << "    <link rel=\"icon\" href=\"./favicon.ico\" />\n	<title></title>\n    <!-- <style>\n";
+	oss << "    <link rel=\"icon\" href=\"/favicon.ico\" />\n	<title></title>\n    <!-- <style>\n";
 	oss << "        /* Add your CSS styles here */\n    </style> -->\n</head>\n<body>\n    <br><b>ERROR: ";
 	oss << status << " " << response.getReason() << "\n</b></body>\n</html>\n";
 	response.setBody(oss.str());
@@ -105,7 +106,7 @@ void Request::handleGet(Response& response) const
 	string file;
 
 	response.setStatus(200);
-	response.setHeader("Content-Type: text/html");
+	response.setHeader("Content-Type: text/html"); //if .css should be text/css
 
 	location = getLocation();
 	if (!location)
@@ -116,10 +117,39 @@ void Request::handleGet(Response& response) const
 		handleError(response, 404);
 }
 
+void Request::handleAutoindex(Response &response) const {
+	std::ostringstream oss;
+	oss << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n";
+	oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
+	oss << "    <link rel=\"icon\" href=\"/favicon.ico\" />\n";
+	oss << "<link rel=\"stylesheet\" href=\"coucou.css\">";
+	oss << "<title>Index of " << _uri << "</title>\n  </head>";
+	oss << "<body>\n";
+	oss << "<h2>Index of " << _uri << "</h2>\n";
+	std::vector<Entry> entries;
+	entries.push_back(Entry("images", DT_DIR));
+	entries.push_back(Entry("fuckbert", DT_DIR));
+	entries.push_back(Entry("helloDenis.html", 0));
+
+	for (size_t i = 0; i < entries.size(); i++) {
+		oss << "<a href=\"./" << entries[i].name;
+		if (entries[i].type == DT_DIR)
+			oss <<  "/";
+		oss <<  "\">" ;
+		oss << entries[i].name << "<br>";
+	}
+	oss << "</body>\n";
+	oss << "</html>\n";
+	response.setBody(oss.str());
+}
+
 void Request::handlePost(Response& response) const
 {
+	(void)response;
+	if (/* Method not in location */!true)
+		handleError(response, 405);
 // temp error
-handleError(response, 405);
+//handleError(response, 405);
 	// check if method is allowed on this resource (405)
 	// check if resource already exists, if yes, overwrite (200)
 	// if not, create new resource (201)
@@ -140,6 +170,8 @@ handleError(response, 405);
 
 void Request::handleDelete(Response& response) const
 {
+	if (/* Method not in location */!true)
+		handleError(response, 405);
 // temp error
 handleError(response, 405);
 	// we should probably be VERY careful with deleting stuff ... probably or not :)
@@ -274,7 +306,7 @@ bool Request::parseUri(string const& uri)
 {
 	if (uri.empty())
 		return false;
-	if (uri.compare(0, 7, "http://") && uri[0] != '/')
+	if (uri.compare(0, 7, "http://") && uri[0] != '/') //wtf is that supposed to do ???
 		return false;
 	_uri = uri;
 	return true;
