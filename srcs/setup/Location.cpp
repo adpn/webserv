@@ -124,15 +124,9 @@ std::list<std::string> const& Location::get_aliases() const {
 	return this->_aliases;
 }
 std::string const&	Location::get_root(bool print) const {
-	if (print)
-		return _root;
-
-	std::string ret = _root;
-	if (ret.empty())
-		ret = _server.get_generic_root();
-	if (ret.front() == '/')
-		return ret.substr(1);
-	return ret;
+	if (_root.empty() && !print)
+		return _server.get_generic_root();
+	return _root;
 }
 
 

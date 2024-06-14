@@ -19,6 +19,7 @@ class Request
 		int _fd;
 		string _method;
 		string _uri;
+		bool _is_index;
 		string _version;
 		string _body;
 		std::map<string, string> _headers;
@@ -35,7 +36,7 @@ class Request
 		bool checkHeaders() const;
 		void manageSpecialHeader(std::pair<string, string> const& pair);
 
-		void handleGet(Response& response) const;
+		void handleGet(Response& response);
 		void handlePost(Response& response) const;
 		void handleDelete(Response& response) const;
 		void handleError(Response& response, int status) const;
@@ -62,8 +63,8 @@ class Request
 		std::map<string, string> const& getHeaders() const;
 
 		bool parse(string const& package);
-		void handle() const;
-		Location const* getLocation() const;
+		void handle();
+		Location const* getLocation();
 		string getFile(Location const* location) const;
 
 		// debugging

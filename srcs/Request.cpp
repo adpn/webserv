@@ -9,11 +9,11 @@
 /* CONSTRUCTORS */
 
 Request::Request(int fd, Server const& server)
-	: _valid(false), _fin_headers(false), _content_left(0), _fd(fd), _server(server) {}
+	: _valid(false), _fin_headers(false), _content_left(0), _fd(fd), _is_index(false), _server(server) {}
 
 Request::Request(Request const& src)
 	: _valid(src._valid), _fin_headers(src._fin_headers), _content_left(src._content_left),
-		_fd(src._fd), _method(src._method), _uri(src._uri),
+		_fd(src._fd), _method(src._method), _uri(src._uri), _is_index(src._is_index),
 		_version(src._version), _body(src._body), _headers(src._headers), _server(src._server) {}
 
 Request::~Request()
@@ -99,7 +99,7 @@ void Request::handleError(Response& response, int status) const
 	// alter response further?
 }
 
-void Request::handleGet(Response& response) const
+void Request::handleGet(Response& response)
 {
 	// use try catch maybe?
 	Location const* location;
@@ -182,7 +182,7 @@ handleError(response, 405);
 		// response.setStatus(204);
 }
 
-void Request::handle() const
+void Request::handle()
 {
 	Response response;
 	char expr = 0;
@@ -206,20 +206,27 @@ void Request::handle() const
 }
 
 // returns NULL if location not found
-Location const* Request::getLocation() const
+Location const* Request::getLocation()
 {
 	// special uri's ?
-	Location const* ret = NULL;
 	string search = _uri;
+	Location const* ret = find_location(search);
+	if (ret)
+		_is_index = true;
 	while (!ret && !search.empty())
 	{
-		ret = find_location(search);
 		next_search_string(search);
+		ret = find_location(search);
 	}
 // debug
 // std::cout << "location search for " << _uri << ": found ";
 // if (ret)
-// std::cout << ret->get_name() << "\n";
+// {
+// std::cout << ret->get_name();
+// if (_is_index)
+// std::cout << " (index)";
+// std::cout << "\n";
+// }
 // else
 // std::cout << "NULL\n";
 // debug end
@@ -228,6 +235,9 @@ Location const* Request::getLocation() const
 
 Location const* Request::find_location(string const& search) const
 {
+	// redirect if location == uri + / (to uri + /) (ofc only if there is no location == uri)
+	if (search.empty())
+		return NULL;
 	std::map<string, Location&>::const_iterator it;
 	it = _server.get_aliases().find(search);
 	if (it == _server.get_aliases().end())
@@ -259,11 +269,19 @@ void Request::next_search_string(string& search) const
 // returns empty string if file not found
 string Request::getFile(Location const* location) const
 {
-	if (_uri.back() == '/')
+	if (_is_index)
+	{
 		// return default (or autoindex?)
 		// what if no default and no autoindex ?
-		return location->get_root() + "/" + location->get_index()[0];
+		// loop over get_index until one works
 
+		if (location->get_root() == "/")
+			return location->get_index()[0];
+		return location->get_root() + "/" + location->get_index()[0];
+	}
+
+	if (location->get_root() == "/")
+		return _uri.substr(1);
 	return location->get_root() + _uri;
 }
 

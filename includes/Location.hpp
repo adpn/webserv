@@ -67,7 +67,7 @@ class Location {
 		//--- Members ---//
 		bool				is_allowed(std::string const& method) const;
 		std::vector<Entry>	create_entries() const;
-		void aliases_to_server(Server& server);
+		void				aliases_to_server(Server& server);
 
 		//--- Error management ---//
 		class Error : public std::exception {
