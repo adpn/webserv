@@ -80,6 +80,7 @@ void	add_location(Server & server, std::string RawStr){
 				RawStr.erase(0, next_sep + 1);
 				break ;
 			case '}':
+				std::cout << "b" << std::endl;
 				if (RawStr.find_first_not_of(" 	}") != NOTFOUND)
 					throw Config::Error("Found weird stuff..");
 				server.set_location(LocationBlock);
