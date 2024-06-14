@@ -42,6 +42,7 @@ class Location {
 		//--- Orthodox Canonical Form ---//
 		Location(Server& server);
 		Location(const Location &other);
+		Location(const Location &other, Server& server);
 		~Location();
 
 		//--- Setters ---//
@@ -54,17 +55,17 @@ class Location {
 		void	set_index(std::vector< std::string > rawString);
 
 		//--- Getters ---//
+		Server const&								get_server() const;
 		std::string const&							get_name() const;
 		std::map<std::string, bool> const&			get_limit_except() const;
 		std::pair<unsigned int, std::string> const&	get_return() const;
 		bool										get_autoindex() const;
-		std::string const&							get_root() const;
+		std::string const&							get_root(bool print = false) const;
 		std::vector<std::string> const&				get_index() const;
 		std::list<std::string> const&				get_aliases() const;
 
 		//--- Members ---//
 		bool				is_allowed(std::string const& method) const;
-		std::string			full_root() const;
 		std::vector<Entry>	create_entries() const;
 		void aliases_to_server(Server& server);
 

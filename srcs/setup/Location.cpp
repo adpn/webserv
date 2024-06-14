@@ -16,7 +16,12 @@ Location::Location(const Location &other)
 	: _server(other._server), _name(other._name), _limit_except(other._limit_except),
 	_return(other._return), _root(other._root), _autoindex(other._autoindex), _index(other._index), _aliases(other._aliases) {}
 
+Location::Location(const Location &other, Server& server)
+	: _server(server), _name(other._name), _limit_except(other._limit_except),
+	_return(other._return), _root(other._root), _autoindex(other._autoindex), _index(other._index), _aliases(other._aliases) {}
+
 // THIS IS PRIVATE AND SHOULD NEVER BE USED
+// ALSO DON'T DEFAULT CONSTRUCT
 Location &Location::operator=(const Location &other){
 	// this->_name = other._name;
 	// this->_limit_except = other._limit_except;
@@ -28,7 +33,7 @@ Location &Location::operator=(const Location &other){
 	(void) other;
 	return *this;
 }
-Location::~Location(){}
+Location::~Location() {}
 
 
 
@@ -97,7 +102,10 @@ void	Location::set_root(std::vector< std::string > s){
 
 
 //--------------- Getters ---------------//
-std::string const& Location::get_name() const{
+Server const& Location::get_server() const {
+	return _server;
+}
+std::string const& Location::get_name() const {
 	return _name;
 }
 std::map<std::string, bool> const& Location::get_limit_except() const {
@@ -115,8 +123,10 @@ std::vector<std::string> const& Location::get_index() const {
 std::list<std::string> const& Location::get_aliases() const {
 	return this->_aliases;
 }
-std::string const&	Location::get_root() const {
-	return this->_root;
+std::string const&	Location::get_root(bool print) const {
+	if (print || !_root.empty())
+		return _root;
+	return _server.get_generic_root();
 }
 
 
@@ -137,15 +147,11 @@ void Location::aliases_to_server(Server& server)
 	server.set_alias(_name, *this);
 }
 
-std::string Location::full_root() const {
-	// DO STUFF HERE WHEN WE GET THE ROOT VARIABLE
-	return std::string();
-}
-
+// throws if root can't be opened
 std::vector<Entry> Location::create_entries() const {
-	DIR* dirp = opendir(full_root().c_str());
+	DIR* dirp = opendir(get_root().c_str());
 	if (!dirp)
-		throw Location::Error("couldn't open location root: " + full_root());
+		throw Location::Error("couldn't open location root: " + get_root());
 	std::vector<Entry> res;
 	struct dirent* entry;
 	entry = readdir(dirp);
@@ -173,7 +179,8 @@ const char *Location::Error::what() const throw(){
 std::ostream& operator<<(std::ostream& o, Location const& l)
 {
 	o << "	location: " << l.get_name() << "\n";
-	o << "		root: " << l.get_root() << "\n";
+	o << "		server: " << l.get_server().get_name().front() << "\n";
+	o << "		root: " << l.get_root(true) << "\n";
 	o << "		limits: \n";
 	for (std::map<std::string, bool>::const_iterator it = l.get_limit_except().begin(); it != l.get_limit_except().end(); ++it)
 		o << "			" << (*it).first << " " << std::boolalpha << (*it).second << "\n";
