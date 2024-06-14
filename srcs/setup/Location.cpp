@@ -96,10 +96,7 @@ void	Location::set_index(std::vector< std::string > s){
 void	Location::set_root(std::vector< std::string > s){
 	if (s.size() != 1)
 		throw Location::Error("Directive format not respected.");
-	if (s.front().front() == '/')
-		this->_root = s.front().substr(1);
-	else
-		this->_root = s.front();
+	this->_root = s.front();
 }
 
 
@@ -127,9 +124,15 @@ std::list<std::string> const& Location::get_aliases() const {
 	return this->_aliases;
 }
 std::string const&	Location::get_root(bool print) const {
-	if (print || !_root.empty())
+	if (print)
 		return _root;
-	return _server.get_generic_root();
+
+	std::string ret = _root;
+	if (ret.empty())
+		ret = _server.get_generic_root();
+	if (ret.front() == '/')
+		return ret.substr(1);
+	return ret;
 }
 
 
