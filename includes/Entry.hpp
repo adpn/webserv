@@ -6,15 +6,14 @@
 
 using std::string;
 
-class Entry
-{
-	string	_name;
-	char	_type;
-
+class Entry {
 	Entry();
 
 public:
+	string	name;
+	char	type;
 	Entry(struct dirent* input);
+	Entry(string n, char t);
 	Entry(Entry const& src);
 	Entry& operator=(Entry const& rhs);
 	~Entry();

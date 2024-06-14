@@ -2,6 +2,7 @@
 #include "Response.hpp"
 #include "Server.hpp"
 #include "Location.hpp"
+#include "Entry.hpp"
 #include <sstream>
 
 /* CONSTRUCTORS */
@@ -90,7 +91,7 @@ void Request::handleError(Response& response, int status) const
 	std::ostringstream oss;
 	oss << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n";
 	oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
-	oss << "    <link rel=\"icon\" href=\"./favicon.ico\" />\n	<title></title>\n    <!-- <style>\n";
+	oss << "    <link rel=\"icon\" href=\"/favicon.ico\" />\n	<title></title>\n    <!-- <style>\n";
 	oss << "        /* Add your CSS styles here */\n    </style> -->\n</head>\n<body>\n    <br><b>ERROR: ";
 	oss << status << " " << response.getReason() << "\n</b></body>\n</html>\n";
 	response.setBody(oss.str());
@@ -100,12 +101,12 @@ void Request::handleError(Response& response, int status) const
 void Request::handleGet(Response& response) const
 {
 	response.setStatus(200);
-	response.setHeader("Content-Type: text/html");
+	response.setHeader("Content-Type: text/html"); //if .css should be text/css
 	// check below if method is allowed on this resource
 	// if (!location.is_allowed(_method))
 	if (/* Location autoindex true*/true)
 		handleAutoindex(response);
-	if (/* Method not in location */!true)
+	else if (/* Method not in location */!true)
 		handleError(response, 405);
 	else if (!response.fileToBody(uritowebsite()))
 		handleError(response, 404);
@@ -115,11 +116,22 @@ void Request::handleAutoindex(Response &response) const {
 	std::ostringstream oss;
 	oss << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n";
 	oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
-	oss << "    <link rel=\"icon\" href=\"./favicon.ico\" />\n	<title>Index of ???????</title>\n  </head>";
+	oss << "    <link rel=\"icon\" href=\"/favicon.ico\" />\n";
+	oss << "<link rel=\"stylesheet\" href=\"coucou.css\">";
+	oss << "<title>Index of " << _uri << "</title>\n  </head>";
 	oss << "<body>\n";
-	std::vector <Entry> entries;
+	oss << "<h2>Index of " << _uri << "</h2>\n";
+	std::vector<Entry> entries;
+	entries.push_back(Entry("images", DT_DIR));
+	entries.push_back(Entry("fuckbert", DT_DIR));
+	entries.push_back(Entry("helloDenis.html", 0));
+
 	for (size_t i = 0; i < entries.size(); i++) {
-		oss << "<a href=\"" << entries[i].jsp <<  "\">" << entries[i].jsp2 << "<\a>\n";
+		oss << "<a href=\"./" << entries[i].name;
+		if (entries[i].type == DT_DIR)
+			oss <<  "/";
+		oss <<  "\">" ;
+		oss << entries[i].name << "<br>";
 	}
 	oss << "</body>\n";
 	oss << "</html>\n";
