@@ -1,25 +1,31 @@
 #include <dirent.h>
 
 #include "Location.hpp"
+#include "Server.hpp"
 #include "Entry.hpp"
 
 //--------------- Orthodox Canonical Form ---------------//
-Location::Location(){
+Location::Location(Server& server)
+	: _server(server) {
 	this->_limit_except["GET"] = false;
 	this->_limit_except["POST"] = false;
 	this->_limit_except["DELETE"] = false;
 	this->_autoindex = false;
 }
-Location::Location(const Location &other){
-	*this = other;
-}
+Location::Location(const Location &other)
+	: _server(other._server), _name(other._name), _limit_except(other._limit_except),
+	_return(other._return), _root(other._root), _autoindex(other._autoindex), _index(other._index), _aliases(other._aliases) {}
+
+// THIS IS PRIVATE AND SHOULD NEVER BE USED
 Location &Location::operator=(const Location &other){
-	this->_limit_except = other._limit_except;
-	this->_return = other._return;
-	this->_alias = other._alias;
-	this->_autoindex = other._autoindex;
-	this->_index = other._index;
-	this->_root = other._root;
+	// this->_name = other._name;
+	// this->_limit_except = other._limit_except;
+	// this->_return = other._return;
+	// this->_autoindex = other._autoindex;
+	// this->_index = other._index;
+	// this->_root = other._root;
+	// this->_aliases = other._aliases;
+	(void) other;
 	return *this;
 }
 Location::~Location(){}
@@ -27,6 +33,10 @@ Location::~Location(){}
 
 
 //--------------- Setters ---------------//
+void	Location::set_name(std::string const& name){
+	_name = name;
+}
+
 void	Location::set_limit_except(std::vector<std::string> s){
 	std::string	authorized_method[3] = {"GET", "POST", "DELETE"};
 	size_t i;
@@ -70,7 +80,8 @@ void	Location::set_autoindex(std::vector<std::string> s ){
 void	Location::set_alias(std::vector< std::string > s){
 	if (!s.size())
 		throw Location::Error("Directive format not respected.");
-	this->_alias = s;
+	for (size_t i = 0; i < s.size(); ++i)
+		_aliases.push_back(s[i]);
 }
 void	Location::set_index(std::vector< std::string > s){
 	if (!s.size())
@@ -86,22 +97,25 @@ void	Location::set_root(std::vector< std::string > s){
 
 
 //--------------- Getters ---------------//
-std::map<std::string, bool> Location::get_limit_except(){
+std::string const& Location::get_name() const{
+	return _name;
+}
+std::map<std::string, bool> const& Location::get_limit_except() const {
 	return this->_limit_except;
 }
-std::pair<unsigned int, std::string> Location::get_return(){
+std::pair<unsigned int, std::string> const& Location::get_return() const {
 	return this->_return;
 }
-std::vector<std::string> Location::get_alias(){
-	return this->_alias;
-}
-bool Location::get_autoindex(){
+bool Location::get_autoindex() const {
 	return this->_autoindex;
 }
-std::vector<std::string> Location::get_index(){
+std::vector<std::string> const& Location::get_index() const {
 	return this->_index;
 }
-std::string	Location::get_root(){
+std::list<std::string> const& Location::get_aliases() const {
+	return this->_aliases;
+}
+std::string const&	Location::get_root() const {
 	return this->_root;
 }
 
@@ -115,6 +129,12 @@ bool Location::is_allowed(std::string const& method) const
 		return false;
 // @Dennis does this seem right to you?
 	return (*it).second;
+}
+void Location::aliases_to_server(Server& server)
+{
+	for (std::list<std::string>::const_iterator it = _aliases.begin(); it != _aliases.end(); ++it)
+		server.set_alias(*it, *this);
+	server.set_alias(_name, *this);
 }
 
 std::string Location::full_root() const {
@@ -148,26 +168,20 @@ const char *Location::Error::what() const throw(){
 }
 
 
+
 //--------------- Output debug ---------------//
-std::ostream& operator<<( std::ostream& o, Location& location){
-	std::string methods[3] = {"GET", "POST", "DELETE"};
-	o << "	";
-	for (int i = 0; i < 3; i++){
-		o << methods[i] << " : " << std::boolalpha << location.get_limit_except()[methods[i]] << " ";
-	}
-	o << std::endl;
-	o << "	return : " << location.get_return().first << " " << location.get_return().second << std::endl;
-	o << "	root : " << location.get_root() << std::endl;
-	o << "	alias :";
-	for (size_t i = 0; i < location.get_alias().size(); i++){
-		o << " " << location.get_alias()[i];
-	}
-	o << std::endl;
-	o << "	autoindex : " << location.get_autoindex() << std::endl;
-	o << "	index : ";
-	for (size_t i = 0; i < location.get_index().size(); i++){
-		o << " " << location.get_index()[i];
-	}
+std::ostream& operator<<(std::ostream& o, Location const& l)
+{
+	o << "	location: " << l.get_name() << "\n";
+	o << "		root: " << l.get_root() << "\n";
+	o << "		limits: \n";
+	for (std::map<std::string, bool>::const_iterator it = l.get_limit_except().begin(); it != l.get_limit_except().end(); ++it)
+		o << "			" << (*it).first << " " << std::boolalpha << (*it).second << "\n";
+	o << "		return: " << l.get_return().first << " " << l.get_return().second << "\n";
+	o << "		autoindex: " << std::boolalpha << l.get_autoindex() << "\n";
+	o << "		index: \n";
+	for (size_t i = 0; i < l.get_index().size(); ++i)
+		o << "			" << l.get_index()[i] << "\n";
 	o << std::endl;
 	return o;
 }

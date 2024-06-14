@@ -51,14 +51,14 @@ void	Router::removeClient(size_t fdIndex) {
 	_fds.erase(_fds.begin() + fdIndex);
 }
 
-void Router::initServerFds(std::vector<Server>& servers) {
+void Router::initServerFds(std::list<Server>& servers) {
 	int pfdIndex = 0;
 	std::cout << "Server for loop start:" << std::endl;
-	for (size_t i = 0; i < servers.size(); i++) {
+	for (std::list<Server>::iterator it = servers.begin(); it != servers.end(); ++it) {
 		std::vector<Socket> serverSockets;
-	
-		serverSockets = servers[i].get_sockets();
-		std::cout << "Loop for server : " << i << std::endl;
+
+		serverSockets = it->get_sockets();
+		std::cout << "Loop for server : " << it->get_name()[0] << std::endl;
 		for (size_t j = 0; j < serverSockets.size(); j++)
 		{
 			std::cout << "Adding socket " << serverSockets[j] << " in fds" << std::endl;
@@ -66,12 +66,12 @@ void Router::initServerFds(std::vector<Server>& servers) {
 			pfd.fd = serverSockets[j]; // first elements are for servers sockets
 			pfd.events = POLLIN; // server sockets is just to check events, real communication is done with clients sockets
 			_fds.push_back(pfd);
-			setServer(serverSockets[j], servers[i]);
+			setServer(serverSockets[j], *it);
 			pfdIndex++;
 		}
 	}
 	_serverFdsNumber = pfdIndex;
-	std::cout << "Total server fds : " << _serverFdsNumber << std::endl; 
+	std::cout << "Total server fds : " << _serverFdsNumber << std::endl;
 }
 
 /* Method functions */
@@ -84,7 +84,7 @@ int Router::managePollin(size_t fdIndex)
 		serverSockets = getServer(_fds[fdIndex].fd).get_sockets();
 	else
 		serverSockets = getServerWithClientFd(_fds[fdIndex].fd).get_sockets();
-	
+
 	// case where the POLLIN is on a server fd
 	if (fdIndex < _serverFdsNumber) {
 		std::cout << "POLLIN SERVER" << std::endl;
@@ -104,7 +104,7 @@ int Router::managePollin(size_t fdIndex)
 		pfd.events = POLLIN; // Initially only enable POLLIN
 		setClient(clientFd, _fds[fdIndex].fd);
 		_fds.push_back(pfd);
-		
+
 	}
 	else {
 		std::cout << "POLLIN CLIENT: " << _fds[fdIndex].fd << std::endl;

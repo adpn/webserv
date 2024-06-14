@@ -4,8 +4,10 @@
 # include <iostream>
 # include <vector>
 # include <map>
+# include <list>
 # include <string>
 
+class Server;
 class Entry;
 
 /*
@@ -23,21 +25,24 @@ Class Location
 */
 class Location {
 	private:
+		Server&									_server;
+		std::string								_name;
 		std::map<std::string, bool>				_limit_except;
 		std::pair<unsigned int, std::string>	_return;
-		std::vector<std::string>				_alias;
 		std::string								_root;
 		bool									_autoindex;
 		std::vector<std::string>				_index;
+		std::list<std::string>					_aliases;
 
+		Location &operator=(const Location &other);
 	public:
 		//--- Orthodox Canonical Form ---//
-		Location();
+		Location(Server& server);
 		Location(const Location &other);
-		Location &operator=(const Location &other);
 		~Location();
 
 		//--- Setters ---//
+		void	set_name(std::string const& name);
 		void	set_limit_except(std::vector< std::string > rawString);
 		void	set_return(std::vector< std::string > rawString);
 		void	set_alias(std::vector< std::string > rawString);
@@ -46,17 +51,19 @@ class Location {
 		void	set_index(std::vector< std::string > rawString);
 
 		//--- Getters ---//
-		std::map<std::string, bool>				get_limit_except();
-		std::pair<unsigned int, std::string>	get_return();
-		std::vector<std::string>				get_alias();
-		bool									get_autoindex();
-		std::string								get_root();
-		std::vector<std::string>				get_index();
+		std::string const&							get_name() const;
+		std::map<std::string, bool> const&			get_limit_except() const;
+		std::pair<unsigned int, std::string> const&	get_return() const;
+		bool										get_autoindex() const;
+		std::string const&							get_root() const;
+		std::vector<std::string> const&				get_index() const;
+		std::list<std::string> const&				get_aliases() const;
 
 		//--- Members ---//
 		bool				is_allowed(std::string const& method) const;
 		std::string			full_root() const;
 		std::vector<Entry>	create_entries() const;
+		void aliases_to_server(Server& server);
 
 		//--- Error management ---//
 		class Error : public std::exception {
@@ -69,6 +76,7 @@ class Location {
 		};
 };
 
-std::ostream& operator<<( std::ostream& o, Location& location);
+// debug print
+std::ostream& operator<<(std::ostream& o, Location const& l);
 
 #endif
