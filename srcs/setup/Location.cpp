@@ -116,7 +116,9 @@ std::list<std::string> const& Location::get_aliases() const {
 	return this->_aliases;
 }
 std::string const&	Location::get_root() const {
-	return this->_root;
+	if (!_root.empty())
+		return _root;
+	return _server.get_generic_root();
 }
 
 
@@ -137,15 +139,11 @@ void Location::aliases_to_server(Server& server)
 	server.set_alias(_name, *this);
 }
 
-std::string Location::full_root() const {
-	// DO STUFF HERE WHEN WE GET THE ROOT VARIABLE
-	return std::string();
-}
-
+// throws if root can't be opened
 std::vector<Entry> Location::create_entries() const {
-	DIR* dirp = opendir(full_root().c_str());
+	DIR* dirp = opendir(get_root().c_str());
 	if (!dirp)
-		throw Location::Error("couldn't open location root: " + full_root());
+		throw Location::Error("couldn't open location root: " + get_root());
 	std::vector<Entry> res;
 	struct dirent* entry;
 	entry = readdir(dirp);

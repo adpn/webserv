@@ -61,7 +61,6 @@ class Location {
 
 		//--- Members ---//
 		bool				is_allowed(std::string const& method) const;
-		std::string			full_root() const;
 		std::vector<Entry>	create_entries() const;
 		void aliases_to_server(Server& server);
 
