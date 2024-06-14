@@ -1,5 +1,6 @@
 #include <Router.hpp>
 #include <Request.hpp>
+#include "Socket.hpp"
 
 //buffer size should be defined with client_max_body_size ????????
 #define BUFFER_SIZE 1024

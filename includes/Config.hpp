@@ -24,11 +24,6 @@ class Config {
 		size_t	count_brackets(std::string buffer);
 		void	bufferize();
 
-		void	add_server(std::string server_block);
-		bool	server_approved(Server server);
-		size_t	count_brackets(std::string buffer);
-		void	bufferize();
-
 	public:
 		Config(std::string filename);
 		~Config();
