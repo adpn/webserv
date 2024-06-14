@@ -7,6 +7,7 @@
 using std::string;
 class Response;
 class Server;
+class Location;
 
 class Request
 {
@@ -20,7 +21,7 @@ class Request
 		string _uri;
 		string _version;
 		string _body;
-		std::map<string, string> _headers; // merge duplicate headers like so [value1],[value2]
+		std::map<string, string> _headers;
 		Server const& _server;
 
 		// handle errors of these with (mandatory default) error pages
@@ -58,8 +59,8 @@ class Request
 
 		bool parse(string const& package);
 		void handle() const;
-		string uritowebsite() const;
-		string uritoupload() const;
+		Location const* getLocation() const;
+		string getFile(Location const* location) const;
 
 		// debugging
 		void print(bool do_body = true) const;

@@ -17,8 +17,7 @@ int main(int argc, char **argv)
 	Config config(conf_path);
 	config.bufferize();
 
-	std::vector<Server> servers;
-	servers = config.get_servers();
+	std::list<Server>& servers = config.get_servers();
 
 	Router router;
 	router.initServerFds(servers);

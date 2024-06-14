@@ -20,8 +20,8 @@ class Router {
 	int		managePollin(size_t fdIndex);
 	int		managePollout(size_t fdIndex);
 public:
-	
-	void	initServerFds(std::vector<Server>& servers);
+
+	void	initServerFds(std::list<Server>& servers);
 	int		pollFds();
 	int		readEvents();
 

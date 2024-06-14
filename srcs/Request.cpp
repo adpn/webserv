@@ -3,6 +3,7 @@
 #include "Server.hpp"
 #include "Location.hpp"
 #include <sstream>
+#include <dirent.h>
 
 /* CONSTRUCTORS */
 
@@ -99,13 +100,19 @@ void Request::handleError(Response& response, int status) const
 
 void Request::handleGet(Response& response) const
 {
+	// use try catch maybe?
+	Location const* location;
+	string file;
+
 	response.setStatus(200);
 	response.setHeader("Content-Type: text/html");
-	// check below if method is allowed on this resource
-	// if (!location.is_allowed(_method))
-	if (!true)
+
+	location = getLocation();
+	if (!location)
+		handleError(response, 404);
+	else if (!(*location).is_allowed(_method))
 		handleError(response, 405);
-	else if (!response.fileToBody(uritowebsite()))
+	else if (!response.fileToBody(getFile(location)))
 		handleError(response, 404);
 }
 
@@ -135,7 +142,7 @@ void Request::handleDelete(Response& response) const
 {
 // temp error
 handleError(response, 405);
-	// we should probably be VERY careful with deleting stuff ...
+	// we should probably be VERY careful with deleting stuff ... probably or not :)
 	// check if resource exists? (404)
 	// check if resource is part of server (403 or 404 if we're not doing the last step)
 	// check if method is allowed on this resource (405)
@@ -166,11 +173,28 @@ void Request::handle() const
 	response.sendResponse(_fd);
 }
 
-string Request::uritowebsite() const // do location instead ??
+// returns NULL if location not found
+Location const* Request::getLocation() const
 {
-	if (!_uri.compare("/"))
-		return "website/index.html";
-	return string("website") + _uri;
+	// special uri's ?
+	string directory = _uri.substr(0, _uri.rfind('/'));
+	std::map<string, Location&>::const_iterator it;
+	it = _server.get_aliases().find(directory);
+	if (it == _server.get_aliases().end())
+		return NULL;
+	return &it->second;
+}
+
+// returns empty string if file not found
+string Request::getFile(Location const* location) const
+{
+	if (_uri.back() == '/')
+		// return default (or autoindex?)
+		// what if no default and no autoindex ?
+		return location->get_index()[0];
+
+	string name = _uri.substr(_uri.rfind('/'));
+	return location->get_name() + name; // do this with root instead of name
 }
 
 void Request::getline_crlf(std::istringstream& iss, string& buf) const

@@ -1,4 +1,6 @@
 #include "Config.hpp"
+#include "Server.hpp"
+#include "Location.hpp"
 
 //--------------- Orthodox Canonical Form ---------------//
 Config::Config( std::string filename ) : _brackets(0), _fd(filename){
@@ -9,12 +11,12 @@ Config::Config( std::string filename ) : _brackets(0), _fd(filename){
 };
 Config::~Config(){
 	this->_fd.close();
-	for (size_t i = 0; i < _servers.size(); i++)
-		_servers[i].closeSockets();
+	for (std::list<Server>::iterator it = _servers.begin(); it != _servers.end(); ++it)
+		it->closeSockets();
 };
 
 //--------------- Getters ---------------//
-std::vector<Server>& Config::get_servers() {
+std::list<Server>& Config::get_servers() {
 	return this->_servers;
 }
 
@@ -42,7 +44,7 @@ void	add_location_directive(Location &LocationBlock, std::string loc_dir){
 											&Location::set_alias,
 											&Location::set_autoindex,
 											&Location::set_index};
-	
+
 	std::vector< std::string > VectorDirective = tokenizer(loc_dir, DELIMITERS);
 	if (VectorDirective.size() < 1)
 		throw Config::Error("Directive format not respected.");
@@ -57,13 +59,14 @@ void	add_location_directive(Location &LocationBlock, std::string loc_dir){
 }
 void	add_location(Server & server, std::string RawStr){
 	//	keep location path
-	Location 					LocationBlock;
+	Location 					LocationBlock(server);
 	size_t 						next_sep;
 	size_t 						FirstBracket = RawStr.find_first_of("{");
 	std::vector<std::string>	VectorDirectives = tokenizer(RawStr.substr(0, FirstBracket), DELIMITERS);
 
 	if (VectorDirectives.size() != 2 || VectorDirectives.front() != "location")
 		throw Config::Error("Directive format not respected.");
+	LocationBlock.set_name(VectorDirectives[1]);
 	RawStr.erase(0, FirstBracket + 1);
 	for (int i = 0; RawStr[i]; i++){
 		next_sep = RawStr.find_first_of(";}");
@@ -75,7 +78,7 @@ void	add_location(Server & server, std::string RawStr){
 			case '}':
 				if (RawStr.find_first_not_of(" 	}") != NOTFOUND)
 					throw Config::Error("Found weird stuff..");
-				server.set_location(VectorDirectives[1], LocationBlock);
+				server.set_location(LocationBlock);
 				return ;
 		}
 	}
@@ -108,15 +111,15 @@ void	add_server_directive(Server & server, std::string directive){
 	}
 	throw Config::Error("Directive format not respected.");
 }
-bool	Config::server_approved(Server server){
+bool	Config::server_approved(Server const& server){
 	std::vector<unsigned int> open_ports;
 	std::vector<unsigned int> nw_ports = server.get_port();
 
 	if (!server.get_port().size()
 		|| !server.get_request_size().first)
 		throw Config::Error("Data's missing.");
-	for (size_t i = 0; i < this->_servers.size(); i++){
-		open_ports = this->_servers[i].get_port();
+	for (std::list<Server>::const_iterator it = _servers.begin(); it != _servers.end(); ++it){
+		open_ports = it->get_port();
 		for (size_t j = 0; j < open_ports.size(); j++){
 			for (size_t m = 0; m < nw_ports.size(); m++){
 				if (open_ports[j] == nw_ports[m])
@@ -153,6 +156,7 @@ void	Config::add_server(std::string server_block){
 					throw Config::Error("Found weird stuff..");
 				if (server_approved(server)) {
 					server.initSockets();
+// std::cout << "SERVER TO ADD:\n" << server << "\n"; // debug
 					this->_servers.push_back(server);
 					return ;
 				}

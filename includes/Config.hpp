@@ -4,6 +4,7 @@
 # include <fstream>
 # include <string>
 # include <vector>
+# include <list>
 # include <iterator>
 
 # include "Server.hpp"
@@ -16,7 +17,7 @@ class Config {
 		unsigned int				_brackets;
 		std::ifstream				_fd;
 		std::vector<std::string> 	_example_server_bloc;
-		std::vector<Server>			_servers;
+		std::list<Server>			_servers;
 
 	public:
 		//--- Orthodox Canonical Form ---//
@@ -26,12 +27,12 @@ class Config {
 		//--- Configuration ---//
 		void	bufferize();
 		size_t	count_brackets(std::string buffer);
-		
+
 		//--- Server ---//
 		void	add_server(std::string server_block);
-		bool	server_approved(Server server);
+		bool	server_approved(Server const& server);
 
-		std::vector<Server>& get_servers();
+		std::list<Server>& get_servers();
 
 		//--- Error management ---//
 		class Error : public std::exception {

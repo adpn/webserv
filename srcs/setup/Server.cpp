@@ -1,18 +1,36 @@
 #include "Server.hpp"
+#include "Location.hpp"
 
 //--------------- Orthodox Canonical Form ---------------//
 Server::Server() : _request_size(100, 'M') {
 }
-Server::Server( const Server & other ){
+Server::Server( const Server & other )
+	: _locations(other._locations) {
+	for (std::map<std::string, Location&>::const_iterator it_alias = other._aliases.begin(); it_alias != other._aliases.end(); ++it_alias)
+	{
+		std::list<Location>::iterator it_loc;
+		for (it_loc = _locations.begin(); it_loc != _locations.end(); ++it_loc)
+			if (it_loc->get_name() == it_alias->second.get_name())
+				break ;
+		if (it_loc == _locations.end())
+		{
+			std::cout << "couldnt find |" << it_alias->second.get_name() << "| in server copy\n";
+			throw Server::Error("something went wrong copying a server instance");
+		}
+		_aliases.insert(std::pair<std::string, Location&>(it_alias->first, *it_loc));
+	}
 	*this = other;
 }
+// THIS IS PRIVATE AND SHOULD NEVER BE USED
 Server & Server::operator=(const Server & other){
 	_port = other._port;
 	_request_size = other._request_size;
 	_name = other._name;
-	_error_page = other._error_page;
-	_location = other._location;
 	_sockets = other._sockets;
+	_error_page = other._error_page;
+	// THESE USE REFERENCES
+	// _locations = other._locations;
+	// _aliases = other._aliases;
 	return (*this);
 }
 Server::~Server(){}
@@ -67,8 +85,16 @@ void	Server::set_error_page( std::vector< std::string > s ){
 		this->_error_page[atoi(s[i].c_str())] = s.back();
 	}
 }
-void	Server::set_location( std::string s, Location loc_block){
-	this->_location[s] = loc_block;
+void	Server::set_location( Location const& loc_block){
+	_locations.push_back(loc_block);
+	_locations.back().aliases_to_server(*this);
+}
+// overwrites if s already exists
+void	Server::set_alias( std::string const& s, Location& loc){
+	std::map<std::string, Location&>::iterator it = _aliases.find(s);
+	if (it != _aliases.end())
+		_aliases.erase(it);
+	_aliases.insert(std::pair<std::string, Location&>(s, loc));
 }
 
 void	Server::initSockets() {
@@ -89,28 +115,30 @@ void	Server::closeSockets() {
 }
 
 //--------------- Getters ---------------//
-std::vector<unsigned int> Server::get_port(){
+std::vector<unsigned int> const& Server::get_port() const {
 	return this->_port;
 }
-std::pair<unsigned int, char> Server::get_request_size(){
+std::pair<unsigned int, char> const& Server::get_request_size() const {
 	return this->_request_size;
 }
-std::vector<std::string> Server::get_name(){
+std::vector<std::string> const& Server::get_name() const {
 	return this->_name;
 }
-std::map<unsigned int, std::string> Server::get_error_page(){
+std::map<unsigned int, std::string> const& Server::get_error_page() const {
 	return this->_error_page;
 }
-std::map<std::string, Location>	Server::get_location(){
-	return this->_location;
+std::list<Location>	const& Server::get_locations() const {
+	return this->_locations;
 }
-
+std::map<std::string, Location&> const& Server::get_aliases() const {
+	return _aliases;
+}
 std::vector<Socket>& Server::get_sockets() {
 	return _sockets;
 }
 
 //--------------- Output debug ---------------//
-std::ostream& operator<<( std::ostream& o, Server & S){
+std::ostream& operator<<( std::ostream& o, Server const& S){
 	std::vector<std::string> names = S.get_name();
 	o << "Name : ";
 	for (std::vector< std::string >::iterator it = names.begin(); it != names.end(); it++){
@@ -125,23 +153,20 @@ std::ostream& operator<<( std::ostream& o, Server & S){
 		if (it + 1 != port.end())
 			o << ", ";
 	}
-	o << "\n" << "Request size : " << S.get_request_size().first << S.get_request_size().second << "\nError page :\n";
+	o << "\n" << "Request size : " << S.get_request_size().first << S.get_request_size().second << "\n";
+	o << "Error page :\n";
 	std::map<unsigned int, std::string>	errors_page = S.get_error_page();
 	for (std::map<unsigned int, std::string>::iterator it = errors_page.begin(); it != errors_page.end(); it++){
-		o << "	" << *it;
+		o << "	" << *it << "\n";
 	}
-	std::map<std::string, Location> location_map = S.get_location(); 
-	for (std::map<std::string, Location>::iterator it = location_map.begin(); it != location_map.end(); it++){
-		o << "\n	Location : " << (*it).first << "\n		";
-		std::string methods[3] = {"GET", "POST", "DELETE"};
-		for (int i = 0; i < 3; i++){
-			o << methods[i] << " : " << std::boolalpha << (*it).second.get_limit_except()[methods[i]] << " ";
-		}
-		o << "\n		return : " << (*it).second.get_return().first << " " << (*it).second.get_return().second << "\n";
-		o << "		alias :";
-		for (size_t i = 0; i < (*it).second.get_alias().size(); i++){
-			o << " " << (*it).second.get_alias()[i];
-		}
+	std::list<Location> const& location_vec = S.get_locations();
+	o << "Locations(" << location_vec.size() << ") :\n";
+	for (std::list<Location>::const_iterator it = location_vec.begin(); it != location_vec.end(); ++it){
+		o << *it;
+	}
+	o << "aliases :\n";
+	for (std::map<std::string, Location&>::const_iterator it = S.get_aliases().begin(); it != S.get_aliases().end(); ++it){
+		o << "	" << (*it).first << " ~ " << (*it).second.get_name() << "\n";
 	}
 	o << std::endl;
 	return o;
