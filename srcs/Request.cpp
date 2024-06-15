@@ -254,6 +254,8 @@ Location const* Request::find_location(string const& search) const
 
 void Request::next_search_string(string& search) const
 {
+	if (search.empty())
+		return ;
 	size_t slash_pos = search.size() - 1;
 	while (slash_pos && search[slash_pos] == '/')
 		--slash_pos;
@@ -284,6 +286,26 @@ string Request::getFile(Location const* location) const
 		return _uri.substr(1);
 	return location->get_root() + _uri;
 }
+
+/* alternative to try for ^ !
+
+	string file(location->get_root());
+	if (_is_index)
+	{
+		// return default (or autoindex?)
+		// what if no default and no autoindex ?
+		// loop over get_index until one works
+
+		file.append("/" + location->get_index()[0]);
+	}
+	else
+	{
+		file.append(_uri);
+	}
+	file.erase(0, file.find_first_not_of('/'));
+	file.erase(file.find_last_not_of('/') + 1);
+	return file;
+*/
 
 void Request::getline_crlf(std::istringstream& iss, string& buf) const
 {

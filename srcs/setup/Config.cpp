@@ -3,7 +3,7 @@
 #include "Location.hpp"
 
 //--------------- Orthodox Canonical Form ---------------//
-Config::Config( std::string filename ) : _brackets(0), _fd(filename){
+Config::Config( std::string filename ) : _brackets(0), _fd(filename.c_str()){
 	if (!_fd)
 		throw Config::Error("Open input file failed.");
 	this->_example_server_bloc.push_back("server");

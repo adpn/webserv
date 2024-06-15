@@ -7,7 +7,7 @@
 # include <list>
 # include <iterator>
 
-# include "Server.hpp"
+class Server;
 
 # define DELIMITERS	" 	"
 # define NOTFOUND	std::string::npos
