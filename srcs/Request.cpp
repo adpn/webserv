@@ -88,6 +88,7 @@ bool Request::executeRequest(int fd)
 void Request::handleError(Response& response, int status) const
 {
 	response.setStatus(status);
+	response.setHeader("Content-Type: text/html");
 	// provide appropriate error page?
 	std::ostringstream oss;
 	oss << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n";
@@ -106,8 +107,6 @@ void Request::handleGet(Response& response)
 	string file;
 
 	response.setStatus(200);
-	response.setHeader("Content-Type: text/html"); //if .css should be text/css
-
 	location = getLocation();
 	if (!location)
 		handleError(response, 404);
@@ -120,6 +119,8 @@ void Request::handleGet(Response& response)
 }
 
 void Request::handleAutoindex(Response &response, Location const* location) const {
+	response.setHeader("Content-Type: text/html");
+
 	std::ostringstream oss;
 	oss << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n";
 	oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";

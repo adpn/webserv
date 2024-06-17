@@ -34,6 +34,7 @@ class Response
 		void setCustomReason(string const& reason);
 		bool setHeader(string const& header);
 		void setBody(string const& body);
+		std::string findContentType(std::string extension);
 		bool fileToBody(string const& file);
 
 		ssize_t sendResponse(int fd);
