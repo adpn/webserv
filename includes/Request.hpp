@@ -40,7 +40,7 @@ class Request
 		void handlePost(Response& response) const;
 		void handleDelete(Response& response) const;
 		void handleError(Response& response, int status) const;
-		void handleAutoindex(Response &response) const;
+		void handleAutoindex(Response &response, Location const* location) const;
 
 		Location const* find_location(string const& search) const;
 		void			next_search_string(string& search) const;
