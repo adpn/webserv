@@ -123,7 +123,7 @@ std::vector<std::string> const& Location::get_index() const {
 std::list<std::string> const& Location::get_aliases() const {
 	return this->_aliases;
 }
-std::string const&	Location::get_root(bool print) const {
+std::string Location::get_root(bool print) const {
 	if (print)
 		return _root;
 

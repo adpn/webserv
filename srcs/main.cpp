@@ -1,4 +1,5 @@
 #include <iostream> // cout
+#include <unistd.h>
 #include <vector>
 #include <Config.hpp>
 #include <Router.hpp>
@@ -18,7 +19,11 @@ int main(int argc, char **argv)
 	Config config(conf_path);
 	Router router;
 	router.initServerFds(config.get_servers());
-
+	
+	if (chdir("website")) {
+		std::cout << "Error: can't access website files" << std::endl;
+		return 1;
+	}
 	std::cout << "Main loop start:" << std::endl;
 	while (true)
 	{
