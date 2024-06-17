@@ -60,11 +60,11 @@ bool Request::manageRequests(int fd, Server const& server, char const* buffer, s
 	Request& instance = (*it).second;
 	instance.parse(package);
 //debug
-//std::cout << ">> parsed a packet[" << fd << "], " << instance.content_left << "b left\n";
+std::cout << ">> parsed a packet[" << fd << "], " << instance._content_left << "b left\n";
 	if (!instance.isFin())
 		return false;
 //debug
-//std::cout << ">> finished a packet[" << fd << "]:\n"; instance.print();
+std::cout << ">> finished a packet[" << fd << "]:\n"; instance.print(false);
 	return true;
 }
 
@@ -111,9 +111,9 @@ void Request::handleGet(Response& response)
 	location = getLocation();
 	if (!location)
 		handleError(response, 404);
-	else if (!(*location).is_allowed(_method))
+	else if (!location->is_allowed(_method))
 		handleError(response, 405);
-	else if ((*location).get_autoindex())
+	else if (location->get_autoindex())
 		handleAutoindex(response);
 	else if (!response.fileToBody(getFile(location)))
 		handleError(response, 404);
@@ -221,16 +221,22 @@ Location const* Request::getLocation()
 		ret = find_location(search);
 	}
 // debug
-// std::cout << "location search for " << _uri << ": found ";
-// if (ret)
-// {
-// std::cout << ret->get_name();
-// if (_is_index)
+std::cout << "location search for " << _uri << ": found ";
+if (ret)
+{
+std::cout << ret->get_name();
+if (_is_index)
 // std::cout << " (index)";
+std::cout << "\n	index:\n";
+{
+std::vector<Entry> vec(ret->create_entries());
+for (size_t i = 0; i < vec.size(); ++i)
+	std::cout << "	" << vec[i].name << "\n";
+}
 // std::cout << "\n";
-// }
-// else
-// std::cout << "NULL\n";
+}
+else
+std::cout << "NULL\n";
 // debug end
 	return ret;
 }

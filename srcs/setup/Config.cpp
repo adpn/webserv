@@ -50,7 +50,7 @@ void	add_location_directive(Location &LocationBlock, std::string loc_dir){
 
 	std::vector< std::string > VectorDirective = tokenizer(loc_dir, DELIMITERS);
 	if (VectorDirective.size() < 1)
-		throw Config::Error("Directive format not respected.");
+		throw Config::Error("Directive format not respected (" + LocationBlock.get_name() + ")");
 	for (int i = 0; i < 6; i++){
 		if (DirectivesName[i] == VectorDirective[0]){
 			VectorDirective.erase(VectorDirective.begin());
@@ -58,7 +58,7 @@ void	add_location_directive(Location &LocationBlock, std::string loc_dir){
 			return ;
 		}
 	}
-	throw Config::Error("Directive format not respected.");
+	throw Config::Error("Directive format not respected (" + LocationBlock.get_name() + ")");
 }
 void	add_location(Server & server, std::string RawStr){
 	//	keep location path
@@ -67,7 +67,7 @@ void	add_location(Server & server, std::string RawStr){
 	size_t 						FirstBracket = RawStr.find_first_of("{");
 	std::vector<std::string>	VectorDirectives = tokenizer(RawStr.substr(0, FirstBracket), DELIMITERS);
 
-	if (VectorDirectives.size() != 2 || VectorDirectives.front() != "location")
+	if (VectorDirectives.size() != 2 || VectorDirectives.front() != "location" || VectorDirectives[1].empty())
 		throw Config::Error("Directive format not respected.");
 	LocationBlock.set_name(VectorDirectives[1]);
 	RawStr.erase(0, FirstBracket + 1);

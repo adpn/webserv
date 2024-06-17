@@ -114,8 +114,8 @@ int Router::managePollin(size_t fdIndex)
 		ssize_t bytesReceived = recv(_fds[fdIndex].fd, buffer, sizeof(buffer) - 1, 0);
 		if (bytesReceived > 0) {
 			buffer[bytesReceived] = '\0';
-			std::cout << "Received from client: " << std::endl;
-			std::cout << buffer << std::endl;
+			// std::cout << "Received from client: " << std::endl;
+			// std::cout << buffer << std::endl;
 			Request::manageRequests(_fds[fdIndex].fd, getServerWithClientFd(_fds[fdIndex].fd), buffer, bytesReceived);
 
 			// manage client

@@ -123,10 +123,18 @@ std::vector<std::string> const& Location::get_index() const {
 std::list<std::string> const& Location::get_aliases() const {
 	return this->_aliases;
 }
-std::string Location::get_root(bool print) const {
-	if (_root.empty() && !print)
-		return _server.get_generic_root();
-	return _root;
+// returns a path without any leading or trailing '/'
+std::string	Location::get_root(bool print) const {
+	if (print)
+		return _root;
+	string ret(_root);
+	if (_root.empty())
+		ret = _server.get_generic_root();
+	if (ret.empty() || ret == "/")
+		return ".";
+	ret.erase(0, ret.find_first_not_of('/'));
+	ret.erase(ret.find_last_not_of('/') + 1);
+	return ret;
 }
 
 
