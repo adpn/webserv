@@ -113,6 +113,8 @@ void Request::handleGet(Response& response)
 		handleError(response, 404);
 	else if (!(*location).is_allowed(_method))
 		handleError(response, 405);
+	else if ((*location).get_autoindex())
+		handleAutoindex(response);
 	else if (!response.fileToBody(getFile(location)))
 		handleError(response, 404);
 }
@@ -122,7 +124,7 @@ void Request::handleAutoindex(Response &response) const {
 	oss << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n";
 	oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
 	oss << "    <link rel=\"icon\" href=\"/favicon.ico\" />\n";
-	oss << "<link rel=\"stylesheet\" href=\"coucou.css\">";
+	// oss << "<link rel=\"stylesheet\" href=\"coucou.css\">";
 	oss << "<title>Index of " << _uri << "</title>\n  </head>";
 	oss << "<body>\n";
 	oss << "<h2>Index of " << _uri << "</h2>\n";
