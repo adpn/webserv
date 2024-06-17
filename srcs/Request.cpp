@@ -108,6 +108,7 @@ bool Request::executeRequest(int fd)
 void Request::handleError(Response& response, int status) const
 {
 	response.setStatus(status);
+	response.setHeader("Content-Type: text/html");
 	// provide appropriate error page?
 	std::ostringstream oss;
 	oss << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n";
@@ -125,20 +126,20 @@ void Request::handleGet(Response& response)
 	string file;
 
 	response.setStatus(200);
-	response.setHeader("Content-Type: text/html"); //if .css should be text/css
-
 	location = getLocation();
 	if (!location)
 		handleError(response, 404);
 	else if (!location->is_allowed(_method))
 		handleError(response, 405);
 	else if (location->get_autoindex() && _uri.back() == '/')
-		handleAutoindex(response);
+		handleAutoindex(response, location);
 	else if (!response.fileToBody(getFile(location)))
 		handleError(response, 404);
 }
 
-void Request::handleAutoindex(Response &response) const {
+void Request::handleAutoindex(Response &response, Location const* location) const {
+	response.setHeader("Content-Type: text/html");
+
 	std::ostringstream oss;
 	oss << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n";
 	oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
@@ -147,10 +148,7 @@ void Request::handleAutoindex(Response &response) const {
 	oss << "<title>Index of " << _uri << "</title>\n  </head>";
 	oss << "<body>\n";
 	oss << "<h2>Index of " << _uri << "</h2>\n";
-	std::vector<Entry> entries;
-	entries.push_back(Entry("images", DT_DIR));
-	entries.push_back(Entry("fuckbert", DT_DIR));
-	entries.push_back(Entry("helloDenis.html", 0));
+	std::vector<Entry> entries = location->create_entries(_uri);
 
 	for (size_t i = 0; i < entries.size(); i++) {
 		oss << "<a href=\"./" << entries[i].name;
@@ -263,7 +261,7 @@ if (_is_index)
 // std::cout << " (index)";
 {
 std::cout << "\n	autoindex:";
-std::vector<Entry> vec(ret->create_entries());
+std::vector<Entry> vec(ret->create_entries(_uri));
 for (size_t i = 0; i < vec.size(); ++i)
 	std::cout << " " << vec[i].name;
 }

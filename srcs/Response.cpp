@@ -102,6 +102,43 @@ void Response::setBody(string const& body)
 	_body = body;
 }
 
+std::string Response::findContentType(std::string file) {
+	size_t dotIndex = file.find_last_of(".");
+	if (dotIndex == std::string::npos)
+		return "application/octet-stream";
+
+	string extension = file.substr(dotIndex + 1);
+
+	std::pair<std::string, std::string> content_types[] = {
+        std::pair<std::string, std::string>("html", "text/html"),
+        std::pair<std::string, std::string>("css", "text/css"),
+        std::pair<std::string, std::string>("js", "application/javascript"),
+        std::pair<std::string, std::string>("json", "application/json"),
+        std::pair<std::string, std::string>("xml", "application/xml"),
+        std::pair<std::string, std::string>("jpg", "image/jpeg"),
+        std::pair<std::string, std::string>("jpeg", "image/jpeg"),
+        std::pair<std::string, std::string>("png", "image/png"),
+        std::pair<std::string, std::string>("gif", "image/gif"),
+        std::pair<std::string, std::string>("svg", "image/svg+xml"),
+        std::pair<std::string, std::string>("ico", "image/x-icon"),
+        std::pair<std::string, std::string>("pdf", "application/pdf"),
+        std::pair<std::string, std::string>("zip", "application/zip"),
+        std::pair<std::string, std::string>("txt", "text/plain"),
+        std::pair<std::string, std::string>("csv", "text/csv"),
+        std::pair<std::string, std::string>("mp3", "audio/mpeg"),
+        std::pair<std::string, std::string>("mp4", "video/mp4"),
+        std::pair<std::string, std::string>("webm", "video/webm"),
+        std::pair<std::string, std::string>("ogg", "audio/ogg"),
+        std::pair<std::string, std::string>("wav", "audio/wav"),
+		std::pair<std::string, std::string>("", "")};
+
+	for (size_t i = 0; !content_types[i].first.empty(); i++) {
+		if (extension == content_types[i].first)
+			return content_types[i].first;
+	}
+	return "application/octet-stream";
+}
+
 bool Response::fileToBody(string const& file)
 {
 // std::cout << "FILE: trying to open the file " << file << " .. "; // debug
@@ -115,6 +152,8 @@ bool Response::fileToBody(string const& file)
 	oss << ifs.rdbuf();
 	_body = oss.str();
 // std::cout << "succeeded\n"; // debug
+
+	setHeader("Content-Type: "+ findContentType(file));
 	return true;
 }
 
