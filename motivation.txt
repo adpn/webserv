@@ -3,3 +3,18 @@ Het kan me niet schelen.
 pleur op!
 augustin come pls.
 WE ARE STILL WAITING FOR THE PARSING TO BE DONE !!! DENIS !!!!
+
+
+
+TO DO LIST:
+- Upload files, manage in configuration files the toggle and path
+- CGI, manage extension with right code using a map, don't forget to put a timeout
+- Autoindex
+- Delete, in html page or using manually ?
+- Use error pages if provided in location
+- Server name ? Use case ?
+- Limit client body size ?? (Sets the maximum allowed size of the client request body. If the size in a request exceeds the configured value, the 413 (Request Entity Too Large) error is returned to the client. Please be aware that browsers cannot correctly display this error. Setting size to 0 disables checking of client request body size.)
+- Define a HTTP redirection (using return in conf file)
+- Test with siege
+- Try and catch in the main
+- Create testing files
