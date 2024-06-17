@@ -19,12 +19,11 @@ int main(int argc, char **argv)
 	Config config(conf_path);
 	Router router;
 	router.initServerFds(config.get_servers());
-
+	
 	if (chdir("website")) {
-		std::cout << "ERROR" << std::endl;
+		std::cout << "Error: can't access website files" << std::endl;
 		return 1;
 	}
-
 	std::cout << "Main loop start:" << std::endl;
 	while (true)
 	{
