@@ -140,7 +140,7 @@ void	Config::add_server(std::string server_block){
 	size_t	stop_location;
 	Server	server;	// create a new server
 
-	for (int i = 0; server_block[i]; i++){
+	while (server_block.size()){
 		next_sep = server_block.find_first_of(";{}");
 		switch (server_block[next_sep]){
 			case ';':	// directive
@@ -166,6 +166,8 @@ void	Config::add_server(std::string server_block){
 					this->_servers.push_back(server);
 					return ;
 				}
+				else
+					throw Config::Error("Server not approved");
 
 		}
 	}
