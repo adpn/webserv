@@ -129,7 +129,8 @@ bool	Config::server_approved(Server const& server){
 		for (size_t j = 0; j < open_ports.size(); j++){
 			for (size_t m = 0; m < nw_ports.size(); m++){
 				if (open_ports[j] == nw_ports[m])
-					return false;
+					std::cout << "/!\\ WARNING double port" << std::endl;		
+					// return false;
 			}
 		}
 	}
