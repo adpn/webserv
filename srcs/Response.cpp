@@ -104,7 +104,7 @@ void Response::setBody(string const& body)
 
 bool Response::fileToBody(string const& file)
 {
-// std::cout << "trying to open the file " << file << " .. "; // debug
+// std::cout << "FILE: trying to open the file " << file << " .. "; // debug
 	std::ifstream ifs(file.c_str());
 	if (!ifs.good())
 	{

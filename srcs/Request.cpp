@@ -27,6 +27,26 @@ bool Request::isValid() const
 bool Request::isFin() const
 	{ return (_fin_headers && _content_left <= 0); }
 
+bool Request::isGoodSize() const
+{
+	long max = _server.get_request_size().first;
+
+	if (!max || _headers.find("Content-Length") == _headers.end())
+		return true;
+
+	switch (_server.get_request_size().second)
+	{
+		case 'K':
+			max * 1000;
+			break;
+		case 'M':
+			max * 1000000;
+	}
+	if (_content_left > max)
+		return false;
+	return true;
+}
+
 int Request::getFd() const
 	{ return _fd; }
 
@@ -101,7 +121,6 @@ void Request::handleError(Response& response, int status) const
 
 void Request::handleGet(Response& response)
 {
-	// use try catch maybe?
 	Location const* location;
 	string file;
 
@@ -113,7 +132,7 @@ void Request::handleGet(Response& response)
 		handleError(response, 404);
 	else if (!location->is_allowed(_method))
 		handleError(response, 405);
-	else if (location->get_autoindex())
+	else if (location->get_autoindex() && _uri.back() == '/')
 		handleAutoindex(response);
 	else if (!response.fileToBody(getFile(location)))
 		handleError(response, 404);
@@ -188,23 +207,38 @@ void Request::handle()
 {
 	Response response;
 	char expr = 0;
-	if (_valid)
-		expr = _method[0];
-	switch (expr)
+
+	try
 	{
-		case 'G':
-			handleGet(response);
-			break;
-		case 'P':
-			handlePost(response);
-			break;
-		case 'D':
-			handleDelete(response);
-			break;
-		default:
-			handleError(response, 400);
+		if (preHandleChecks(response))
+			expr = _method[0];
+
+		switch (expr)
+		{
+			case 'G':
+				handleGet(response);
+				break;
+			case 'P':
+				handlePost(response);
+				break;
+			case 'D':
+				handleDelete(response);
+		}
 	}
+	catch (...) { handleError(response, 500); }
 	response.sendResponse(_fd);
+}
+
+// handleError() if bad
+bool Request::preHandleChecks(Response& response) const
+{
+	if (!isGoodSize())
+		handleError(response, 413);
+	else if (!_valid)
+		handleError(response, 400);
+	else
+		return true;
+	return false;
 }
 
 // returns NULL if location not found
@@ -285,35 +319,13 @@ string Request::getFile(Location const* location) const
 		// what if no default and no autoindex ?
 		// loop over get_index until one works
 
-		if (location->get_root() == "/")
-			return location->get_index()[0];
-		return location->get_root() + "/" + location->get_index()[0];
+		if (_uri.back() == '/')
+			return "." + _uri + location->get_index()[0];
+		else
+			return "." + _uri + "/" + location->get_index()[0];
 	}
-
-	if (location->get_root() == "/")
-		return _uri.substr(1);
 	return location->get_root() + _uri;
 }
-
-/* alternative to try for ^ !
-
-	string file(location->get_root());
-	if (_is_index)
-	{
-		// return default (or autoindex?)
-		// what if no default and no autoindex ?
-		// loop over get_index until one works
-
-		file.append("/" + location->get_index()[0]);
-	}
-	else
-	{
-		file.append(_uri);
-	}
-	file.erase(0, file.find_first_not_of('/'));
-	file.erase(file.find_last_not_of('/') + 1);
-	return file;
-*/
 
 void Request::getline_crlf(std::istringstream& iss, string& buf) const
 {
@@ -333,6 +345,9 @@ void Request::getline_crlf(std::istringstream& iss, string& buf) const
 // a 'Host' header is required
 bool Request::parse(string const& package)
 {
+	if (!isGoodSize())
+		return false;
+
 	if (_fin_headers && _content_left)
 		return parseBody(package);
 
@@ -480,6 +495,10 @@ bool Request::parseBody(string const& body)
 bool Request::checkHeaders() const
 {
 	if (_headers.find("Host") == _headers.end())
+		return false;
+	if (_headers.find("Content-Length") == _headers.end())
+		return false;
+	if (!isGoodSize())
 		return false;
 	return true;
 }

@@ -13,17 +13,17 @@ class Request
 {
 		static std::map<int, Request> _requests;
 
-		bool _valid;
-		bool _fin_headers;
-		long _content_left;
-		int _fd;
-		string _method;
-		string _uri;
-		bool _is_index;
-		string _version;
-		string _body;
+		bool					_valid;
+		bool					_fin_headers;
+		long					_content_left;
+		int						_fd;
+		string					_method;
+		string					_uri;
+		bool					_is_index;
+		string					_version;
+		string					_body;
 		std::map<string, string> _headers;
-		Server const& _server;
+		Server const&			_server;
 
 		// handle errors of these with (mandatory default) error pages
 		bool parseMethod(string const& method);
@@ -40,7 +40,8 @@ class Request
 		void handlePost(Response& response) const;
 		void handleDelete(Response& response) const;
 		void handleError(Response& response, int status) const;
-		void handleAutoindex(Response &response) const;
+		void handleAutoindex(Response& response) const;
+		bool preHandleChecks(Response& response) const;
 
 		Location const* find_location(string const& search) const;
 		void			next_search_string(string& search) const;
@@ -55,6 +56,7 @@ class Request
 
 		bool isValid() const;
 		bool isFin() const;
+		bool isGoodSize() const;
 		int getFd() const;
 		string const& getMethod() const;
 		string const& getUri() const;
