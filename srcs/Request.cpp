@@ -227,13 +227,13 @@ if (ret)
 std::cout << ret->get_name();
 if (_is_index)
 // std::cout << " (index)";
-std::cout << "\n	index:\n";
 {
+std::cout << "\n	autoindex:";
 std::vector<Entry> vec(ret->create_entries());
 for (size_t i = 0; i < vec.size(); ++i)
-	std::cout << "	" << vec[i].name << "\n";
+	std::cout << " " << vec[i].name;
 }
-// std::cout << "\n";
+std::cout << "\n";
 }
 else
 std::cout << "NULL\n";
