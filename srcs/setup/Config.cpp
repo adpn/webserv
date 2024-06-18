@@ -34,24 +34,26 @@ const char *Config::Error::what() const throw(){
 
 //--------------- Location ---------------//
 void	add_location_directive(Location &LocationBlock, std::string loc_dir){
-	std::string	DirectivesName[6] = {"limit_except",
+	std::string	DirectivesName[7] = {"limit_except",
 										"return",
 										"alias",
 										"autoindex",
 										"index",
-										"root"};
-	void (Location::*DirectivesFonction[6])
+										"root",
+										"upload_path"};
+	void (Location::*DirectivesFonction[7])
 		(std::vector< std::string > rawString) = {&Location::set_limit_except,
 											&Location::set_return,
 											&Location::set_alias,
 											&Location::set_autoindex,
 											&Location::set_index,
-											&Location::set_root};
+											&Location::set_root,
+											&Location::set_upload_path};
 
 	std::vector< std::string > VectorDirective = tokenizer(loc_dir, DELIMITERS);
 	if (VectorDirective.size() < 1)
 		throw Config::Error("Directive format not respected (" + LocationBlock.get_name() + ")");
-	for (int i = 0; i < 6; i++){
+	for (int i = 0; i < 7; i++){
 		if (DirectivesName[i] == VectorDirective[0]){
 			VectorDirective.erase(VectorDirective.begin());
 			(LocationBlock.*DirectivesFonction[i])(VectorDirective);

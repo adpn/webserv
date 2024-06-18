@@ -33,6 +33,7 @@ class Location {
 		std::map<std::string, bool>				_limit_except;
 		std::pair<unsigned int, std::string>	_return;
 		std::string								_root;
+		std::string								_upload_path;
 		bool									_autoindex;
 		std::vector<std::string>				_index;
 		std::list<std::string>					_aliases;
@@ -53,6 +54,7 @@ class Location {
 		void	set_root(std::vector< std::string > rawString);
 		void	set_autoindex(std::vector< std::string > rawString);
 		void	set_index(std::vector< std::string > rawString);
+		void	set_upload_path(std::vector< std::string > rawString);
 
 		//--- Getters ---//
 		Server const&								get_server() const;

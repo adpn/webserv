@@ -98,6 +98,11 @@ void	Location::set_root(std::vector< std::string > s){
 		throw Location::Error("Directive format not respected.");
 	this->_root = s.front();
 }
+void	Location::set_upload_path(std::vector< std::string > s){
+	if (s.size() != 1)
+		throw Location::Error("Directive format not respected.");
+	this->_upload_path = s.front();
+}
 
 
 
