@@ -33,15 +33,15 @@ class Request
 		bool loopHeaders(std::istringstream& iss);
 		bool parseHeader(string const& header);
 		void getline_crlf(std::istringstream& iss, string& buf) const;
-		bool checkHeaders() const;
+		bool checkHeaders();
 		void manageSpecialHeader(std::pair<string, string> const& pair);
 
 		void handleGet(Response& response);
-		void handlePost(Response& response) const;
-		void handleDelete(Response& response) const;
-		void handleError(Response& response, int status) const;
+		void handlePost(Response& response);
+		void handleDelete(Response& response);
+		void handleError(Response& response, int status = 0);
 		void handleAutoindex(Response& response, Location const* location) const;
-		bool preHandleChecks(Response& response) const;
+		bool preHandleChecks(Response& response);
 
 		Location const* find_location(string const& search) const;
 		void			next_search_string(string& search) const;
@@ -56,9 +56,10 @@ class Request
 
 		bool isValid() const;
 		bool isFin() const;
-		bool isGoodSize() const;
+		bool isGoodSize();
 		int getFd() const;
 		string const& getMethod() const;
+		int			  getStatus() const;
 		string const& getUri() const;
 		string const& getVersion() const;
 		string const& getBody() const;

@@ -9,7 +9,7 @@
 /* CONSTRUCTORS */
 
 Request::Request(int fd, Server const& server)
-	: _status(400), _fin_headers(false), _content_left(0), _fd(fd), _is_index(false), _server(server) {}
+	: _status(0), _fin_headers(false), _content_left(0), _fd(fd), _is_index(false), _server(server) {}
 
 Request::Request(Request const& src)
 	: _status(src._status), _fin_headers(src._fin_headers), _content_left(src._content_left),
@@ -25,14 +25,21 @@ bool Request::isValid() const
 	{ return (200 <= _status && _status <= 399); }
 
 bool Request::isFin() const
-	{ return (_fin_headers && _content_left <= 0); }
+	{ return ((_status && !isValid()) || (_status && _fin_headers && _content_left <= 0)); }
 
-bool Request::isGoodSize() const
+// sets _status if bad
+bool Request::isGoodSize()
 {
 	long max = _server.get_request_size().first;
 
-	if (!max || _headers.find("Content-Length") == _headers.end())
+	if (!max || _body.empty())
 		return true;
+	// except for chunked requests .....
+	if (_headers.find("Content-Length") == _headers.end())
+	{
+		_status = 411;
+		return false;
+	}
 
 	switch (_server.get_request_size().second)
 	{
@@ -43,7 +50,10 @@ bool Request::isGoodSize() const
 			max *= 1000000;
 	}
 	if (_content_left > max)
+	{
+		_status = 413;
 		return false;
+	}
 	return true;
 }
 
@@ -52,6 +62,9 @@ int Request::getFd() const
 
 string const& Request::getMethod() const
 	{ return _method; }
+
+int Request::getStatus() const
+	{ return _status; }
 
 string const& Request::getUri() const
 	{ return _uri; }
@@ -105,9 +118,13 @@ bool Request::executeRequest(int fd)
 
 /* MEMBERS */
 
-void Request::handleError(Response& response, int status) const
+void Request::handleError(Response& response, int status)
 {
-	response.setStatus(status);
+	if (!status && !_status)
+		_status = 500;
+	else if (status)
+		_status = status;
+	response.setStatus(_status);
 	response.setHeader("Content-Type: text/html");
 	// provide appropriate error page?
 	std::ostringstream oss;
@@ -115,7 +132,7 @@ void Request::handleError(Response& response, int status) const
 	oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
 	oss << "    <link rel=\"icon\" href=\"/favicon.ico\" />\n	<title></title>\n    <!-- <style>\n";
 	oss << "        /* Add your CSS styles here */\n    </style> -->\n</head>\n<body>\n    <br><b>ERROR: ";
-	oss << status << " " << response.getReason() << "\n</b></body>\n</html>\n";
+	oss << _status << " " << response.getReason() << "\n</b></body>\n</html>\n";
 	response.setBody(oss.str());
 	// alter response further?
 }
@@ -125,7 +142,7 @@ void Request::handleGet(Response& response)
 	Location const* location;
 	string file;
 
-	response.setStatus(200);
+	response.setStatus(_status);
 	location = getLocation();
 	if (!location)
 		handleError(response, 404);
@@ -162,7 +179,7 @@ void Request::handleAutoindex(Response &response, Location const* location) cons
 	response.setBody(oss.str());
 }
 
-void Request::handlePost(Response& response) const
+void Request::handlePost(Response& response)
 {
 	(void)response;
 	if (/* Method not in location */!true)
@@ -187,7 +204,7 @@ void Request::handlePost(Response& response) const
 	*/
 }
 
-void Request::handleDelete(Response& response) const
+void Request::handleDelete(Response& response)
 {
 	if (/* Method not in location */!true)
 		handleError(response, 405);
@@ -232,12 +249,12 @@ void Request::handle()
 }
 
 // handleError() if bad
-bool Request::preHandleChecks(Response& response) const
+bool Request::preHandleChecks(Response& response)
 {
-	if (!isGoodSize())
-		handleError(response, 413);
-	else if (!isValid())
-		handleError(response, 400);
+	if (!isValid())
+		handleError(response);
+	else if (!isGoodSize())
+		handleError(response);
 	else
 		return true;
 	return false;
@@ -251,6 +268,7 @@ Location const* Request::getLocation()
 	Location const* ret = find_location(search);
 	if (ret)
 		_is_index = true;
+	// set _status if not found? (there should always be / right?)
 	while (!ret && !search.empty())
 	{
 		next_search_string(search);
@@ -262,13 +280,13 @@ if (ret)
 {
 std::cout << ret->get_name();
 if (_is_index)
-// std::cout << " (index)";
-{
-std::cout << "\n	autoindex:";
-std::vector<Entry> vec(ret->create_entries(_uri));
-for (size_t i = 0; i < vec.size(); ++i)
-	std::cout << " " << vec[i].name;
-}
+std::cout << " (index)";
+// {
+// std::cout << "\n	autoindex:";
+// std::vector<Entry> vec(ret->create_entries(_uri));
+// for (size_t i = 0; i < vec.size(); ++i)
+// 	std::cout << " " << vec[i].name;
+// }
 std::cout << "\n";
 }
 else
@@ -315,12 +333,14 @@ void Request::next_search_string(string& search) const
 // returns empty string if file not found
 string Request::getFile(Location const* location) const
 {
+	// do 'access' checks here? existence and permissions
 	if (_is_index)
 	{
 		// return default (or autoindex?)
 		// what if no default and no autoindex ?
 		// loop over get_index until one works
-
+		if (location->get_index().empty())
+			return string();
 		if (_uri.back() == '/')
 			return "." + _uri + location->get_index()[0];
 		else
@@ -347,15 +367,12 @@ void Request::getline_crlf(std::istringstream& iss, string& buf) const
 // a 'Host' header is required
 bool Request::parse(string const& package)
 {
-	if (!isGoodSize())
-		return false;
-
 	if (_fin_headers && _content_left)
 		return parseBody(package);
 
 // maybe add more iss bit checks in here?
 	std::istringstream iss(package);
-	if (_method.empty())
+	if (!_status && _method.empty())
 	{
 		string token;
 		std::getline(iss, token, ' ');
@@ -371,7 +388,7 @@ bool Request::parse(string const& package)
 			return false;
 			// what is this check ?
 	}
-	if (!_fin_headers)
+	if (!_status && !_fin_headers)
 	{
 		if (!loopHeaders(iss))
 			return false;
@@ -393,13 +410,14 @@ bool Request::parseMethod(string const& method)
 	string	valid_headers[] = {"GET", "POST", "DELETE"};
 	int		size = 3;
 
-	if (method.size() < 3)
-		return false;
 	for (--size; size >= 0; --size)
 		if (!method.compare(valid_headers[size]))
 			break ;
 	if (size < 0)
+	{
+		_status = 405;
 		return false;
+	}
 	_method = method;
 	return true;
 }
@@ -407,10 +425,11 @@ bool Request::parseMethod(string const& method)
 // basic parsing, don't allow general "*" (n/a for GET, POST or DELETE)
 bool Request::parseUri(string const& uri)
 {
-	if (uri.empty())
+	if (uri.empty() || uri[0] != '/')
+	{
+		_status = 400;
 		return false;
-	if (uri.compare(0, 7, "http://") && uri[0] != '/') //wtf is that supposed to do ???
-		return false;
+	}
 	_uri = uri;
 	return true;
 }
@@ -419,7 +438,10 @@ bool Request::parseUri(string const& uri)
 bool Request::parseVersion(string const& version)
 {
 	if (version.compare(0, 5, "HTTP/"))
+	{
+		_status = 400;
 		return false;
+	}
 	_version = version;
 	return true;
 }
@@ -486,11 +508,6 @@ bool Request::parseBody(string const& body)
 		return true;
 	if (_method[0] != 'P' || !isValid())
 		return false;
-	if (_headers.find("Content-Length") == _headers.end())
-	{
-		_status = 411;
-		return false;
-	}
 // check if a request is finished with content-length
 // (or an empty chunk at the end IF it is chunked (chunked in Transfer-Encoding header))
 	if (isFin())
@@ -498,16 +515,15 @@ bool Request::parseBody(string const& body)
 	_body.append(body);
 	_content_left -= body.size();
 	return true;
-// complain if method is post but there's no Content-Length? (411 Length Required)
 }
 
-bool Request::checkHeaders() const
+bool Request::checkHeaders()
 {
 	if (_headers.find("Host") == _headers.end())
-		return false;
-	if (!isGoodSize())
-		return false;
-	return true;
+		_status = 400;
+	else
+		return true;
+	return false;
 }
 
 void Request::manageSpecialHeader(std::pair<string, string> const& pair)
@@ -518,7 +534,7 @@ void Request::manageSpecialHeader(std::pair<string, string> const& pair)
 	// 		boundary = pair.second.substr(pair.second.find("boundary") + 9, string::npos);
 	// 		// maybe replace the string::npos with a check for delimiters?
 	// }
-	if (!pair.first.compare("Content-Length"))
+	if (_method[0] == 'P' && !pair.first.compare("Content-Length"))
 		_content_left = atol(pair.second.c_str());
 }
 

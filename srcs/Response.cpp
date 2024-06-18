@@ -12,7 +12,7 @@ Response::Response()
 	{ setHDate(); }
 
 Response::Response(Request const& request)
-	: _version(request.getVersion()), _status(500), _reason("Internal Server Error")
+	: _version(request.getVersion()), _status(request.getStatus()), _reason("Internal Server Error")
 	{ setHDate(); }
 
 Response::Response(Response const& src)
