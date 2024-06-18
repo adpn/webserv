@@ -3,10 +3,10 @@
 
 # include <sys/socket.h>
 # include <netinet/in.h>
-# include <unistd.h> 
+# include <unistd.h>
 # include <exception>
 
-# define MAX_CLIENTS 2000 
+# define MAX_CLIENTS 2000
 
 class Socket {
 private:
@@ -22,15 +22,15 @@ public:
 
 	operator int() const;
 
-	class BoundFailException : std::exception {
+	class BoundFailException : public std::exception {
 	public:
 		const char* what() const throw();
 	};
-	class ListenFailException : std::exception {
+	class ListenFailException : public std::exception {
 	public:
 		const char* what() const throw();
 	};
-	class SocketFailException : std::exception {
+	class SocketFailException : public std::exception {
 	public:
 		const char* what() const throw();
 	};

@@ -8,13 +8,13 @@
 
 /* CONSTRUCTORS */
 
-Request::Request(int fd, Server const& server)
-	: _status(0), _fin_headers(false), _content_left(0), _fd(fd), _is_index(false), _server(server) {}
+Request::Request(int fd, std::vector<Server *> servers)
+	: _status(0), _fin_headers(false), _content_left(0), _fd(fd), _is_index(false), _servers(servers), _server(NULL) {}
 
 Request::Request(Request const& src)
-	: _status(src._status), _fin_headers(src._fin_headers), _content_left(src._content_left),
-		_fd(src._fd), _method(src._method), _uri(src._uri), _is_index(src._is_index),
-		_version(src._version), _body(src._body), _headers(src._headers), _server(src._server) {}
+	: _status(src._status), _fin_headers(src._fin_headers), _content_left(src._content_left), _fd(src._fd),
+		_method(src._method), _uri(src._uri), _is_index(src._is_index), _version(src._version),
+		_body(src._body), _headers(src._headers), _servers(src._servers), _server(src._server) {}
 
 Request::~Request()
 	{}
@@ -30,7 +30,7 @@ bool Request::isFin() const
 // sets _status if bad
 bool Request::isGoodSize()
 {
-	long max = _server.get_request_size().first;
+	long max = _server->get_request_size().first;
 
 	if (!max || _body.empty())
 		return true;
@@ -41,7 +41,7 @@ bool Request::isGoodSize()
 		return false;
 	}
 
-	switch (_server.get_request_size().second)
+	switch (_server->get_request_size().second)
 	{
 		case 'K':
 			max *= 1000;
@@ -84,18 +84,19 @@ std::map<int, Request> Request::_requests;
 
 // returns true if request is finished
 // return false if request is not finished or fd is bad
-bool Request::manageRequests(int fd, Server const& server, char const* buffer, ssize_t size)
+bool Request::manageRequests(int fd, std::vector<Server *> servers, char const* buffer, ssize_t size)
 {
 	if (fd < 3)
 		return false;
 	std::string package(buffer, buffer + size);
-	std::map<int, Request>::iterator it = (_requests.insert(std::pair<int, Request>(fd, Request(fd, server)))).first;
+	std::map<int, Request>::iterator it = (_requests.insert(std::pair<int, Request>(fd, Request(fd, servers)))).first;
 	Request& instance = (*it).second;
 	instance.parse(package);
 //debug
 std::cout << ">> parsed a packet[" << fd << "], " << instance._content_left << "b left\n";
 	if (!instance.isFin())
 		return false;
+	instance.assignServer();
 //debug
 std::cout << ">> finished a packet[" << fd << "]:\n"; instance.print(false);
 	return true;
@@ -117,6 +118,33 @@ bool Request::executeRequest(int fd)
 }
 
 /* MEMBERS */
+
+void	Request::assignServer() {
+	std::string host = _headers["Host"];
+
+	//Remove the port part of the host
+	size_t i = host.find_first_of(":");
+	if (i != std::string::npos) {
+		host = host.substr(0, i);
+	}
+	std::cout << "Host extracted: " << host << std::endl;
+	//Loop through servers
+	for (size_t i = 0; i < _servers.size(); i++) {
+		std::vector<string> names = _servers[i]->get_name();
+
+		//Loop through names of server[i]
+		for (size_t j = 0; j < names.size(); j++) {
+
+			if (names[j] == host) {
+				_server = _servers[i];
+				std::cout << "Right server found" << std::endl;
+				return ;
+			}
+		}
+	}
+	std::cout << "Host not found, default server" << std::endl;
+	_server = _servers[0];
+}
 
 void Request::handleError(Response& response, int status)
 {
@@ -301,14 +329,14 @@ Location const* Request::find_location(string const& search) const
 	if (search.empty())
 		return NULL;
 	std::map<string, Location&>::const_iterator it;
-	it = _server.get_aliases().find(search);
-	if (it == _server.get_aliases().end())
+	it = _server->get_aliases().find(search);
+	if (it == _server->get_aliases().end())
 	{
 		if (search.back() == '/')
-			it = _server.get_aliases().find(search.substr(0, search.size() - 1));
+			it = _server->get_aliases().find(search.substr(0, search.size() - 1));
 		else
-			it = _server.get_aliases().find(search + "/");
-		if (it == _server.get_aliases().end())
+			it = _server->get_aliases().find(search + "/");
+		if (it == _server->get_aliases().end())
 			return NULL;
 	}
 	return &it->second;
