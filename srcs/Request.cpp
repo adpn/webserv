@@ -9,10 +9,10 @@
 /* CONSTRUCTORS */
 
 Request::Request(int fd, Server const& server)
-	: _valid(false), _fin_headers(false), _content_left(0), _fd(fd), _is_index(false), _server(server) {}
+	: _status(400), _fin_headers(false), _content_left(0), _fd(fd), _is_index(false), _server(server) {}
 
 Request::Request(Request const& src)
-	: _valid(src._valid), _fin_headers(src._fin_headers), _content_left(src._content_left),
+	: _status(src._status), _fin_headers(src._fin_headers), _content_left(src._content_left),
 		_fd(src._fd), _method(src._method), _uri(src._uri), _is_index(src._is_index),
 		_version(src._version), _body(src._body), _headers(src._headers), _server(src._server) {}
 
@@ -22,7 +22,7 @@ Request::~Request()
 /* G(/S)ETTERS */
 
 bool Request::isValid() const
-	{ return _valid; }
+	{ return (200 <= _status && _status <= 399); }
 
 bool Request::isFin() const
 	{ return (_fin_headers && _content_left <= 0); }
@@ -37,10 +37,10 @@ bool Request::isGoodSize() const
 	switch (_server.get_request_size().second)
 	{
 		case 'K':
-			max * 1000;
+			max *= 1000;
 			break;
 		case 'M':
-			max * 1000000;
+			max *= 1000000;
 	}
 	if (_content_left > max)
 		return false;
@@ -223,7 +223,11 @@ void Request::handle()
 				handleDelete(response);
 		}
 	}
-	catch (...) { handleError(response, 500); }
+	catch (std::exception const& e)
+	{
+		std::cout << "\nERROR: request handling: " << e.what() << "\n";
+		handleError(response, 500);
+	}
 	response.sendResponse(_fd);
 }
 
@@ -232,7 +236,7 @@ bool Request::preHandleChecks(Response& response) const
 {
 	if (!isGoodSize())
 		handleError(response, 413);
-	else if (!_valid)
+	else if (!isValid())
 		handleError(response, 400);
 	else
 		return true;
@@ -375,7 +379,7 @@ bool Request::parse(string const& package)
 			return true;
 		if (!checkHeaders())
 			return false;
-		_valid = true;
+		_status = 200;
 	}
 	std::ostringstream oss;
 	oss << iss.rdbuf();
@@ -478,8 +482,15 @@ bool Request::parseHeader(string const& header)
 // doesn't really check anything
 bool Request::parseBody(string const& body)
 {
-	if (_method[0] != 'P')
+	if (body.empty())
+		return true;
+	if (_method[0] != 'P' || !isValid())
 		return false;
+	if (_headers.find("Content-Length") == _headers.end())
+	{
+		_status = 411;
+		return false;
+	}
 // check if a request is finished with content-length
 // (or an empty chunk at the end IF it is chunked (chunked in Transfer-Encoding header))
 	if (isFin())
@@ -493,8 +504,6 @@ bool Request::parseBody(string const& body)
 bool Request::checkHeaders() const
 {
 	if (_headers.find("Host") == _headers.end())
-		return false;
-	if (_headers.find("Content-Length") == _headers.end())
 		return false;
 	if (!isGoodSize())
 		return false;
@@ -518,9 +527,10 @@ void Request::manageSpecialHeader(std::pair<string, string> const& pair)
 void Request::print(bool do_body) const
 {
 	std::cout << "request package:";
-	if (!_valid)
+	if (!isValid())
 		std::cout << " INVALID";
 	std::cout << "\n";
+	std::cout << "\tstatus: " << _status << "\n";
 	if (_method.empty())
 		return ;
 	std::cout << "\t" << _method << " " << _uri << " " << _version << "\n";

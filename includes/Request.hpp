@@ -13,7 +13,7 @@ class Request
 {
 		static std::map<int, Request> _requests;
 
-		bool					_valid;
+		int						_status;
 		bool					_fin_headers;
 		long					_content_left;
 		int						_fd;

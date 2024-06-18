@@ -57,6 +57,7 @@ bool Response::setStatus(int status)
 		std::pair<int, string>(403, "Forbidden"),
 		std::pair<int, string>(404, "Not Found"),
 		std::pair<int, string>(405, "Method Not Allowed"),
+		std::pair<int, string>(411, "Length Required"),
 		std::pair<int, string>(413, "Request Entity Too Large"),
 		std::pair<int, string>(0, "")};
 	for (int i = 0; reasons[i].first; ++i)

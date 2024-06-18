@@ -159,7 +159,7 @@ void Location::aliases_to_server(Server& server)
 std::vector<Entry> Location::create_entries(std::string uri) const {
 	DIR* dirp = opendir((get_root() + uri).c_str());
 	if (!dirp)
-		throw Location::Error("couldn't open location root: " + get_root());
+		throw Location::Error("couldn't open location root: " + (get_root() + uri));
 	std::vector<Entry> res;
 	struct dirent* entry;
 	entry = readdir(dirp);
