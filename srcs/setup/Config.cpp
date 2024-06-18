@@ -12,8 +12,6 @@ Config::Config( std::string filename ) : _brackets(0), _fd(filename.c_str()){
 };
 Config::~Config(){
 	this->_fd.close();
-	for (std::list<Server>::iterator it = _servers.begin(); it != _servers.end(); ++it)
-		it->closeSockets();
 };
 
 //--------------- Getters ---------------//
@@ -164,7 +162,6 @@ void	Config::add_server(std::string server_block){
 				if (server_block.find_first_not_of(" 	}") != NOTFOUND)
 					throw Config::Error("Found weird stuff..");
 				if (server_approved(server)) {
-					server.initSockets();
 // std::cout << "SERVER TO ADD:\n" << server << "\n"; // debug
 					this->_servers.push_back(server);
 					return ;
@@ -175,8 +172,6 @@ void	Config::add_server(std::string server_block){
 		}
 	}
 }
-
-
 
 //--------------- Configuration ---------------//
 std::vector< std::string > tokenizer( std::string string, std::string delimiters){

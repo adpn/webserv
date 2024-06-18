@@ -1,27 +1,32 @@
 #ifndef ROUTER_HPP
 # define ROUTER_HPP
 
-# include <Server.hpp>
 # include <map>
 # include <exception>
 # include <sys/poll.h>
+# include <Socket.hpp>
+# include <Server.hpp>
 
 class Router {
-	std::map<size_t, Server &> _servers;
-	std::map<size_t, Server &>	_clients;
+	std::map<size_t, std::vector<Server *> > _servers;
+	std::map<size_t, std::vector<Server *> >	_clients;
 	std::vector<pollfd> 	_fds;
+	std::vector<Socket>		_sockets;
 	size_t					_serverFdsNumber;
 
-	Server& getServer(size_t fd);
-	Server& getServerWithClientFd(size_t clientFd);
-	void	setServer(size_t fd, Server& server);
+	std::vector<Server*> getServers(size_t fd);
+	std::vector<Server*> getServerWithClientFd(size_t clientFd);
+	void	setServer(size_t fd, Server* server);
 	void	setClient(size_t clientFd, size_t serverFd);
 	void	removeClient(size_t fdIndex);
 	int		managePollin(size_t fdIndex);
 	int		managePollout(size_t fdIndex);
+	void	closeSockets();
 public:
 
-	void	initServerFds(std::list<Server>& servers);
+	~Router();
+	void	initServerFds();
+	void	initSockets(std::list<Server> &servers);
 	int		pollFds();
 	int		readEvents();
 
