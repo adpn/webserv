@@ -1,6 +1,5 @@
 #include "Server.hpp"
 #include "Location.hpp"
-#include "Socket.hpp"
 
 //--------------- Orthodox Canonical Form ---------------//
 // default _request_size
@@ -29,7 +28,6 @@ Server & Server::operator=(const Server & other){
 	_port = other._port;
 	_request_size = other._request_size;
 	_name = other._name;
-	_sockets = other._sockets;
 	_error_page = other._error_page;
 	_generic_root = other._generic_root;
 	// THESE USE REFERENCES
@@ -106,23 +104,6 @@ void	Server::set_generic_root( std::vector< std::string > s ){
 	this->_generic_root = s.front();
 }
 
-void	Server::initSockets() {
-	std::cout << "Init sockets:" << std::endl;
-	//_sockets.reserve(_port.size());
-	for (size_t i = 0; i < _port.size(); i++) {
-		Socket socket(_port[i]);
-		_sockets.push_back(socket);
-	}
-	std::cout << "End of init sockets." << std::endl << std::endl;
-}
-
-void	Server::closeSockets() {
-	for (size_t i = 0; i < _sockets.size(); i++) {
-		std::cout << "Closing port: " << _sockets[i].getPort() << " with socket fd: " << _sockets[i] << std::endl;
-		close(_sockets[i]);
-	}
-}
-
 //--------------- Getters ---------------//
 std::vector<unsigned int> const& Server::get_port() const {
 	return this->_port;
@@ -144,9 +125,6 @@ std::list<Location>	const& Server::get_locations() const {
 }
 std::map<std::string, Location&> const& Server::get_aliases() const {
 	return _aliases;
-}
-std::vector<Socket>& Server::get_sockets() {
-	return _sockets;
 }
 
 //--------------- Output debug ---------------//

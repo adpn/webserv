@@ -9,7 +9,6 @@
 # include <iostream>
 
 class Location;
-class Socket;
 
 # define NOTFOUND	std::string::npos
 
@@ -18,7 +17,6 @@ class Server {
 		std::vector<unsigned int>			_port;
 		std::pair<unsigned int, char>		_request_size;
 		std::vector<std::string>			_name;
-		std::vector<Socket>					_sockets;
 		std::map<unsigned int, std::string>	_error_page;
 		std::list<Location>					_locations;
 		std::string							_generic_root;
@@ -39,7 +37,6 @@ class Server {
 		void	set_generic_root( std::vector< std::string > s );
 		void	set_location( Location const& loc_block);
 		void	set_alias( std::string const& s, Location& loc);
-		void	initSockets();
 
 		//--- Getters ---//
 		std::vector<std::string> const&				get_name() const;
@@ -49,9 +46,6 @@ class Server {
 		std::string const&							get_generic_root() const;
 		std::list<Location> const&					get_locations() const;
 		std::map<std::string, Location&> const&		get_aliases() const;
-		std::vector<Socket>&						get_sockets();
-
-		void	closeSockets();
 
 		//--- Error management ---//
 		class Error : public std::exception {

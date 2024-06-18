@@ -3,6 +3,7 @@
 
 # include <iostream>
 # include <map>
+# include <vector>
 
 using std::string;
 class Response;
@@ -22,8 +23,9 @@ class Request
 		bool _is_index;
 		string _version;
 		string _body;
-		std::map<string, string> _headers;
-		Server const& _server;
+		std::map<string, string>	_headers;
+		std::vector<Server *>	_servers;
+		Server					*_server;
 
 		// handle errors of these with (mandatory default) error pages
 		bool parseMethod(string const& method);
@@ -46,12 +48,13 @@ class Request
 		void			next_search_string(string& search) const;
 
 	public:
-		Request(int fd, Server const& server);
+		Request(int fd, std::vector<Server *> servers);
 		Request(Request const& src);
 		~Request();
 
-		static bool manageRequests(int fd, Server const& server, char const* buffer, ssize_t size);
+		static bool manageRequests(int fd, std::vector<Server *> servers, char const* buffer, ssize_t size);
 		static bool executeRequest(int fd);
+		void	assignServer();
 
 		bool isValid() const;
 		bool isFin() const;
