@@ -29,12 +29,12 @@ bool Request::isFin() const
 
 bool Request::isGoodSize() const
 {
-	long max = _server.get_request_size().first;
+	long max = _server->get_request_size().first;
 
 	if (!max || _headers.find("Content-Length") == _headers.end())
 		return true;
 
-	switch (_server.get_request_size().second)
+	switch (_server->get_request_size().second)
 	{
 		case 'K':
 			max * 1000;
