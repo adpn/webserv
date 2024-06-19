@@ -158,7 +158,7 @@ bool Response::fileToBody(string const& file)
 	_body = oss.str();
 // std::cout << "succeeded\n"; // debug
 
-	setHeader("Content-Type: "+ findContentType(file));
+	setHeader("Content-Type:" + findContentType(file));
 	return true;
 }
 

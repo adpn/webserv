@@ -25,7 +25,7 @@ class Request
 		string						_body;
 		std::map<string, string>	_headers;
 		std::vector<Server *>		_servers;
-		Server						*_server;
+		Server*						_server;
 
 		// handle errors of these with (mandatory default) error pages
 		bool parseMethod(string const& method);
@@ -41,9 +41,11 @@ class Request
 		void handleGet(Response& response, Location const* location);
 		void handlePost(Response& response, Location const* location);
 		void handleDelete(Response& response, Location const* location);
-		void handleError(Response& response, int status = 0);
-		void handleAutoindex(Response& response, Location const* location) const;
 		bool preHandleChecks(Response& response, Location const* location);
+		void handleAutoindex(Response& response, Location const* location) const;
+		void handleError(Response& response, int status = 0);
+		bool configErrorPage(Response& response);
+		void defaultErrorPage(Response& response);
 
 		Location const*	find_location(string const& search) const;
 		void			next_search_string(string& search) const;

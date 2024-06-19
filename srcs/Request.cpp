@@ -147,15 +147,11 @@ void	Request::assignServer() {
 	_server = _servers[0];
 }
 
-void Request::handleError(Response& response, int status)
+void Request::defaultErrorPage(Response& response)
 {
-	if (!status && !_status)
-		_status = 500;
-	else if (status)
-		_status = status;
-	response.setStatus(_status);
+	// use actual default pages
+	// use this stuff if default page can't be opened? (deleted for some reason)
 	response.setHeader("Content-Type: text/html");
-	// provide appropriate error page?
 	std::ostringstream oss;
 	oss << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n";
 	oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
@@ -163,7 +159,29 @@ void Request::handleError(Response& response, int status)
 	oss << "        /* Add your CSS styles here */\n    </style> -->\n</head>\n<body>\n    <br><b>ERROR: ";
 	oss << _status << " " << response.getReason() << "\n</b></body>\n</html>\n";
 	response.setBody(oss.str());
-	// alter response further?
+}
+
+// returns false if none provided or something else went wrong
+bool Request::configErrorPage(Response& response)
+{
+	// do error_page on location level too?
+	std::map<unsigned int, string>::const_iterator it = _server->get_error_page().find(_status);
+	if (it == _server->get_error_page().end())
+		return false;
+	if (!response.fileToBody(it->second))
+		return false;
+	return true;
+}
+
+void Request::handleError(Response& response, int status)
+{
+	if (!status && !_status)
+		_status = 500;
+	else if (status)
+		_status = status;
+	response.setStatus(_status);
+	if (!configErrorPage(response))
+		defaultErrorPage(response);
 }
 
 void Request::handleAutoindex(Response &response, Location const* location) const {
@@ -287,34 +305,26 @@ bool Request::preHandleChecks(Response& response, Location const* location)
 // returns NULL if location not found
 Location const* Request::getLocation()
 {
-	// special uri's ?
 	string search = _uri;
 	Location const* ret = find_location(search);
 	if (ret)
 		_is_index = true;
-	// set _status if not found? (there should always be / right?)
 	while (!ret && !search.empty())
 	{
 		next_search_string(search);
 		ret = find_location(search);
 	}
-// debug
-std::cout << "location search for " << _uri << ": found ";
-if (ret)
-{
-std::cout << ret->get_name();
-if (_is_index)
-std::cout << " (index)";
+// debug start
+// std::cout << "location search for " << _uri << ": found ";
+// if (ret)
 // {
-// std::cout << "\n	autoindex:";
-// std::vector<Entry> vec(ret->create_entries(_uri));
-// for (size_t i = 0; i < vec.size(); ++i)
-// 	std::cout << " " << vec[i].name;
+// std::cout << ret->get_name();
+// if (_is_index)
+// std::cout << " (index)";
+// std::cout << "\n";
 // }
-std::cout << "\n";
-}
-else
-std::cout << "NULL\n";
+// else
+// std::cout << "NULL\n";
 // debug end
 	return ret;
 }
