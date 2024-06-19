@@ -3,8 +3,9 @@
 #include "Server.hpp"
 #include "Location.hpp"
 #include "Entry.hpp"
-#include <sstream>
+#include <unistd.h>
 #include <dirent.h>
+#include <sstream>
 
 /* CONSTRUCTORS */
 
@@ -175,7 +176,7 @@ void Request::handleGet(Response& response)
 	if (!location)
 		handleError(response, 404);
 	else if (!location->is_allowed(_method))
-		handleError(response, 405);
+		handleError(response, 405); // make 'Allow' header that includes allowed methods
 	else if (location->get_autoindex() && _uri.back() == '/')
 		handleAutoindex(response, location);
 	else if (!response.fileToBody(getFile(location)))
@@ -210,11 +211,10 @@ void Request::handleAutoindex(Response &response, Location const* location) cons
 void Request::handlePost(Response& response)
 {
 	(void)response;
-	if (/* Method not in location */!true)
-		handleError(response, 405);
 // temp error
-//handleError(response, 405);
-	// check if method is allowed on this resource (405)
+handleError(response, 500);
+	// if (Method not in location)
+	// 	handleError(response, 405);
 	// check if resource already exists, if yes, overwrite (200)
 	// if not, create new resource (201)
 
@@ -234,14 +234,13 @@ void Request::handlePost(Response& response)
 
 void Request::handleDelete(Response& response)
 {
-	if (/* Method not in location */!true)
-		handleError(response, 405);
 // temp error
-handleError(response, 405);
+handleError(response, 500);
+	// if (Method not in location)
+	// 	handleError(response, 405);
 	// we should probably be VERY careful with deleting stuff ... probably or not :)
 	// check if resource exists? (404)
 	// check if resource is part of server (403 or 404 if we're not doing the last step)
-	// check if method is allowed on this resource (405)
 	// if (!std::remove(uritoupload().c_str()))
 		// response.setStatus(204);
 }
@@ -358,23 +357,29 @@ void Request::next_search_string(string& search) const
 	search.erase(slash_pos + 1);
 }
 
-// returns empty string if file not found
+// no guarantee that return exists/can be opened
 string Request::getFile(Location const* location) const
 {
-	// do 'access' checks here? existence and permissions
 	if (_is_index)
-	{
-		// return default (or autoindex?)
-		// what if no default and no autoindex ?
-		// loop over get_index until one works
-		if (location->get_index().empty())
-			return string();
-		if (_uri.back() == '/')
-			return "." + _uri + location->get_index()[0];
-		else
-			return "." + _uri + "/" + location->get_index()[0];
-	}
+		return getIndexFile(location);
 	return location->get_root() + _uri;
+}
+
+string Request::getIndexFile(Location const* location) const
+{
+	string prefix = "." + _uri;
+	if (_uri.back() != '/')
+		prefix.append("/");
+	size_t i = 0;
+	while (i < location->get_index().size())
+	{
+		if (!access((prefix + location->get_index()[i]).c_str(), R_OK))
+			break ;
+		++i;
+	}
+	if (i == location->get_index().size())
+		return prefix + "index.html";
+	return prefix + location->get_index()[i];
 }
 
 void Request::getline_crlf(std::istringstream& iss, string& buf) const

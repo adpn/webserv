@@ -140,6 +140,7 @@ std::string Response::findContentType(std::string file) {
 	return "application/octet-stream";
 }
 
+// returns false if 'file' couldn't be opened
 bool Response::fileToBody(string const& file)
 {
 // std::cout << "FILE: trying to open the file " << file << " .. "; // debug

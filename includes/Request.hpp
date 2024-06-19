@@ -72,6 +72,7 @@ class Request
 		void handle();
 		Location const* getLocation();
 		string getFile(Location const* location) const;
+		string getIndexFile(Location const* location) const;
 
 		// debugging
 		void print(bool do_body = true) const;
