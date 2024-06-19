@@ -1,5 +1,6 @@
 #include "Response.hpp"
 #include "Request.hpp"
+#include "Location.hpp"
 #include <sstream>
 #include <fstream>
 #include <sys/socket.h>
@@ -8,11 +9,11 @@
 /* CONSTRUCTORS */
 
 Response::Response()
-	: _version("HTTP/1.1"), _status(500), _reason("Internal Server Error")
+	: _version("HTTP/1.1"), _status(500), _reason("Internal Server Error"), _location(NULL)
 	{ setHDate(); }
 
 Response::Response(Request const& request)
-	: _version(request.getVersion()), _status(request.getStatus()), _reason("Internal Server Error")
+	: _version("HTTP/1.1"), _status(request.getStatus()), _reason("Internal Server Error"), _location(NULL)
 	{ setHDate(); }
 
 Response::Response(Response const& src)
@@ -38,6 +39,9 @@ bool Response::isGood() const
 
 string const& Response::getReason() const
 	{ return _reason; }
+
+void Response::setLocation(Location const* location)
+	{ _location = location; }
 
 // sets 'reason' if available in internal set
 bool Response::setStatus(int status)
@@ -89,7 +93,6 @@ bool Response::setHeader(string const& header)
 		iss >> std::ws;
 		if (pair.second.empty())
 			continue ;
-	// do some parsing and comparing to allowed headers here?
 		std::pair<std::map<string, string>::iterator, bool> ret(_headers.insert(pair));
 		if (!ret.second)
 			if (ret.first->second.find(pair.second) == string::npos)
@@ -103,35 +106,35 @@ void Response::setBody(string const& body)
 	_body = body;
 }
 
-std::string Response::findContentType(std::string file) {
+string Response::findContentType(string file) {
 	size_t dotIndex = file.find_last_of(".");
-	if (dotIndex == std::string::npos)
+	if (dotIndex == string::npos)
 		return "application/octet-stream";
 
 	string extension = file.substr(dotIndex + 1);
 
-	std::pair<std::string, std::string> content_types[] = {
-        std::pair<std::string, std::string>("html", "text/html"),
-        std::pair<std::string, std::string>("css", "text/css"),
-        std::pair<std::string, std::string>("js", "application/javascript"),
-        std::pair<std::string, std::string>("json", "application/json"),
-        std::pair<std::string, std::string>("xml", "application/xml"),
-        std::pair<std::string, std::string>("jpg", "image/jpeg"),
-        std::pair<std::string, std::string>("jpeg", "image/jpeg"),
-        std::pair<std::string, std::string>("png", "image/png"),
-        std::pair<std::string, std::string>("gif", "image/gif"),
-        std::pair<std::string, std::string>("svg", "image/svg+xml"),
-        std::pair<std::string, std::string>("ico", "image/x-icon"),
-        std::pair<std::string, std::string>("pdf", "application/pdf"),
-        std::pair<std::string, std::string>("zip", "application/zip"),
-        std::pair<std::string, std::string>("txt", "text/plain"),
-        std::pair<std::string, std::string>("csv", "text/csv"),
-        std::pair<std::string, std::string>("mp3", "audio/mpeg"),
-        std::pair<std::string, std::string>("mp4", "video/mp4"),
-        std::pair<std::string, std::string>("webm", "video/webm"),
-        std::pair<std::string, std::string>("ogg", "audio/ogg"),
-        std::pair<std::string, std::string>("wav", "audio/wav"),
-		std::pair<std::string, std::string>("", "")};
+	std::pair<string, string> content_types[] = {
+        std::pair<string, string>("html", "text/html"),
+        std::pair<string, string>("css", "text/css"),
+        std::pair<string, string>("js", "application/javascript"),
+        std::pair<string, string>("json", "application/json"),
+        std::pair<string, string>("xml", "application/xml"),
+        std::pair<string, string>("jpg", "image/jpeg"),
+        std::pair<string, string>("jpeg", "image/jpeg"),
+        std::pair<string, string>("png", "image/png"),
+        std::pair<string, string>("gif", "image/gif"),
+        std::pair<string, string>("svg", "image/svg+xml"),
+        std::pair<string, string>("ico", "image/x-icon"),
+        std::pair<string, string>("pdf", "application/pdf"),
+        std::pair<string, string>("zip", "application/zip"),
+        std::pair<string, string>("txt", "text/plain"),
+        std::pair<string, string>("csv", "text/csv"),
+        std::pair<string, string>("mp3", "audio/mpeg"),
+        std::pair<string, string>("mp4", "video/mp4"),
+        std::pair<string, string>("webm", "video/webm"),
+        std::pair<string, string>("ogg", "audio/ogg"),
+        std::pair<string, string>("wav", "audio/wav"),
+		std::pair<string, string>("", "")};
 
 	for (size_t i = 0; !content_types[i].first.empty(); i++) {
 		if (extension == content_types[i].first)
@@ -188,7 +191,8 @@ void Response::addHeaders()
 {
 	setHContentLength();
 	setHServer();
-	// maybe content-type if not yet specified i guess
+	if (_status == 405)
+		setHAllow();
 }
 
 void Response::setHContentLength()
@@ -213,6 +217,30 @@ void Response::setHDate()
 void Response::setHServer()
 {
 	_headers.insert(std::pair<string, string>("Server", "WebServ"));
+}
+
+void Response::setHAllow()
+{
+	string value;
+	std::map<string, bool>::const_iterator it;
+
+	if (!_location)
+		return ;
+	for (it = _location->get_limit_except().begin(); it != _location->get_limit_except().end(); ++it)
+	{
+		if (it->second)
+		{
+			value = it->first;
+			++it;
+			break ;
+		}
+	}
+	for (; it != _location->get_limit_except().end(); ++it)
+	{
+		if (it->second)
+			value.append("," + it->first);
+	}
+	_headers["Allow"] = value;
 }
 
 /* DEBUG */

@@ -14,18 +14,18 @@ class Request
 {
 		static std::map<int, Request> _requests;
 
-		int	 _status;
-		bool _fin_headers;
-		long _content_left;
-		int _fd;
-		string _method;
-		string _uri;
-		bool _is_index;
-		string _version;
-		string _body;
+		int							_status;
+		bool						_fin_headers;
+		long						_content_left;
+		int							_fd;
+		string						_method;
+		string						_uri;
+		bool						_is_index;
+		string						_version;
+		string						_body;
 		std::map<string, string>	_headers;
-		std::vector<Server *>	_servers;
-		Server					*_server;
+		std::vector<Server *>		_servers;
+		Server						*_server;
 
 		// handle errors of these with (mandatory default) error pages
 		bool parseMethod(string const& method);
@@ -38,14 +38,14 @@ class Request
 		bool checkHeaders();
 		void manageSpecialHeader(std::pair<string, string> const& pair);
 
-		void handleGet(Response& response);
-		void handlePost(Response& response);
-		void handleDelete(Response& response);
+		void handleGet(Response& response, Location const* location);
+		void handlePost(Response& response, Location const* location);
+		void handleDelete(Response& response, Location const* location);
 		void handleError(Response& response, int status = 0);
 		void handleAutoindex(Response& response, Location const* location) const;
-		bool preHandleChecks(Response& response);
+		bool preHandleChecks(Response& response, Location const* location);
 
-		Location const* find_location(string const& search) const;
+		Location const*	find_location(string const& search) const;
 		void			next_search_string(string& search) const;
 
 	public:
@@ -53,26 +53,26 @@ class Request
 		Request(Request const& src);
 		~Request();
 
-		static bool manageRequests(int fd, std::vector<Server *> servers, char const* buffer, ssize_t size);
-		static bool executeRequest(int fd);
-		void	assignServer();
+		static bool	manageRequests(int fd, std::vector<Server *> servers, char const* buffer, ssize_t size);
+		static bool	executeRequest(int fd);
+		void		assignServer();
 
-		bool isValid() const;
-		bool isFin() const;
-		bool isGoodSize();
-		int getFd() const;
-		string const& getMethod() const;
-		int			  getStatus() const;
-		string const& getUri() const;
-		string const& getVersion() const;
-		string const& getBody() const;
-		std::map<string, string> const& getHeaders() const;
+		bool					isValid() const;
+		bool					isFin() const;
+		bool					isGoodSize();
+		int						getFd() const;
+		string const&			getMethod() const;
+		int						getStatus() const;
+		string const&			getUri() const;
+		string const&			getVersion() const;
+		string const&			getBody() const;
+		std::map<string, string> const&	getHeaders() const;
 
-		bool parse(string const& package);
-		void handle();
-		Location const* getLocation();
-		string getFile(Location const* location) const;
-		string getIndexFile(Location const* location) const;
+		bool			parse(string const& package);
+		void			handle();
+		Location const*	getLocation();
+		string			getFile(Location const* location) const;
+		string			getIndexFile(Location const* location) const;
 
 		// debugging
 		void print(bool do_body = true) const;

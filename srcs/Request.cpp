@@ -166,23 +166,6 @@ void Request::handleError(Response& response, int status)
 	// alter response further?
 }
 
-void Request::handleGet(Response& response)
-{
-	Location const* location;
-	string file;
-
-	response.setStatus(_status);
-	location = getLocation();
-	if (!location)
-		handleError(response, 404);
-	else if (!location->is_allowed(_method))
-		handleError(response, 405); // make 'Allow' header that includes allowed methods
-	else if (location->get_autoindex() && _uri.back() == '/')
-		handleAutoindex(response, location);
-	else if (!response.fileToBody(getFile(location)))
-		handleError(response, 404);
-}
-
 void Request::handleAutoindex(Response &response, Location const* location) const {
 	response.setHeader("Content-Type: text/html");
 
@@ -208,13 +191,19 @@ void Request::handleAutoindex(Response &response, Location const* location) cons
 	response.setBody(oss.str());
 }
 
-void Request::handlePost(Response& response)
+void Request::handleGet(Response& response, Location const* location)
 {
-	(void)response;
+	if (location->get_autoindex() && _uri.back() == '/')
+		handleAutoindex(response, location);
+	else if (!response.fileToBody(getFile(location)))
+		handleError(response, 404);
+}
+
+void Request::handlePost(Response& response, Location const* location)
+{
+(void)location;
 // temp error
 handleError(response, 500);
-	// if (Method not in location)
-	// 	handleError(response, 405);
 	// check if resource already exists, if yes, overwrite (200)
 	// if not, create new resource (201)
 
@@ -232,12 +221,11 @@ handleError(response, 500);
 	*/
 }
 
-void Request::handleDelete(Response& response)
+void Request::handleDelete(Response& response, Location const* location)
 {
+(void)location;
 // temp error
 handleError(response, 500);
-	// if (Method not in location)
-	// 	handleError(response, 405);
 	// we should probably be VERY careful with deleting stuff ... probably or not :)
 	// check if resource exists? (404)
 	// check if resource is part of server (403 or 404 if we're not doing the last step)
@@ -248,40 +236,49 @@ handleError(response, 500);
 void Request::handle()
 {
 	Response response;
-	char expr = 0;
+	Location const* location = getLocation();
+	response.setStatus(_status);
+	response.setLocation(location);
 
 	try
 	{
-		if (preHandleChecks(response))
-			expr = _method[0];
+		if (!preHandleChecks(response, location))
+		{
+			response.sendResponse(_fd);
+			return ;
+		}
 
-		switch (expr)
+		switch (_method[0])
 		{
 			case 'G':
-				handleGet(response);
+				handleGet(response, location);
 				break;
 			case 'P':
-				handlePost(response);
+				handlePost(response, location);
 				break;
 			case 'D':
-				handleDelete(response);
+				handleDelete(response, location);
 		}
 	}
 	catch (std::exception const& e)
 	{
-		std::cout << "\nERROR: request handling: " << e.what() << "\n";
+		std::cout << "\n*\n* ERROR: request handling: " << e.what() << "\n*\n";
 		handleError(response, 500);
 	}
 	response.sendResponse(_fd);
 }
 
-// handleError() if bad
-bool Request::preHandleChecks(Response& response)
+// calls handleError() and returns false if bad
+bool Request::preHandleChecks(Response& response, Location const* location)
 {
 	if (!isValid())
 		handleError(response);
 	else if (!isGoodSize())
 		handleError(response);
+	else if (!location)
+		handleError(response, 404);
+	else if (!location->is_allowed(_method))
+		handleError(response, 405);
 	else
 		return true;
 	return false;
