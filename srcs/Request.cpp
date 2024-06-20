@@ -149,16 +149,18 @@ void	Request::assignServer() {
 
 void Request::defaultErrorPage(Response& response)
 {
-	// use actual default pages
-	// use this stuff if default page can't be opened? (deleted for some reason)
-	response.setHeader("Content-Type: text/html");
 	std::ostringstream oss;
+	oss << "../default_error_pages/" << _status << ".html";
+	if (response.fileToBody(oss.str()))
+		return ;
+	oss.str("");
 	oss << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n";
 	oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
 	oss << "    <link rel=\"icon\" href=\"/favicon.ico\" />\n	<title></title>\n    <!-- <style>\n";
 	oss << "        /* Add your CSS styles here */\n    </style> -->\n</head>\n<body>\n    <br><b>ERROR: ";
 	oss << _status << " " << response.getReason() << "\n</b></body>\n</html>\n";
 	response.setBody(oss.str());
+	response.setHeader("Content-Type: text/html");
 }
 
 // returns false if none provided or something else went wrong
