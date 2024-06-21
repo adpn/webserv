@@ -10,10 +10,10 @@
 /* CONSTRUCTORS */
 
 Request::Request(int fd, std::vector<Server *> servers)
-	: _status(0), _fin_headers(false), _content_left(0), _fd(fd), _is_index(false), _servers(servers), _server(NULL) {}
+	: _status(0), _fin_header(false), _content_left(0), _fd(fd), _is_index(false), _servers(servers), _server(NULL) {}
 
 Request::Request(Request const& src)
-	: _status(src._status), _fin_headers(src._fin_headers), _content_left(src._content_left), _fd(src._fd),
+	: _status(src._status), _fin_header(src._fin_header), _content_left(src._content_left), _fd(src._fd),
 		_method(src._method), _uri(src._uri), _is_index(src._is_index), _version(src._version),
 		_body(src._body), _headers(src._headers), _servers(src._servers), _server(src._server) {}
 
@@ -26,7 +26,7 @@ bool Request::isValid() const
 	{ return (200 <= _status && _status <= 399); }
 
 bool Request::isFin() const
-	{ return ((_status && !isValid()) || (_status && _fin_headers && _content_left <= 0)); }
+	{ return ((_status && !isValid()) || (_status && _fin_header && _content_left <= 0)); }
 
 // sets _status if bad
 bool Request::isGoodSize()
@@ -93,13 +93,11 @@ bool Request::manageRequests(int fd, std::vector<Server *> servers, char const* 
 	std::map<int, Request>::iterator it = (_requests.insert(std::pair<int, Request>(fd, Request(fd, servers)))).first;
 	Request& instance = (*it).second;
 	instance.parse(package);
-//debug
-std::cout << ">> parsed a packet[" << fd << "], " << instance._content_left << "b left\n";
+std::cout << ">> parsed a packet[" << fd << "], " << instance._content_left << "b left\n"; //debug
 	if (!instance.isFin())
 		return false;
 	instance.assignServer();
-//debug
-std::cout << ">> finished a packet[" << fd << "]:\n"; instance.print(false);
+std::cout << ">> finished a packet[" << fd << "]:\n"; instance.print(false); //debug
 	return true;
 }
 
@@ -391,58 +389,88 @@ string Request::getIndexFile(Location const* location) const
 	return prefix + location->get_index()[i];
 }
 
-void Request::getline_crlf(std::istringstream& iss, string& buf) const
+// returns true if CRLF was found
+bool Request::getline_crlf(std::istringstream& iss, string& buf) const
 {
 	std::getline(iss, buf, '\r');
-	while (iss.peek() != '\n')
+	while (iss.good() && iss.peek() != '\n')
 	{
 		string temp;
 		std::getline(iss, temp, '\r');
 		buf.append(temp);
 	}
+	if (!iss.good())
+		return false;
 	iss.get();
-	if (iss.peek() == '\r')
-		return ;
-	iss >> std::ws;
+	if (iss.peek() != '\r')
+		iss >> std::ws;
+	return true;
 }
 
 // a 'Host' header is required
-bool Request::parse(string const& package)
+void Request::parse(string const& package)
 {
-	if (_fin_headers && _content_left)
+	if (_fin_header)
 		return parseBody(package);
+	if (_status)
+		return ;
 
-// maybe add more iss bit checks in here?
-	std::istringstream iss(package);
-	if (!_status && _method.empty())
-	{
-		string token;
-		std::getline(iss, token, ' ');
-		if (!parseMethod(token))
-			return false;
-		std::getline(iss, token, ' ');
-		if (!parseUri(token))
-			return false;
-		getline_crlf(iss, token);
-		if (!parseVersion(token))
-			return false;
-		if (iss.eof())
-			return false;
-			// what is this check ?
-	}
-	if (!_status && !_fin_headers)
-	{
-		if (!loopHeaders(iss))
-			return false;
-		if (!_fin_headers)
-			return true;
-		if (!checkHeaders())
-			return false;
-		_status = 200;
-	}
+	std::istringstream iss;
+	if (!buffer(package, iss))
+		return ;
+
+	if (_method.empty())
+		if (!parseRequestLine(iss))
+			return ;
+	if (!loopHeaders(iss))
+		return ;
+	if (!_fin_header)
+		return ;
+	if (!checkHeaders())
+		return ;
+	_status = 200;
+	if (!_fin_header)
+		return ;
 	std::ostringstream oss;
 	oss << iss.rdbuf();
-	if (!parseBody(oss.str()))
+	parseBody(oss.str());
+	buffer(string(), iss);
+	parseBody(iss.str());
+}
+
+// returns true and sets iss if a CRLF has been received or _fin_header is set
+// if (_fin_header), the remaining static buffer is returned in iss (overwritten) and cleared
+bool Request::buffer(string const& package, std::istringstream& iss)
+{
+	static string buffer;
+
+	buffer.append(package);
+	if (_fin_header)
+	{
+		iss.str(buffer);
+		buffer.clear();
+		return true;
+	}
+	size_t pos_crlf = buffer.rfind("\r\n");
+	if (pos_crlf == string::npos)
+		return false;
+	iss.str(buffer.substr(0, pos_crlf + 2));
+	buffer.erase(0, pos_crlf + 2);
+	return true;
+}
+
+bool Request::parseRequestLine(std::istringstream& iss)
+{
+	string token;
+
+	std::getline(iss, token, ' ');
+	if (!parseMethod(token))
+		return false;
+	std::getline(iss, token, ' ');
+	if (!parseUri(token))
+		return false;
+	getline_crlf(iss, token);
+	if (!parseVersion(token))
 		return false;
 	return true;
 }
@@ -488,33 +516,21 @@ bool Request::parseVersion(string const& version)
 	return true;
 }
 
+// depends on input being CRLF terminated
 bool Request::loopHeaders(std::istringstream& iss)
 {
 	string token;
-	static string leftover;
 
-	if (leftover.empty())
-		getline_crlf(iss, token);
-	else
-	{
-		token = leftover;
-		getline_crlf(iss, leftover);
-		token.append(leftover);
-	}
+	if (!getline_crlf(iss, token))
+		return true;
 	while (!token.empty())
 	{
-		if (iss.eof())
-		{
-			leftover = token;
-			return true;
-		}
-		if (!parseHeader(token)){
+		if (!parseHeader(token))
 			return false;
-		}
-		getline_crlf(iss, token);
+		if (!getline_crlf(iss, token))
+			return true;
 	}
-	leftover.clear();
-	_fin_headers = true;
+	_fin_header = true;
 	return true;
 }
 
@@ -544,19 +560,19 @@ bool Request::parseHeader(string const& header)
 }
 
 // doesn't really check anything
-bool Request::parseBody(string const& body)
+void Request::parseBody(string const& body)
 {
 	if (body.empty())
-		return true;
+		return ;
 	if (_method[0] != 'P' || !isValid())
-		return false;
+		return ;
 // check if a request is finished with content-length
 // (or an empty chunk at the end IF it is chunked (chunked in Transfer-Encoding header))
 	if (isFin())
-		return false;
+		return ;
 	_body.append(body);
 	_content_left -= body.size();
-	return true;
+	return ;
 }
 
 bool Request::checkHeaders()

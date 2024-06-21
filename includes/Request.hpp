@@ -15,7 +15,7 @@ class Request
 		static std::map<int, Request> _requests;
 
 		int							_status;
-		bool						_fin_headers;
+		bool						_fin_header;
 		long						_content_left;
 		int							_fd;
 		string						_method;
@@ -23,18 +23,20 @@ class Request
 		bool						_is_index;
 		string						_version;
 		string						_body;
-		std::map<string, string>	_headers;
+		std::map<string, string>	_headers; // fields would have been a more correct name
 		std::vector<Server *>		_servers;
 		Server*						_server;
 
 		// handle errors of these with (mandatory default) error pages
+		bool buffer(string const& package, std::istringstream& iss);
+		bool parseRequestLine(std::istringstream& iss);
 		bool parseMethod(string const& method);
 		bool parseUri(string const& uri);
 		bool parseVersion(string const& version);
-		bool parseBody(string const& body);
+		void parseBody(string const& body);
 		bool loopHeaders(std::istringstream& iss);
 		bool parseHeader(string const& header);
-		void getline_crlf(std::istringstream& iss, string& buf) const;
+		bool getline_crlf(std::istringstream& iss, string& buf) const;
 		bool checkHeaders();
 		void manageSpecialHeader(std::pair<string, string> const& pair);
 
@@ -70,7 +72,7 @@ class Request
 		string const&			getBody() const;
 		std::map<string, string> const&	getHeaders() const;
 
-		bool			parse(string const& package);
+		void			parse(string const& package);
 		void			handle();
 		Location const*	getLocation();
 		string			getFile(Location const* location) const;
