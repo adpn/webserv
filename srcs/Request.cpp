@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <sstream>
+#include <fstream>
 
 /* CONSTRUCTORS */
 
@@ -217,15 +218,41 @@ void Request::handleGet(Response& response, Location const* location)
 		handleError(response, 404);
 }
 
+// only works with a multipart request
 void Request::handlePost(Response& response, Location const* location)
 {
-(void)location;
-// temp error
-handleError(response, 500);
-	// check if resource already exists, if yes, overwrite (200)
-	// if not, create new resource (201)
+// maybe spread this out over a few functions
+	std::ostringstream oss;
+	oss << location->get_upload_path() << '/';
+	size_t name_pos = _body.find("filename=\"");
+	if (name_pos == string::npos)
+	{
+		std::ostringstream oss_temp;
+		for (int i = 0; true; i++)
+		{
+			oss_temp.str("unnamed");
+			oss_temp.seekp(0, std::ios_base::end);
+			if (i)
+				oss_temp << i;
+			if (access((oss.str() + oss_temp.str()).c_str(), W_OK))
+				break ;
+		}
+		oss << oss_temp.str();
+	}
+	else
+	{
+		name_pos += 10;
+		oss << _body.substr(name_pos, _body.find('"', name_pos) - name_pos);
+	}
+	if (access(oss.str().c_str(), F_OK))
+		response.setStatus(201);
+	std::ofstream ofs(oss.str().c_str(), std::ios::out | std::ios::trunc);
+	if (ofs.fail())
+		return handleError(response, 500);
+	ofs << _body;
+	response.confirmationToBody("Uploaded !");
 
-	/* multipart;	or... keep it intact and send it back the same way ? (with correct headers)
+	/* multipart;	or... keep it intact and send it back the same way ? (with correct headers?)
 		header: Content-Type: multipart/form-data;boundary="boundary"
 		body:	--boundary
 				Content-Disposition: form-data; name="field1"
@@ -507,9 +534,9 @@ bool Request::parseUri(string const& uri)
 // only allows HTTP
 bool Request::parseVersion(string const& version)
 {
-	if (version.compare(0, 5, "HTTP/"))
+	if (version != "HTTP/1.1")
 	{
-		_status = 400;
+		_status = 505;
 		return false;
 	}
 	_version = version;

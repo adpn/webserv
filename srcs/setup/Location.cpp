@@ -14,11 +14,13 @@ Location::Location(Server& server)
 }
 Location::Location(const Location &other)
 	: _server(other._server), _name(other._name), _limit_except(other._limit_except),
-	_return(other._return), _root(other._root), _autoindex(other._autoindex), _index(other._index), _aliases(other._aliases) {}
+	_return(other._return), _root(other._root), _upload_path(other._upload_path),
+	_autoindex(other._autoindex), _index(other._index), _aliases(other._aliases) {}
 
 Location::Location(const Location &other, Server& server)
 	: _server(server), _name(other._name), _limit_except(other._limit_except),
-	_return(other._return), _root(other._root), _autoindex(other._autoindex), _index(other._index), _aliases(other._aliases) {}
+	_return(other._return), _root(other._root), _upload_path(other._upload_path),
+	_autoindex(other._autoindex), _index(other._index), _aliases(other._aliases) {}
 
 // THIS IS PRIVATE AND SHOULD NEVER BE USED
 // ALSO DON'T DEFAULT CONSTRUCT
@@ -141,6 +143,20 @@ std::string	Location::get_root(bool print) const {
 	ret.erase(ret.find_last_not_of('/') + 1);
 	return ret;
 }
+// empty if upload not allowed on this resource
+// otherwise a path without any leading or trailing '/'
+std::string Location::get_upload_path(bool print) const {
+	if (print)
+		return _upload_path;
+	if (_upload_path.empty())
+		return string();
+	if (_upload_path == "/")
+		return ".";
+	string ret(_upload_path);
+	ret.erase(0, ret.find_first_not_of('/'));
+	ret.erase(ret.find_last_not_of('/') + 1);
+	return ret;
+}
 
 
 
@@ -202,6 +218,7 @@ std::ostream& operator<<(std::ostream& o, Location const& l)
 	o << "		index: \n";
 	for (size_t i = 0; i < l.get_index().size(); ++i)
 		o << "			" << l.get_index()[i] << "\n";
+	o << "		upload: " << l.get_upload_path(true) << "\n";
 	o << std::endl;
 	return o;
 }

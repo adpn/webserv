@@ -63,6 +63,7 @@ bool Response::setStatus(int status)
 		std::pair<int, string>(405, "Method Not Allowed"),
 		std::pair<int, string>(411, "Length Required"),
 		std::pair<int, string>(413, "Request Entity Too Large"),
+		std::pair<int, string>(505, "HTTP Version Not Supported"),
 		std::pair<int, string>(0, "")};
 	for (int i = 0; reasons[i].first; ++i)
 	{
@@ -160,6 +161,21 @@ bool Response::fileToBody(string const& file)
 
 	setHeader("Content-Type:" + findContentType(file));
 	return true;
+}
+
+void Response::confirmationToBody(string const& message)
+{
+	std::ostringstream oss;
+	oss << "<!DOCTYPE html>\n<html>\n<head>\n<title>upload_confirmation - webserv</title>\n";
+	oss << "<style>\nhtml{\nbackground-color: #64fc12;\n}\n\n";
+	oss << "body{\nmin-height: 100vh;\ndisplay: flex;\nalign-items: center;\n";
+	oss << "justify-content: space-around;\ncolor: #000000;\n}\n</style>\n</head>\n\n";
+	oss << "<body>\n<center>\n\t<h1 style=\"font-family:'Courier New', Courier, monospace\">";
+	oss << message;
+	if (message.empty())
+		oss << "All done !";
+	oss << "</h1>\n</center>\n</body>\n</html>\n";
+	_body = oss.str();
 }
 
 /* MEMBERS */
