@@ -218,10 +218,12 @@ void Request::handleGet(Response& response, Location const* location)
 		handleError(response, 404);
 }
 
-// only works with a multipart request
+// only works with a multipart file upload request
 void Request::handlePost(Response& response, Location const* location)
 {
 // maybe spread this out over a few functions
+	if (location->get_upload_path().empty())
+		return handleError(response, 403);
 	std::ostringstream oss;
 	oss << location->get_upload_path() << '/';
 	size_t name_pos = _body.find("filename=\"");
