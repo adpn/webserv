@@ -16,7 +16,7 @@ Request::Request(int fd, std::vector<Server *> servers)
 Request::Request(Request const& src)
 	: _status(src._status), _fin_header(src._fin_header), _content_left(src._content_left), _fd(src._fd),
 		_method(src._method), _uri(src._uri), _is_index(src._is_index), _version(src._version),
-		_body(src._body), _headers(src._headers), _servers(src._servers), _server(src._server) {}
+		_body(src._body), _filename(src._filename), _headers(src._headers), _servers(src._servers), _server(src._server) {}
 
 Request::~Request()
 	{}
@@ -80,7 +80,7 @@ string const& Request::getBody() const
 std::map<string, string> const& Request::getHeaders() const
 	{ return _headers; }
 
-/* STATIC MEMBERS */
+/* STATIC MEMBERS */ // maybe move all of these to somewhere else? (router?)
 
 std::map<int, Request> Request::_requests;
 
@@ -97,6 +97,7 @@ bool Request::manageRequests(int fd, std::vector<Server *> servers, char const* 
 std::cout << ">> parsed a packet[" << fd << "], " << instance._content_left << "b left\n"; //debug
 	if (!instance.isFin())
 		return false;
+	instance.prepare();
 	instance.assignServer();
 std::cout << ">> finished a packet[" << fd << "]:\n"; instance.print(false); //debug
 	return true;
@@ -115,6 +116,13 @@ bool Request::executeRequest(int fd)
 	instance.handle();
 	_requests.erase(it);
 	return true;
+}
+
+void Request::deleteRequest(int fd)
+{
+	std::map<int, Request>::iterator it = _requests.find(fd);
+	if (it != _requests.end())
+		_requests.erase(it);
 }
 
 /* MEMBERS */
@@ -226,8 +234,7 @@ void Request::handlePost(Response& response, Location const* location)
 		return handleError(response, 403);
 	std::ostringstream oss;
 	oss << location->get_upload_path() << '/';
-	size_t name_pos = _body.find("filename=\"");
-	if (name_pos == string::npos)
+	if (_filename.empty())
 	{
 		std::ostringstream oss_temp;
 		for (int i = 0; true; i++)
@@ -242,10 +249,8 @@ void Request::handlePost(Response& response, Location const* location)
 		oss << oss_temp.str();
 	}
 	else
-	{
-		name_pos += 10;
-		oss << _body.substr(name_pos, _body.find('"', name_pos) - name_pos);
-	}
+		oss << _filename;
+	// we are assuming that status is 200 at this point
 	if (access(oss.str().c_str(), F_OK))
 		response.setStatus(201);
 	std::ofstream ofs(oss.str().c_str(), std::ios::out | std::ios::trunc);
@@ -253,19 +258,6 @@ void Request::handlePost(Response& response, Location const* location)
 		return handleError(response, 500);
 	ofs << _body;
 	response.confirmationToBody("Uploaded !");
-
-	/* multipart;	or... keep it intact and send it back the same way ? (with correct headers?)
-		header: Content-Type: multipart/form-data;boundary="boundary"
-		body:	--boundary
-				Content-Disposition: form-data; name="field1"
-
-				value1
-				--boundary
-				Content-Disposition: form-data; name="field2"; filename="example.txt"
-
-				value2
-				--boundary--
-	*/
 }
 
 void Request::handleDelete(Response& response, Location const* location)
@@ -623,6 +615,80 @@ void Request::manageSpecialHeader(std::pair<string, string> const& pair)
 	// }
 	if (_method[0] == 'P' && !pair.first.compare("Content-Length"))
 		_content_left = atol(pair.second.c_str());
+}
+
+
+void Request::prepare()
+{
+	prepareBody();
+}
+
+void Request::prepareBody()
+{
+	if (_method[0] != 'P' || _body.empty())
+		return ;
+	std::map<string, string>::const_iterator it;
+	it = _headers.find("Content-Type");
+	if (it != _headers.end() && it->second.find("multipart") != string::npos)
+		return removeMultipart(it->second);
+}
+
+void Request::removeMultipart(string const& header)
+{
+// std::cout << "MULTIPART before: \n*\n*\n" << _body << "\n*\n*\n"; // debug
+	string boundary;
+	{
+		size_t boundary_pos = header.find("boundary=");
+		if (boundary_pos == string::npos)
+			return ;
+		boundary_pos += 9;
+		size_t count;
+		if (header[boundary_pos] == '"')
+		{
+			++boundary_pos;
+			count = header.find('"', boundary_pos);
+		}
+		else
+			count = header.find_first_of(":;,", boundary_pos);
+		if (count != string::npos)
+			count -= boundary_pos;
+		boundary = header.substr(boundary_pos, count);
+	}
+	{
+		size_t cursor = 0;
+		size_t count = _body.find("\r\n\r\n");
+		if (count == string::npos)
+			return ;
+		count += 4;
+		{
+			size_t name_pos = _body.rfind("filename=\"", count); // searches only in the first boundary block
+			if (name_pos != string::npos)
+			{
+				name_pos += 10;
+				_filename = _body.substr(name_pos, _body.find('"', name_pos) - name_pos);
+			}
+		}
+		while (cursor <= _body.size())
+		{
+// std::cout << "REMOVING |" << _body.substr(cursor, count) << "|\n"; // debug
+			_body.erase(cursor, count);
+			cursor = _body.find("\r\n--" + boundary, cursor);
+			if (!_body.compare(cursor + 4 + boundary.size(), 2, "--"))
+			{
+// std::cout << "REMOVING (last) |" << _body.substr(cursor) << "|\n"; // debug
+				_body.erase(cursor);
+				break ;
+			}
+			if (cursor != string::npos)
+				count = _body.find("\r\n\r\n", cursor + 4 + boundary.size());
+			if (count != string::npos)
+				count += (4 - cursor);
+		}
+	}
+// std::cout << "MULTIPART after: \n*\n*\n" << _body << "\n*\n*\n"; // debug
+	// remove "CRLF--boundary [potential ws] CRLF [optional header fields CRLF] CRLF" // also, grab the filename here
+	// last boundary is followed by --
+	// ignore all before first and after last boundary
 }
 
 /* DEBUG */

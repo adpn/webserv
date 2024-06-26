@@ -23,11 +23,11 @@ class Request
 		bool						_is_index;
 		string						_version;
 		string						_body;
+		string						_filename;
 		std::map<string, string>	_headers; // fields would have been a more correct name
 		std::vector<Server *>		_servers;
 		Server*						_server;
 
-		// handle errors of these with (mandatory default) error pages
 		bool buffer(string const& package, std::istringstream& iss);
 		bool parseRequestLine(std::istringstream& iss);
 		bool parseMethod(string const& method);
@@ -39,6 +39,11 @@ class Request
 		bool getline_crlf(std::istringstream& iss, string& buf) const;
 		bool checkHeaders();
 		void manageSpecialHeader(std::pair<string, string> const& pair);
+
+		void prepare();
+		void prepareBody();
+		void removeMultipart(string const& header);
+		void removeChunked();
 
 		void handleGet(Response& response, Location const* location);
 		void handlePost(Response& response, Location const* location);
@@ -59,6 +64,7 @@ class Request
 
 		static bool	manageRequests(int fd, std::vector<Server *> servers, char const* buffer, ssize_t size);
 		static bool	executeRequest(int fd);
+		static void deleteRequest(int fd);
 		void		assignServer();
 
 		bool					isValid() const;
