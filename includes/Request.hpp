@@ -12,8 +12,6 @@ class Location;
 
 class Request
 {
-		static std::map<int, Request> _requests;
-
 		int							_status;
 		bool						_fin_header;
 		long						_content_left;
@@ -24,7 +22,7 @@ class Request
 		string						_version;
 		string						_body;
 		string						_filename;
-		std::map<string, string>	_headers; // fields would have been a more correct name
+		std::map<string, string>	_fields;
 		std::vector<Server *>		_servers;
 		Server*						_server;
 
@@ -34,16 +32,14 @@ class Request
 		bool parseUri(string const& uri);
 		bool parseVersion(string const& version);
 		void parseBody(string const& body);
-		bool loopHeaders(std::istringstream& iss);
-		bool parseHeader(string const& header);
+		bool loopFields(std::istringstream& iss);
+		bool parseField(string const& header);
 		bool getline_crlf(std::istringstream& iss, string& buf) const;
-		bool checkHeaders();
-		void manageSpecialHeader(std::pair<string, string> const& pair);
+		bool checkFields();
+		void manageSpecialField(std::pair<string, string> const& pair);
 
-		void prepare();
 		void prepareBody();
 		void removeMultipart(string const& header);
-		void removeChunked();
 
 		void handleGet(Response& response, Location const* location);
 		void handlePost(Response& response, Location const* location);
@@ -62,9 +58,6 @@ class Request
 		Request(Request const& src);
 		~Request();
 
-		static bool	manageRequests(int fd, std::vector<Server *> servers, char const* buffer, ssize_t size);
-		static bool	executeRequest(int fd);
-		static void deleteRequest(int fd);
 		void		assignServer();
 
 		bool					isValid() const;
@@ -76,10 +69,11 @@ class Request
 		string const&			getUri() const;
 		string const&			getVersion() const;
 		string const&			getBody() const;
-		std::map<string, string> const&	getHeaders() const;
+		std::map<string, string> const&	getFields() const;
 
 		void			parse(string const& package);
 		void			handle();
+		void 			prepare();
 		Location const*	getLocation();
 		string			getFile(Location const* location) const;
 		string			getIndexFile(Location const* location) const;

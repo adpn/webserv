@@ -3,6 +3,7 @@
 
 # include <iostream>
 # include <map>
+# include <exception>
 
 using std::string;
 class Request;
@@ -13,11 +14,11 @@ class Response
 		string						_version;
 		int							_status;
 		string						_reason;
-		std::map<string, string>	_headers;
+		std::map<string, string>	_fields;
 		string						_body;
 		Location const*				_location;
 
-		void addHeaders();
+		void addFields();
 		void setHContentLength();
 		void setHDate();
 		void setHServer();
@@ -36,17 +37,22 @@ class Response
 		void	setLocation(Location const* location);
 		bool	setStatus(int status);
 		void	setCustomReason(string const& reason);
-		bool	setHeader(string const& header);
+		bool	setField(string const& field);
 		void	setBody(string const& body);
 		string	findContentType(string extension);
 		bool	fileToBody(string const& file);
 		void	confirmationToBody(string const& message);
 
-		ssize_t	sendResponse(int fd);
+		void	sendResponse(int fd);
 		string	wrapPackage() const;
 
 		// debugging
 		void print(bool do_body = true) const;
+
+		class SendFailException : public std::exception {
+		public:
+			const char* what() const throw();
+		};
 };
 
 #endif

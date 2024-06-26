@@ -1,6 +1,4 @@
 #include <Router.hpp>
-#include <Request.hpp>
-#include "Socket.hpp"
 
 #define BUFFER_SIZE 1024
 
@@ -51,20 +49,20 @@ void	Router::removeClient(size_t fdIndex) {
 }
 /* Method functions */
 
-int Router::managePollin(size_t fdIndex)
+void Router::managePollin(size_t fdIndex)
 {
 	// case where the POLLIN is on a server fd
 	if (fdIndex < _serverFdsNumber) {
-		std::cout << "POLLIN SERVER" << std::endl;
+		//std::cout << "POLLIN SERVER" << std::endl;
 		// Accept new client connection
 		struct sockaddr_in clientAddr;
 		socklen_t clientAddrLen = sizeof(clientAddr);
 		int clientFd = accept(_fds[fdIndex].fd, (struct sockaddr *)&clientAddr, &clientAddrLen);
 		if (clientFd == -1) {
 			std::cout << "Accept error" << std::endl;
-			return 0;
+			return ;
 		}
-		std::cout << "Client connected to fd : " << _fds[fdIndex].fd << std::endl;
+		//std::cout << "Client connected to fd : " << _fds[fdIndex].fd << std::endl;
 
 		// Add new client socket to fds
 		struct pollfd pfd;
@@ -75,7 +73,7 @@ int Router::managePollin(size_t fdIndex)
 
 	}
 	else {
-		std::cout << "POLLIN CLIENT: " << _fds[fdIndex].fd << std::endl;
+		//std::cout << "POLLIN CLIENT: " << _fds[fdIndex].fd << std::endl;
 		// case where the POLLIN is on a client fd
 		char buffer[BUFFER_SIZE];
 		ssize_t bytesReceived = recv(_fds[fdIndex].fd, buffer, sizeof(buffer) - 1, 0);
@@ -83,36 +81,37 @@ int Router::managePollin(size_t fdIndex)
 			buffer[bytesReceived] = '\0';
 			// std::cout << "Received from client: " << std::endl;
 			// std::cout << buffer << std::endl;
-			Request::manageRequests(_fds[fdIndex].fd, getServerWithClientFd(_fds[fdIndex].fd), buffer, bytesReceived);
+			manageRequests(_fds[fdIndex].fd, getServerWithClientFd(_fds[fdIndex].fd), buffer, bytesReceived);
 
 			// manage client
 			_fds[fdIndex].events |= POLLOUT; // Enable POLLOUT to send data
 		}
-		else if (bytesReceived == 0) {
+		else {
 			// Connection closed by client
-			std::cout << "Client disconnected " << _fds[fdIndex].fd <<std::endl;
+			//std::cout << "Client disconnected " << _fds[fdIndex].fd << std::endl;
 
 			removeClient(fdIndex);
+			deleteRequest(_fds[fdIndex].fd);
 			--fdIndex;
 		}
-		else {
-			std::cout << "Recv error" << std::endl;
-			return 1;
-		}
 	}
-	return 0;
 }
 
-int Router::managePollout(size_t fdIndex) {
-	std::cout << "Ready to send data to client on fd " << _fds[fdIndex].fd << std::endl;
+void Router::managePollout(size_t fdIndex) {
+	//std::cout << "Ready to send data to client on fd " << _fds[fdIndex].fd << std::endl;
 	// Send data to client
-	Request::executeRequest(_fds[fdIndex].fd);
-	std::cout << "Client disconnected after sending a response: " << _fds[fdIndex].fd <<std::endl;
-	_fds[fdIndex].events = POLLIN;
-
-	removeClient(fdIndex);
-	--fdIndex;
-	return 0;
+	try {
+		executeRequest(_fds[fdIndex].fd);
+		//std::cout << "Client disconnected after sending a response: " << _fds[fdIndex].fd << std::endl;
+		removeClient(fdIndex);
+		--fdIndex; 
+	}
+	catch (std::exception const &e) {
+		std::cout << "Client disconnected after send failed: " << _fds[fdIndex].fd << std::endl;
+		removeClient(fdIndex);
+		deleteRequest(_fds[fdIndex].fd);
+		--fdIndex;
+	}
 }
 
 int Router::pollFds() {
@@ -128,12 +127,10 @@ int	Router::readEvents() {
 	for (size_t i = 0; i < _fds.size(); ++i)
 	{
 		if (_fds[i].revents & POLLIN) {
-			if (managePollin(i))
-				return 1;
+			managePollin(i);
 		}
 		else if (_fds[i].revents & POLLOUT) {
-			if (managePollout(i))
-					return 1;
+			managePollout(i);
 		}
 	}
 	return 0;
@@ -185,4 +182,45 @@ void	Router::closeSockets() {
 		std::cout << "Closing port: " << _sockets[i].getPort() << " with socket fd: " << _sockets[i] << std::endl;
 		close(_sockets[i]);
 	}
+}
+
+// returns true if request is finished
+// return false if request is not finished or fd is bad
+bool Router::manageRequests(int fd, std::vector<Server *> servers, char const* buffer, ssize_t size)
+{
+	if (fd < 3)
+		return false;
+	std::string package(buffer, buffer + size);
+	std::map<int, Request>::iterator it = (_requests.insert(std::pair<int, Request>(fd, Request(fd, servers)))).first;
+	Request& instance = (*it).second;
+	instance.parse(package);
+// std::cout << ">> parsed a packet[" << fd << "], " << instance._content_left << "b left\n"; //debug
+	if (!instance.isFin())
+		return false;
+	instance.prepare();
+	instance.assignServer();
+// std::cout << ">> finished a packet[" << fd << "]:\n"; instance.print(false); //debug
+	return true;
+}
+
+// returns true if execution was a success
+// else fd was not found or request is unfinished
+bool Router::executeRequest(int fd)
+{
+	std::map<int, Request>::iterator it = _requests.find(fd);
+	if (it == _requests.end())
+		return false;
+	Request& instance = (*it).second;
+	if (!instance.isFin())
+		return false;
+	instance.handle();
+	deleteRequest(fd);
+	return true;
+}
+
+void Router::deleteRequest(int fd)
+{
+	std::map<int, Request>::iterator it = _requests.find(fd);
+	if (it != _requests.end())
+		_requests.erase(it);
 }

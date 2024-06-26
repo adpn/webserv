@@ -6,6 +6,11 @@
 #include <sys/socket.h>
 #include <ctime>
 
+/* Exceptions*/
+const char* Response::SendFailException::what() const throw() {
+	return "send failed";
+}
+
 /* CONSTRUCTORS */
 
 Response::Response()
@@ -27,7 +32,7 @@ Response& Response::operator=(Response const& rhs)
 	_version = rhs._version;
 	_status = rhs._status;
 	_reason = rhs._reason;
-	_headers = rhs._headers;
+	_fields = rhs._fields;
 	_body = rhs._body;
 	return *this;
 }
@@ -79,12 +84,12 @@ bool Response::setStatus(int status)
 void Response::setCustomReason(string const& reason)
 { _reason = reason; }
 
-bool Response::setHeader(string const& header)
+bool Response::setField(string const& field)
 {
-	if (header.find(':') == string::npos)
+	if (field.find(':') == string::npos)
 		return false;
 	std::pair<string, string> pair;
-	std::istringstream iss(header);
+	std::istringstream iss(field);
 
 	std::getline(iss, pair.first, ':');
 	iss >> std::ws;
@@ -94,7 +99,7 @@ bool Response::setHeader(string const& header)
 		iss >> std::ws;
 		if (pair.second.empty())
 			continue ;
-		std::pair<std::map<string, string>::iterator, bool> ret(_headers.insert(pair));
+		std::pair<std::map<string, string>::iterator, bool> ret(_fields.insert(pair));
 		if (!ret.second)
 			if (ret.first->second.find(pair.second) == string::npos)
 				ret.first->second.append("," + pair.second);
@@ -159,7 +164,7 @@ bool Response::fileToBody(string const& file)
 	_body = oss.str();
 // std::cout << "succeeded\n"; // debug
 
-	setHeader("Content-Type:" + findContentType(file));
+	setField("Content-Type:" + findContentType(file));
 	return true;
 }
 
@@ -180,14 +185,13 @@ void Response::confirmationToBody(string const& message)
 
 /* MEMBERS */
 
-// doesn't handle errors :)
-ssize_t Response::sendResponse(int fd)
+void	Response::sendResponse(int fd)
 {
-	addHeaders();
+	addFields();
 	string str(wrapPackage());
 
-	return send(fd, str.c_str(), str.size(), 0);
-	//not return but throw Response::SendFailException
+	if (send(fd, str.c_str(), str.size(), 0) < 1)
+		throw SendFailException();
 }
 
 string Response::wrapPackage() const
@@ -195,7 +199,7 @@ string Response::wrapPackage() const
 	std::ostringstream package;
 
 	package << _version << " " << _status << " " << _reason << "\r\n";
-	for (std::map<string, string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
+	for (std::map<string, string>::const_iterator it = _fields.begin(); it != _fields.end(); ++it)
 		package << (*it).first << ":" << (*it).second << "\r\n";
 	package << "\r\n";
 	if (_body.size())
@@ -203,7 +207,7 @@ string Response::wrapPackage() const
 	return package.str();
 }
 
-void Response::addHeaders()
+void Response::addFields()
 {
 	setHContentLength();
 	setHServer();
@@ -215,8 +219,8 @@ void Response::setHContentLength()
 {
 	std::ostringstream oss;
 	oss << _body.size();
-	_headers.erase("Content-Length");
-	_headers.insert(std::pair<string, string>("Content-Length", oss.str()));
+	_fields.erase("Content-Length");
+	_fields.insert(std::pair<string, string>("Content-Length", oss.str()));
 }
 
 //HTTP format example: "Tue, 15 Nov 1994 08:12:31 GMT"
@@ -227,12 +231,12 @@ void Response::setHDate()
 	char str[30];
 	strftime(str, 29, "%a, %d %b %Y %H:%M:%S GMT", tm);
 	str[29] = 0;
-	_headers.insert(std::pair<string, string>("Date", str));
+	_fields.insert(std::pair<string, string>("Date", str));
 }
 
 void Response::setHServer()
 {
-	_headers.insert(std::pair<string, string>("Server", "WebServ"));
+	_fields.insert(std::pair<string, string>("Server", "WebServ"));
 }
 
 void Response::setHAllow()
@@ -256,7 +260,7 @@ void Response::setHAllow()
 		if (it->second)
 			value.append("," + it->first);
 	}
-	_headers["Allow"] = value;
+	_fields["Allow"] = value;
 }
 
 /* DEBUG */
@@ -265,7 +269,7 @@ void Response::print(bool do_body) const
 {
 	std::cout << "response package:\n";
 	std::cout << "\t" << _version << " " << _status << " " << _reason << "\n";
-	for (std::map<string, string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
+	for (std::map<string, string>::const_iterator it = _fields.begin(); it != _fields.end(); ++it)
 		std::cout << "\t" << (*it).first << ":" << (*it).second << "\n";
 	if (do_body && _body.size())
 		std::cout << "\n\t" << _body << "\n";
