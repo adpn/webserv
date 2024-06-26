@@ -48,6 +48,7 @@ class Request
 		void handleDelete(Response& response, Location const* location);
 		bool preHandleChecks(Response& response, Location const* location);
 		void handleAutoindex(Response& response, Location const* location) const;
+		void handleReturn(Response& response, Location const* location) const;
 		void handleError(Response& response, int status = 0);
 		bool configErrorPage(Response& response);
 		void defaultErrorPage(Response& response);
