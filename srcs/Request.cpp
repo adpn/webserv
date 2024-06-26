@@ -16,7 +16,7 @@ Request::Request(int fd, std::vector<Server *> servers)
 Request::Request(Request const& src)
 	: _status(src._status), _fin_header(src._fin_header), _content_left(src._content_left), _fd(src._fd),
 		_method(src._method), _uri(src._uri), _is_index(src._is_index), _version(src._version),
-		_body(src._body), _filename(src._filename), _headers(src._headers), _servers(src._servers), _server(src._server) {}
+		_body(src._body), _filename(src._filename), _fields(src._fields), _servers(src._servers), _server(src._server) {}
 
 Request::~Request()
 	{}
@@ -30,7 +30,7 @@ bool Request::isFin() const
 	{ return ((_status && !isValid()) || (_status && _fin_header && _content_left <= 0)); }
 
 bool Request::isUser() const
-	{ return _headers.find("Sec-Fetch-User") != _headers.end(); }
+	{ return _fields.find("Sec-Fetch-User") != _fields.end(); }
 
 // sets _status if bad
 bool Request::isGoodSize()
@@ -39,7 +39,7 @@ bool Request::isGoodSize()
 
 	if (!max || _body.empty())
 		return true;
-	if (_headers.find("Content-Length") == _headers.end())
+	if (_fields.find("Content-Length") == _fields.end())
 	{
 		_status = 411;
 		return false;
@@ -79,65 +79,20 @@ string const& Request::getVersion() const
 string const& Request::getBody() const
 	{ return _body; }
 
-std::map<string, string> const& Request::getHeaders() const
-	{ return _headers; }
-
-/* STATIC MEMBERS */ // maybe move all of these to somewhere else? (router?)
-
-std::map<int, Request> Request::_requests;
-
-// returns true if request is finished
-// return false if request is not finished or fd is bad
-bool Request::manageRequests(int fd, std::vector<Server *> servers, char const* buffer, ssize_t size)
-{
-	if (fd < 3)
-		return false;
-	std::string package(buffer, buffer + size);
-	std::map<int, Request>::iterator it = (_requests.insert(std::pair<int, Request>(fd, Request(fd, servers)))).first;
-	Request& instance = (*it).second;
-	instance.parse(package);
-std::cout << ">> parsed a packet[" << fd << "], " << instance._content_left << "b left\n"; //debug
-	if (!instance.isFin())
-		return false;
-	instance.prepare();
-	instance.assignServer();
-std::cout << ">> finished a packet[" << fd << "]:\n"; instance.print(false); //debug
-	return true;
-}
-
-// returns true if execution was a success
-// else fd was not found or request is unfinished
-bool Request::executeRequest(int fd)
-{
-	std::map<int, Request>::iterator it = _requests.find(fd);
-	if (it == _requests.end())
-		return false;
-	Request& instance = (*it).second;
-	if (!instance.isFin())
-		return false;
-	instance.handle();
-	_requests.erase(it);
-	return true;
-}
-
-void Request::deleteRequest(int fd)
-{
-	std::map<int, Request>::iterator it = _requests.find(fd);
-	if (it != _requests.end())
-		_requests.erase(it);
-}
+std::map<string, string> const& Request::getFields() const
+	{ return _fields; }
 
 /* MEMBERS */
 
 void	Request::assignServer() {
-	std::string host = _headers["Host"];
+	std::string host = _fields["Host"];
 
 	//Remove the port part of the host
 	size_t i = host.find_first_of(":");
 	if (i != std::string::npos) {
 		host = host.substr(0, i);
 	}
-	std::cout << "Host extracted: " << host << std::endl;
+	//std::cout << "Host extracted: " << host << std::endl;
 	//Loop through servers
 	for (size_t i = 0; i < _servers.size(); i++) {
 		std::vector<string> names = _servers[i]->get_name();
@@ -147,12 +102,12 @@ void	Request::assignServer() {
 
 			if (names[j] == host) {
 				_server = _servers[i];
-				std::cout << "Right server found" << std::endl;
+				//std::cout << "Right server found" << std::endl;
 				return ;
 			}
 		}
 	}
-	std::cout << "Host not found, default server" << std::endl;
+	//std::cout << "Host not found, default server" << std::endl;
 	_server = _servers[0];
 }
 
@@ -169,7 +124,7 @@ void Request::defaultErrorPage(Response& response)
 	oss << "        /* Add your CSS styles here */\n    </style> -->\n</head>\n<body>\n    <br><b>ERROR: ";
 	oss << _status << " " << response.getReason() << "\n</b></body>\n</html>\n";
 	response.setBody(oss.str());
-	response.setHeader("Content-Type: text/html");
+	response.setField("Content-Type: text/html");
 }
 
 // returns false if none provided or something else went wrong
@@ -198,7 +153,7 @@ void Request::handleError(Response& response, int status)
 }
 
 void Request::handleAutoindex(Response &response, Location const* location) const {
-	response.setHeader("Content-Type: text/html");
+	response.setField("Content-Type: text/html");
 
 	std::ostringstream oss;
 	oss << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n";
@@ -447,11 +402,11 @@ void Request::parse(string const& package)
 	if (_method.empty())
 		if (!parseRequestLine(iss))
 			return ;
-	if (!loopHeaders(iss))
+	if (!loopFields(iss))
 		return ;
 	if (!_fin_header)
 		return ;
-	if (!checkHeaders())
+	if (!checkFields())
 		return ;
 	_status = 200;
 	if (!_fin_header)
@@ -502,11 +457,11 @@ bool Request::parseRequestLine(std::istringstream& iss)
 
 bool Request::parseMethod(string const& method)
 {
-	string	valid_headers[] = {"GET", "POST", "DELETE"};
+	string	valid_fields[] = {"GET", "POST", "DELETE"};
 	int		size = 3;
 
 	for (--size; size >= 0; --size)
-		if (!method.compare(valid_headers[size]))
+		if (!method.compare(valid_fields[size]))
 			break ;
 	if (size < 0)
 	{
@@ -542,7 +497,7 @@ bool Request::parseVersion(string const& version)
 }
 
 // depends on input being CRLF terminated
-bool Request::loopHeaders(std::istringstream& iss)
+bool Request::loopFields(std::istringstream& iss)
 {
 	string token;
 
@@ -550,7 +505,7 @@ bool Request::loopHeaders(std::istringstream& iss)
 		return true;
 	while (!token.empty())
 	{
-		if (!parseHeader(token))
+		if (!parseField(token))
 			return false;
 		if (!getline_crlf(iss, token))
 			return true;
@@ -559,7 +514,7 @@ bool Request::loopHeaders(std::istringstream& iss)
 	return true;
 }
 
-bool Request::parseHeader(string const& header)
+bool Request::parseField(string const& header)
 {
 	if (header.find(':') == string::npos)
 		return false;
@@ -575,8 +530,8 @@ bool Request::parseHeader(string const& header)
 		if (pair.second.empty())
 			continue ;
 
-		manageSpecialHeader(pair);
-		std::pair<std::map<string, string>::iterator, bool> ret(_headers.insert(pair));
+		manageSpecialField(pair);
+		std::pair<std::map<string, string>::iterator, bool> ret(_fields.insert(pair));
 		if (!ret.second)
 			if (ret.first->second.find(pair.second) == string::npos)
 				ret.first->second.append("," + pair.second);
@@ -600,16 +555,16 @@ void Request::parseBody(string const& body)
 	return ;
 }
 
-bool Request::checkHeaders()
+bool Request::checkFields()
 {
-	if (_headers.find("Host") == _headers.end())
+	if (_fields.find("Host") == _fields.end())
 		_status = 400;
 	else
 		return true;
 	return false;
 }
 
-void Request::manageSpecialHeader(std::pair<string, string> const& pair)
+void Request::manageSpecialField(std::pair<string, string> const& pair)
 {
 	// if (!pair.first.compare("Content-Type"))
 	// {
@@ -632,8 +587,8 @@ void Request::prepareBody()
 	if (_method[0] != 'P' || _body.empty())
 		return ;
 	std::map<string, string>::const_iterator it;
-	it = _headers.find("Content-Type");
-	if (it != _headers.end() && it->second.find("multipart") != string::npos)
+	it = _fields.find("Content-Type");
+	if (it != _fields.end() && it->second.find("multipart") != string::npos)
 		return removeMultipart(it->second);
 }
 
@@ -699,7 +654,7 @@ void Request::print(bool do_body) const
 	if (_method.empty())
 		return ;
 	std::cout << "\t" << _method << " " << _uri << " " << _version << "\n";
-	for (std::map<string, string>::const_iterator it = _headers.begin(); it != _headers.end(); ++it)
+	for (std::map<string, string>::const_iterator it = _fields.begin(); it != _fields.end(); ++it)
 		std::cout << "\t" << (*it).first << ":" << (*it).second << "\n";
 	if (do_body && _body.size())
 		std::cout << "\n\t" << _body << "\n";
