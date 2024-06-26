@@ -29,6 +29,9 @@ bool Request::isValid() const
 bool Request::isFin() const
 	{ return ((_status && !isValid()) || (_status && _fin_header && _content_left <= 0)); }
 
+bool Request::isUser() const
+	{ return _headers.find("Sec-Fetch-User") != _headers.end(); }
+
 // sets _status if bad
 bool Request::isGoodSize()
 {
@@ -36,7 +39,6 @@ bool Request::isGoodSize()
 
 	if (!max || _body.empty())
 		return true;
-	// except for chunked requests .....
 	if (_headers.find("Content-Length") == _headers.end())
 	{
 		_status = 411;
@@ -189,6 +191,8 @@ void Request::handleError(Response& response, int status)
 	else if (status)
 		_status = status;
 	response.setStatus(_status);
+	if (!isUser())
+		return ;
 	if (!configErrorPage(response))
 		defaultErrorPage(response);
 }
@@ -257,7 +261,7 @@ void Request::handlePost(Response& response, Location const* location)
 	if (ofs.fail())
 		return handleError(response, 500);
 	ofs << _body;
-	response.confirmationToBody("Uploaded !");
+	response.confirmationToBody("Uploaded !", *this);
 }
 
 void Request::handleDelete(Response& response, Location const* location)
@@ -635,60 +639,52 @@ void Request::prepareBody()
 
 void Request::removeMultipart(string const& header)
 {
-// std::cout << "MULTIPART before: \n*\n*\n" << _body << "\n*\n*\n"; // debug
-	string boundary;
-	{
-		size_t boundary_pos = header.find("boundary=");
-		if (boundary_pos == string::npos)
-			return ;
-		boundary_pos += 9;
-		size_t count;
-		if (header[boundary_pos] == '"')
-		{
-			++boundary_pos;
-			count = header.find('"', boundary_pos);
-		}
-		else
-			count = header.find_first_of(":;,", boundary_pos);
-		if (count != string::npos)
-			count -= boundary_pos;
-		boundary = header.substr(boundary_pos, count);
-	}
-	{
-		size_t cursor = 0;
-		size_t count = _body.find("\r\n\r\n");
-		if (count == string::npos)
-			return ;
+	string boundary = extractBoundary(header);
+	if (boundary.empty())
+		return ;
+	extractFilename();
+	size_t count = _body.find("\r\n\r\n");
+	if (count != string::npos)
 		count += 4;
-		{
-			size_t name_pos = _body.rfind("filename=\"", count); // searches only in the first boundary block
-			if (name_pos != string::npos)
-			{
-				name_pos += 10;
-				_filename = _body.substr(name_pos, _body.find('"', name_pos) - name_pos);
-			}
-		}
-		while (cursor <= _body.size())
-		{
-// std::cout << "REMOVING |" << _body.substr(cursor, count) << "|\n"; // debug
-			_body.erase(cursor, count);
-			cursor = _body.find("\r\n--" + boundary, cursor);
-			if (!_body.compare(cursor + 4 + boundary.size(), 2, "--"))
-			{
-// std::cout << "REMOVING (last) |" << _body.substr(cursor) << "|\n"; // debug
-				_body.erase(cursor);
-				break ;
-			}
-			if (cursor != string::npos)
-				count = _body.find("\r\n\r\n", cursor + 4 + boundary.size());
-			if (count != string::npos)
-				count += (4 - cursor);
-		}
+	_body.erase(0, count);
+	size_t cursor = _body.find(boundary);
+	while (cursor != string::npos && _body.compare(cursor + boundary.size(), 2, "--"))
+	{
+		count = _body.find("\r\n\r\n", cursor + boundary.size());
+		if (count != string::npos)
+			count += (4 - cursor);
+		_body.erase(cursor, count);
+		cursor = _body.find(boundary, cursor);
 	}
-// std::cout << "MULTIPART after: \n*\n*\n" << _body << "\n*\n*\n"; // debug
-	// remove "CRLF--boundary [potential ws] CRLF [optional header fields CRLF] CRLF" // also, grab the filename here
-	// last boundary is followed by --
-	// ignore all before first and after last boundary
+	_body.erase(cursor);
+}
+
+string Request::extractBoundary(string const& header) const
+{
+	size_t boundary_pos = header.find("boundary=");
+	if (boundary_pos == string::npos)
+		return string();
+	boundary_pos += 9;
+	size_t count;
+	if (header[boundary_pos] == '"')
+	{
+		++boundary_pos;
+		count = header.find('"', boundary_pos);
+	}
+	else
+		count = header.find_first_of(":;,", boundary_pos);
+	if (count != string::npos)
+		count -= boundary_pos;
+	return "\r\n--" + header.substr(boundary_pos, count);
+}
+
+void Request::extractFilename()
+{
+	size_t name_pos = _body.find("filename=\"");
+	if (name_pos == string::npos)
+		return ;
+	name_pos += 10;
+	_filename = _body.substr(name_pos, _body.find('"', name_pos) - name_pos);
 }
 
 /* DEBUG */

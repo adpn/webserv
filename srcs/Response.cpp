@@ -163,8 +163,10 @@ bool Response::fileToBody(string const& file)
 	return true;
 }
 
-void Response::confirmationToBody(string const& message)
+void Response::confirmationToBody(string const& message, Request const& request)
 {
+	if (!request.isUser())
+		return ;
 	std::ostringstream oss;
 	oss << "<!DOCTYPE html>\n<html>\n<head>\n<title>upload_confirmation - webserv</title>\n";
 	oss << "<style>\nhtml{\nbackground-color: #64fc12;\n}\n\n";

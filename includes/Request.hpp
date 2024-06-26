@@ -43,7 +43,8 @@ class Request
 		void prepare();
 		void prepareBody();
 		void removeMultipart(string const& header);
-		void removeChunked();
+		string extractBoundary(string const& header) const;
+		void extractFilename();
 
 		void handleGet(Response& response, Location const* location);
 		void handlePost(Response& response, Location const* location);
@@ -69,6 +70,7 @@ class Request
 
 		bool					isValid() const;
 		bool					isFin() const;
+		bool					isUser() const;
 		bool					isGoodSize();
 		int						getFd() const;
 		string const&			getMethod() const;

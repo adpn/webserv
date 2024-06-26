@@ -40,7 +40,7 @@ class Response
 		void	setBody(string const& body);
 		string	findContentType(string extension);
 		bool	fileToBody(string const& file);
-		void	confirmationToBody(string const& message);
+		void	confirmationToBody(string const& message, Request const& request);
 
 		ssize_t	sendResponse(int fd);
 		string	wrapPackage() const;
