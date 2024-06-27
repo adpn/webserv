@@ -176,9 +176,16 @@ void Request::handleAutoindex(Response &response, Location const* location) cons
 	response.setBody(oss.str());
 }
 
+void Request::handleReturn(Response &response, Location const* location) const {
+	response.setStatus(location->get_return().first);
+	response.setField("Location: " + location->get_return().second);
+}
+
 void Request::handleGet(Response& response, Location const* location)
 {
-	if (location->get_autoindex() && _uri.back() == '/')
+	if (location->get_return().first)
+		handleReturn(response, location);
+	else if (location->get_autoindex() && _uri.back() == '/')
 		handleAutoindex(response, location);
 	else if (!response.fileToBody(getFile(location)))
 		handleError(response, 404);
