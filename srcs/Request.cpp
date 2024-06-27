@@ -225,7 +225,8 @@ void Request::handleDelete(Response& response, Location const* location)
 {
 	// check if resource exists? (404)
 	// check if resource is part of server (403 or 404 if we're not doing the last step)
-	if (!std::remove(getFile(location).c_str()))
+	// check if resource is a dir? (403?)
+	if (std::remove(getFile(location).c_str()))
 		return handleError(response, 404);
 	response.setStatus(204);
 }
