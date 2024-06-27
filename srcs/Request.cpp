@@ -130,7 +130,6 @@ void Request::defaultErrorPage(Response& response)
 // returns false if none provided or something else went wrong
 bool Request::configErrorPage(Response& response)
 {
-	// do error_page on location level too?
 	std::map<unsigned int, string>::const_iterator it = _server->get_error_page().find(_status);
 	if (it == _server->get_error_page().end())
 		return false;
@@ -188,7 +187,6 @@ void Request::handleGet(Response& response, Location const* location)
 // only works with a multipart file upload request
 void Request::handlePost(Response& response, Location const* location)
 {
-// maybe spread this out over a few functions
 	if (location->get_upload_path().empty())
 		return handleError(response, 403);
 	std::ostringstream oss;
@@ -209,26 +207,20 @@ void Request::handlePost(Response& response, Location const* location)
 	}
 	else
 		oss << _filename;
-	// we are assuming that status is 200 at this point
-	if (access(oss.str().c_str(), F_OK))
-		response.setStatus(201);
 	std::ofstream ofs(oss.str().c_str(), std::ios::out | std::ios::trunc);
 	if (ofs.fail())
 		return handleError(response, 500);
 	ofs << _body;
-	response.confirmationToBody("Uploaded !", *this);
+	response.setStatus(204);
 }
 
 void Request::handleDelete(Response& response, Location const* location)
 {
-(void)location;
-// temp error
-handleError(response, 500);
-	// we should probably be VERY careful with deleting stuff ... probably or not :)
 	// check if resource exists? (404)
 	// check if resource is part of server (403 or 404 if we're not doing the last step)
-	// if (!std::remove(uritoupload().c_str()))
-		// response.setStatus(204);
+	if (!std::remove(getFile(location).c_str()))
+		return handleError(response, 404);
+	response.setStatus(204);
 }
 
 void Request::handle()
