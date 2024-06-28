@@ -139,7 +139,8 @@ std::string	Location::get_root(bool print) const {
 		ret = _server.get_generic_root();
 	if (ret.empty() || ret == "/")
 		return ".";
-	ret.erase(0, ret.find_first_not_of('/'));
+// check for .. here somewhere
+	ret.erase(0, ret.find_first_not_of("/~"));
 	ret.erase(ret.find_last_not_of('/') + 1);
 	return ret;
 }
