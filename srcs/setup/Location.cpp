@@ -177,11 +177,11 @@ void Location::aliases_to_server(Server& server)
 	server.set_alias(_name, *this);
 }
 
-// throws if root can't be opened
+// throws if dir can't be opened
 std::vector<Entry> Location::create_entries(std::string uri) const {
 	DIR* dirp = opendir((get_root() + uri).c_str());
 	if (!dirp)
-		throw Location::Error("couldn't open location root: " + (get_root() + uri));
+		throw Location::Error("couldn't open directory: " + (get_root() + uri));
 	std::vector<Entry> res;
 	struct dirent* entry;
 	entry = readdir(dirp);

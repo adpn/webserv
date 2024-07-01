@@ -151,9 +151,11 @@ void Request::handleError(Response& response, int status)
 		defaultErrorPage(response);
 }
 
-void Request::handleAutoindex(Response &response, Location const* location) const {
-	response.setField("Content-Type: text/html");
+void Request::handleAutoindex(Response &response, Location const* location) {
+	if (access((location->get_root() + _uri).c_str(), F_OK))
+		return handleError(response, 404);
 
+	response.setField("Content-Type: text/html");
 	std::ostringstream oss;
 	oss << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n";
 	oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
@@ -354,7 +356,7 @@ string Request::getFile(Location const* location) const
 
 string Request::getIndexFile(Location const* location) const
 {
-	string prefix = "." + _uri;
+	string prefix = location->get_root() + _uri;
 	if (_uri.back() != '/')
 		prefix.append("/");
 	size_t i = 0;
