@@ -1,5 +1,6 @@
 #include <dirent.h>
 
+#include "Config.hpp"
 #include "Location.hpp"
 #include "Server.hpp"
 #include "Entry.hpp"
@@ -98,12 +99,16 @@ void	Location::set_index(std::vector< std::string > s){
 void	Location::set_root(std::vector< std::string > s){
 	if (s.size() != 1)
 		throw Location::Error("Directive format not respected.");
-	this->_root = s.front();
+	this->_root = Config::process_path(s.front());
+	if (this->_root.empty())
+		this->_root = ".";
 }
 void	Location::set_upload_path(std::vector< std::string > s){
 	if (s.size() != 1)
 		throw Location::Error("Directive format not respected.");
-	this->_upload_path = s.front();
+	this->_upload_path = Config::process_path(s.front());
+	if (this->_upload_path.empty())
+		this->_upload_path = ".";
 }
 
 
@@ -131,32 +136,15 @@ std::list<std::string> const& Location::get_aliases() const {
 	return this->_aliases;
 }
 // returns a path without any leading or trailing '/'
-std::string	Location::get_root(bool print) const {
-	if (print)
-		return _root;
-	string ret(_root);
+std::string const&	Location::get_root() const {
 	if (_root.empty())
-		ret = _server.get_generic_root();
-	if (ret.empty() || ret == "/")
-		return ".";
-// check for .. here somewhere
-	ret.erase(0, ret.find_first_not_of("/~"));
-	ret.erase(ret.find_last_not_of('/') + 1);
-	return ret;
+		return _server.get_generic_root();
+	return _root;
 }
 // empty if upload not allowed on this resource
 // otherwise a path without any leading or trailing '/'
-std::string Location::get_upload_path(bool print) const {
-	if (print)
-		return _upload_path;
-	if (_upload_path.empty())
-		return string();
-	if (_upload_path == "/")
-		return ".";
-	string ret(_upload_path);
-	ret.erase(0, ret.find_first_not_of('/'));
-	ret.erase(ret.find_last_not_of('/') + 1);
-	return ret;
+std::string const& Location::get_upload_path() const {
+	return _upload_path;
 }
 
 
@@ -210,7 +198,7 @@ std::ostream& operator<<(std::ostream& o, Location const& l)
 {
 	o << "	location: " << l.get_name() << "\n";
 	o << "		server: " << l.get_server().get_name().front() << "\n";
-	o << "		root: " << l.get_root(true) << "\n";
+	o << "		root: " << l.get_root() << "\n";
 	o << "		limits: \n";
 	for (std::map<std::string, bool>::const_iterator it = l.get_limit_except().begin(); it != l.get_limit_except().end(); ++it)
 		o << "			" << (*it).first << " " << std::boolalpha << (*it).second << "\n";
@@ -219,7 +207,7 @@ std::ostream& operator<<(std::ostream& o, Location const& l)
 	o << "		index: \n";
 	for (size_t i = 0; i < l.get_index().size(); ++i)
 		o << "			" << l.get_index()[i] << "\n";
-	o << "		upload: " << l.get_upload_path(true) << "\n";
+	o << "		upload: " << l.get_upload_path() << "\n";
 	o << std::endl;
 	return o;
 }

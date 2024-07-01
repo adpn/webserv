@@ -30,6 +30,8 @@ class Config {
 
 		std::list<Server>& get_servers();
 
+		static std::string process_path(std::string const& input);
+
 		//--- Error management ---//
 		class Error : public std::exception {
 			private:

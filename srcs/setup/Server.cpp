@@ -1,5 +1,6 @@
 #include "Server.hpp"
 #include "Location.hpp"
+#include "Config.hpp"
 
 //--------------- Orthodox Canonical Form ---------------//
 // default _request_size
@@ -101,7 +102,9 @@ void	Server::set_alias( std::string const& s, Location& loc){
 void	Server::set_generic_root( std::vector< std::string > s ){
 	if (s.size() != 1)
 		throw Server::Error("Generic root invalid.");
-	this->_generic_root = s.front();
+	this->_generic_root = Config::process_path(s.front());
+	if (this->_generic_root.empty())
+		this->_generic_root = ".";
 }
 
 //--------------- Getters ---------------//

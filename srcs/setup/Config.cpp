@@ -238,3 +238,21 @@ void	Config::bufferize(){
 	if (this->_servers.empty())
 		throw Config::Error("No server found.");
 }
+
+//--------------- Processing ---------------//
+
+// removes any leading and trailing '/', any leading '~' and any '..'
+std::string Config::process_path(std::string const& input)
+{
+	std::string ret(input);
+	ret.erase(0, ret.find_first_not_of("/~"));
+	ret.erase(ret.find_last_not_of('/') + 1);
+// does this '..' removal work ??
+	// if (ret == "..")
+	// 	return std::string();
+	// for (size_t pos = ret.find("/.."); pos != std::string::npos; pos = ret.find("/.."))
+	// 	ret.erase(pos, 3);
+	// for (size_t pos = ret.find("../"); pos != std::string::npos; pos = ret.find("../"))
+	// 	ret.erase(pos, 3);
+	return ret;
+}
