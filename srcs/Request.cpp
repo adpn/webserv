@@ -3,20 +3,22 @@
 #include "Server.hpp"
 #include "Location.hpp"
 #include "Entry.hpp"
+#include <CGI.hpp>
 #include <unistd.h>
 #include <dirent.h>
 #include <sstream>
 #include <fstream>
+#include <cstdio>
 #include <sys/stat.h>
 
 /* CONSTRUCTORS */
 
 Request::Request(int fd, std::vector<Server *> servers)
-	: _status(0), _fin_header(false), _content_left(0), _fd(fd), _is_dir(false), _servers(servers), _server(NULL) {}
+	: _status(0), _fin_header(false), _content_left(0), _fd(fd), _is_dir(false), _is_cgi(false), _servers(servers), _server(NULL) {}
 
 Request::Request(Request const& src)
 	: _status(src._status), _fin_header(src._fin_header), _content_left(src._content_left), _fd(src._fd),
-		_method(src._method), _uri(src._uri), _is_dir(src._is_dir), _version(src._version),
+		_method(src._method), _uri(src._uri), _is_dir(src._is_dir), _is_cgi(src._is_cgi), _version(src._version),
 		_body(src._body), _filename(src._filename), _fields(src._fields), _servers(src._servers), _server(src._server) {}
 
 Request::~Request()
@@ -61,6 +63,9 @@ bool Request::isGoodSize()
 	}
 	return true;
 }
+
+void Request::setCGI()
+	{ this->_is_cgi = true; }
 
 int Request::getFd() const
 	{ return _fd; }
@@ -152,7 +157,8 @@ void Request::handleError(Response& response, int status)
 		defaultErrorPage(response);
 }
 
-void Request::handleAutoindex(Response &response, Location const* location) {
+void Request::handleAutoindex(Response &response, Location const* location)
+{
 	if (access((location->get_root() + _uri).c_str(), F_OK))
 		return handleError(response, 404);
 
@@ -161,9 +167,10 @@ void Request::handleAutoindex(Response &response, Location const* location) {
 	oss << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n";
 	oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
 	oss << "    <link rel=\"icon\" href=\"/favicon.ico\" />\n";
-	// oss << "<link rel=\"stylesheet\" href=\"coucou.css\">";
+	oss << "<style> body { background-color: #f5f5f5; padding: 20px;} a, h2 {text-align: center; display: block;} ";
+	oss << ".centered-box { background-color: #fadcdc;padding: 20px;margin: 0 auto;max-width: 600px; border-radius: 10px;} </style>";
 	oss << "<title>Index of " << _uri << "</title>\n  </head>";
-	oss << "<body>\n";
+	oss << "<body>\n <div class=\"centered-box\">";
 	oss << "<h2>Index of " << _uri << "</h2>\n";
 	std::vector<Entry> entries = location->create_entries(_uri);
 
@@ -174,14 +181,20 @@ void Request::handleAutoindex(Response &response, Location const* location) {
 		oss <<  "\">" ;
 		oss << entries[i].name << "<br>";
 	}
-	oss << "</body>\n";
+	oss << "</div> </body>\n";
 	oss << "</html>\n";
 	response.setBody(oss.str());
 }
 
-void Request::handleReturn(Response &response, Location const* location) const {
+void Request::handleReturn(Response &response, Location const* location) const
+{
 	response.setStatus(location->get_return().first);
 	response.setField("Location: " + location->get_return().second);
+}
+
+void Request::handleCGI(Response &response, Location const* location)
+{
+	CGI cgi(response, location, *this);
 }
 
 void Request::handleGet(Response& response, Location const* location)
@@ -190,6 +203,8 @@ void Request::handleGet(Response& response, Location const* location)
 		handleReturn(response, location);
 	else if (location->get_autoindex() && _is_dir)
 		handleAutoindex(response, location);
+	else if (!_uri.compare(0, 9, "/cgi-bin/") && _uri.size() > 3 && !_uri.compare(_uri.size() - 3, 3, ".py"))
+		handleCGI(response, location);
 	else if (!response.fileToBody(getFile(location)))
 		handleError(response, 404);
 }
@@ -266,7 +281,8 @@ void Request::handle()
 		std::cout << "\n*\n* ERROR: request handling: " << e.what() << "\n*\n";
 		handleError(response, 500);
 	}
-	response.sendResponse(_fd);
+	if (!_is_cgi)
+		response.sendResponse(_fd);
 }
 
 // calls handleError() and returns false if bad

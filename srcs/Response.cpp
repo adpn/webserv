@@ -74,6 +74,7 @@ bool Response::setStatus(int status)
 		std::pair<int, string>(411, "Length Required"),
 		std::pair<int, string>(413, "Content Too Large"),
 		std::pair<int, string>(505, "HTTP Version Not Supported"),
+		std::pair<int, string>(508, "Loop Detected"),
 		std::pair<int, string>(0, "")};
 	for (int i = 0; reasons[i].first; ++i)
 	{
