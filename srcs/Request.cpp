@@ -3,19 +3,21 @@
 #include "Server.hpp"
 #include "Location.hpp"
 #include "Entry.hpp"
+#include <CGI.hpp>
 #include <unistd.h>
 #include <dirent.h>
 #include <sstream>
 #include <fstream>
+#include <cstdio>
 
 /* CONSTRUCTORS */
 
 Request::Request(int fd, std::vector<Server *> servers)
-	: _status(0), _fin_header(false), _content_left(0), _fd(fd), _is_index(false), _servers(servers), _server(NULL) {}
+	: _status(0), _fin_header(false), _content_left(0), _fd(fd), _is_index(false), _is_cgi(false), _servers(servers), _server(NULL) {}
 
 Request::Request(Request const& src)
 	: _status(src._status), _fin_header(src._fin_header), _content_left(src._content_left), _fd(src._fd),
-		_method(src._method), _uri(src._uri), _is_index(src._is_index), _version(src._version),
+		_method(src._method), _uri(src._uri), _is_index(src._is_index), _is_cgi(src._is_cgi), _version(src._version),
 		_body(src._body), _filename(src._filename), _fields(src._fields), _servers(src._servers), _server(src._server) {}
 
 Request::~Request()
@@ -59,6 +61,10 @@ bool Request::isGoodSize()
 		return false;
 	}
 	return true;
+}
+
+void Request::setCGI(){
+	this->_is_cgi = true;
 }
 
 int Request::getFd() const
@@ -138,8 +144,7 @@ bool Request::configErrorPage(Response& response)
 	return true;
 }
 
-void Request::handleError(Response& response, int status)
-{
+void Request::handleError(Response& response, int status){
 	if (!status && !_status)
 		_status = 500;
 	else if (status)
@@ -181,12 +186,18 @@ void Request::handleReturn(Response &response, Location const* location) const {
 	response.setField("Location: " + location->get_return().second);
 }
 
+void Request::handleCGI(Response &response, Location const* location) {
+	CGI cgi(response, location, *this);
+}
+
 void Request::handleGet(Response& response, Location const* location)
 {
 	if (location->get_return().first)
 		handleReturn(response, location);
 	else if (location->get_autoindex() && _uri.back() == '/')
 		handleAutoindex(response, location);
+	else if (!_uri.compare(0, 9, "/cgi-bin/") && _uri.size() > 3 && !_uri.compare(_uri.size() - 3, 3, ".py"))
+		handleCGI(response, location);
 	else if (!response.fileToBody(getFile(location)))
 		handleError(response, 404);
 }
@@ -263,7 +274,8 @@ void Request::handle()
 		std::cout << "\n*\n* ERROR: request handling: " << e.what() << "\n*\n";
 		handleError(response, 500);
 	}
-	response.sendResponse(_fd);
+	if (!_is_cgi)
+		response.sendResponse(_fd);
 }
 
 // calls handleError() and returns false if bad

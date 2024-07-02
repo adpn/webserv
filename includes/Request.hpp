@@ -9,6 +9,7 @@ using std::string;
 class Response;
 class Server;
 class Location;
+class CGI;
 
 class Request
 {
@@ -19,6 +20,7 @@ class Request
 		string						_method;
 		string						_uri;
 		bool						_is_index;
+		bool						_is_cgi;
 		string						_version;
 		string						_body;
 		string						_filename;
@@ -49,7 +51,7 @@ class Request
 		bool preHandleChecks(Response& response, Location const* location);
 		void handleAutoindex(Response& response, Location const* location) const;
 		void handleReturn(Response& response, Location const* location) const;
-		void handleError(Response& response, int status = 0);
+		void handleCGI(Response& response, Location const* location);
 		bool configErrorPage(Response& response);
 		void defaultErrorPage(Response& response);
 
@@ -57,6 +59,8 @@ class Request
 		void			next_search_string(string& search) const;
 
 	public:
+		void handleError(Response& response, int status = 0);
+		
 		Request(int fd, std::vector<Server *> servers);
 		Request(Request const& src);
 		~Request();
@@ -67,6 +71,7 @@ class Request
 		bool					isFin() const;
 		bool					isUser() const;
 		bool					isGoodSize();
+		void					setCGI();
 		int						getFd() const;
 		string const&			getMethod() const;
 		int						getStatus() const;
