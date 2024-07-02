@@ -53,7 +53,7 @@ bool Request::isGoodSize()
 		case 'M':
 			max *= 1000000;
 	}
-	if (_content_left > max)
+	if (atol(_fields["Content-Length"].c_str()) > max)
 	{
 		_status = 413;
 		return false;
@@ -202,6 +202,7 @@ void Request::handlePost(Response& response, Location const* location)
 	oss << location->get_upload_path() << '/';
 	if (_filename.empty())
 	{
+	std::cout << "Filename empty" << std::endl; //debug
 		std::ostringstream oss_temp;
 		for (int i = 0; true; i++)
 		{
@@ -216,9 +217,12 @@ void Request::handlePost(Response& response, Location const* location)
 	}
 	else
 		oss << _filename;
+std::cout << "Open file: " << oss.str() << std ::endl; //debug
 	std::ofstream ofs(oss.str().c_str(), std::ios::out | std::ios::trunc);
-	if (ofs.fail())
+	if (ofs.fail()) {
+	std::cout << "Open fail" << std ::endl; //debug		
 		return handleError(response, 500);
+	}
 	ofs << _body;
 	response.setStatus(204);
 }
