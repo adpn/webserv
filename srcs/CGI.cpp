@@ -24,9 +24,8 @@ void	CGI::_Executor(){
 	char *cmd_tab[3] = {const_cast<char *>(str.c_str()), const_cast<char *>(file.c_str()), NULL};
 	std::string pathInfo("PATH_INFO=" + this->_request.getUri());
 	char *envp[] = {const_cast<char *>(pathInfo.c_str()), NULL};
-	std::cerr << "execve launched" << std::endl;
+
 	execve(str.c_str(), cmd_tab, envp);
-	std::cerr << "execve failed" << std::endl;
 	close(this->_pipe_fd[1]);
 	exit(1);
 }
@@ -45,7 +44,6 @@ void	CGI::_Read(){
 		output += buffer;
 	}
 	close(this->_pipe_fd[0]);
-	std::cerr << "child2 ok" << std::endl;
 	this->_response.setStatus(200);
 	this->_response.setBody(output);
 	this->_response.setField("Content-Type: text/html");
