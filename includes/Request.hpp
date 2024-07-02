@@ -49,7 +49,7 @@ class Request
 		void handlePost(Response& response, Location const* location);
 		void handleDelete(Response& response, Location const* location);
 		bool preHandleChecks(Response& response, Location const* location);
-		void handleAutoindex(Response& response, Location const* location) const;
+		void handleAutoindex(Response& response, Location const* location);
 		void handleReturn(Response& response, Location const* location) const;
 		void handleCGI(Response& response, Location const* location);
 		bool configErrorPage(Response& response);

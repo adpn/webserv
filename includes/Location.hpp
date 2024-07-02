@@ -61,8 +61,8 @@ class Location {
 		std::string const&							get_name() const;
 		std::map<std::string, bool> const&			get_limit_except() const;
 		std::pair<unsigned int, std::string> const&	get_return() const;
-		std::string									get_root(bool print = false) const;
-		std::string									get_upload_path(bool print = false) const;
+		std::string const&							get_root() const;
+		std::string const&							get_upload_path() const;
 		bool										get_autoindex() const;
 		std::vector<std::string> const&				get_index() const;
 		std::list<std::string> const&				get_aliases() const;

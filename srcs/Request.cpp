@@ -55,7 +55,7 @@ bool Request::isGoodSize()
 		case 'M':
 			max *= 1000000;
 	}
-	if (_content_left > max)
+	if (atol(_fields["Content-Length"].c_str()) > max)
 	{
 		_status = 413;
 		return false;
@@ -156,9 +156,11 @@ void Request::handleError(Response& response, int status){
 		defaultErrorPage(response);
 }
 
-void Request::handleAutoindex(Response &response, Location const* location) const {
-	response.setField("Content-Type: text/html");
+void Request::handleAutoindex(Response &response, Location const* location) {
+	if (access((location->get_root() + _uri).c_str(), F_OK))
+		return handleError(response, 404);
 
+	response.setField("Content-Type: text/html");
 	std::ostringstream oss;
 	oss << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n";
 	oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
@@ -211,6 +213,7 @@ void Request::handlePost(Response& response, Location const* location)
 	oss << location->get_upload_path() << '/';
 	if (_filename.empty())
 	{
+	std::cout << "Filename empty" << std::endl; //debug
 		std::ostringstream oss_temp;
 		for (int i = 0; true; i++)
 		{
@@ -225,9 +228,12 @@ void Request::handlePost(Response& response, Location const* location)
 	}
 	else
 		oss << _filename;
+std::cout << "Open file: " << oss.str() << std ::endl; //debug
 	std::ofstream ofs(oss.str().c_str(), std::ios::out | std::ios::trunc);
-	if (ofs.fail())
+	if (ofs.fail()) {
+	std::cout << "Open fail" << std ::endl; //debug		
 		return handleError(response, 500);
+	}
 	ofs << _body;
 	response.setStatus(204);
 }
@@ -366,7 +372,7 @@ string Request::getFile(Location const* location) const
 
 string Request::getIndexFile(Location const* location) const
 {
-	string prefix = "." + _uri;
+	string prefix = location->get_root() + _uri;
 	if (_uri.back() != '/')
 		prefix.append("/");
 	size_t i = 0;
