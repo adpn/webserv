@@ -7,15 +7,16 @@
 #include <dirent.h>
 #include <sstream>
 #include <fstream>
+#include <sys/stat.h>
 
 /* CONSTRUCTORS */
 
 Request::Request(int fd, std::vector<Server *> servers)
-	: _status(0), _fin_header(false), _content_left(0), _fd(fd), _is_index(false), _servers(servers), _server(NULL) {}
+	: _status(0), _fin_header(false), _content_left(0), _fd(fd), _is_dir(false), _servers(servers), _server(NULL) {}
 
 Request::Request(Request const& src)
 	: _status(src._status), _fin_header(src._fin_header), _content_left(src._content_left), _fd(src._fd),
-		_method(src._method), _uri(src._uri), _is_index(src._is_index), _version(src._version),
+		_method(src._method), _uri(src._uri), _is_dir(src._is_dir), _version(src._version),
 		_body(src._body), _filename(src._filename), _fields(src._fields), _servers(src._servers), _server(src._server) {}
 
 Request::~Request()
@@ -53,7 +54,7 @@ bool Request::isGoodSize()
 		case 'M':
 			max *= 1000000;
 	}
-	if (atol(_fields["Content-Length"].c_str()) > max)
+	if (_content_left > max)
 	{
 		_status = 413;
 		return false;
@@ -187,7 +188,7 @@ void Request::handleGet(Response& response, Location const* location)
 {
 	if (location->get_return().first)
 		handleReturn(response, location);
-	else if (location->get_autoindex() && _uri.back() == '/')
+	else if (location->get_autoindex() && _is_dir)
 		handleAutoindex(response, location);
 	else if (!response.fileToBody(getFile(location)))
 		handleError(response, 404);
@@ -202,7 +203,6 @@ void Request::handlePost(Response& response, Location const* location)
 	oss << location->get_upload_path() << '/';
 	if (_filename.empty())
 	{
-	std::cout << "Filename empty" << std::endl; //debug
 		std::ostringstream oss_temp;
 		for (int i = 0; true; i++)
 		{
@@ -217,12 +217,9 @@ void Request::handlePost(Response& response, Location const* location)
 	}
 	else
 		oss << _filename;
-std::cout << "Open file: " << oss.str() << std ::endl; //debug
 	std::ofstream ofs(oss.str().c_str(), std::ios::out | std::ios::trunc);
-	if (ofs.fail()) {
-	std::cout << "Open fail" << std ::endl; //debug		
+	if (ofs.fail())
 		return handleError(response, 500);
-	}
 	ofs << _body;
 	response.setStatus(204);
 }
@@ -293,20 +290,25 @@ Location const* Request::getLocation()
 {
 	string search = _uri;
 	Location const* ret = find_location(search);
-	if (ret)
-		_is_index = true;
 	while (!ret && !search.empty())
 	{
 		next_search_string(search);
 		ret = find_location(search);
+	}
+	if (ret && _uri.back() == '/')
+	{
+		struct stat buf;
+		if (!stat((ret->get_root() + _uri).c_str(), &buf))
+			if (S_ISDIR(buf.st_mode))
+				_is_dir = true;
 	}
 // debug start
 // std::cout << "location search for " << _uri << ": found ";
 // if (ret)
 // {
 // std::cout << ret->get_name();
-// if (_is_index)
-// std::cout << " (index)";
+// if (_is_dir)
+// std::cout << ", (dir)";
 // std::cout << "\n";
 // }
 // else
@@ -315,23 +317,28 @@ Location const* Request::getLocation()
 	return ret;
 }
 
+Location const* Request::search_locations(string const& search) const
+{
+	std::list<Location>::const_iterator it;
+	for (it = _server->get_locations().begin(); it != _server->get_locations().end(); ++it)
+	{
+		if (it->get_name() == search)
+			return &(*it);
+	}
+	return NULL;
+}
+
 Location const* Request::find_location(string const& search) const
 {
-	// redirect if location == uri + / (to uri + /) (ofc only if there is no location == uri)
 	if (search.empty())
 		return NULL;
-	std::map<string, Location&>::const_iterator it;
-	it = _server->get_aliases().find(search);
-	if (it == _server->get_aliases().end())
-	{
-		if (search.back() == '/')
-			it = _server->get_aliases().find(search.substr(0, search.size() - 1));
-		else
-			it = _server->get_aliases().find(search + "/");
-		if (it == _server->get_aliases().end())
-			return NULL;
-	}
-	return &it->second;
+	Location const* ret = search_locations(search);
+	if (ret)
+		return ret;
+	if (search.back() == '/')
+		return search_locations(search.substr(0, search.size() - 1));
+	else
+		return search_locations(search + "/");
 }
 
 void Request::next_search_string(string& search) const
@@ -353,7 +360,7 @@ void Request::next_search_string(string& search) const
 // no guarantee that return exists/can be opened
 string Request::getFile(Location const* location) const
 {
-	if (_is_index)
+	if (_is_dir)
 		return getIndexFile(location);
 	return location->get_root() + _uri;
 }

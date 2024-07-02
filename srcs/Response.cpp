@@ -4,6 +4,7 @@
 #include <sstream>
 #include <fstream>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <ctime>
 
 /* Exceptions*/
@@ -157,10 +158,23 @@ string Response::findContentType(string file) {
 bool Response::fileToBody(string const& file)
 {
 // std::cout << "FILE: trying to open the file " << file << " .. "; // debug
+	{
+		struct stat buf;
+		if (stat(file.c_str(), &buf))
+		{
+// std::cout << "failed: stat failed\n"; // debug
+			return false;
+		}
+		if (S_ISDIR(buf.st_mode))
+		{
+// std::cout << "failed: is dir\n"; // debug
+			return false;
+		}
+	}
 	std::ifstream ifs(file.c_str());
 	if (!ifs.good())
 	{
-// std::cout << "failed\n"; // debug
+// std::cout << "failed: bad stream\n"; // debug
 		return false;
 	}
 	std::ostringstream oss;

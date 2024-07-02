@@ -15,7 +15,6 @@ Class Location
 	private members:
 		_limit_except[3] -> accepted_HTTP_methods(); default value : false
 		_return;		 ->	HTTP_redirections
-		_alias;			 ->	directory_to_search
 		_autoindex;		 ->	directory_listing, default value : false
 		_index;			 ->	default_file
 
@@ -36,7 +35,6 @@ class Location {
 		std::string								_upload_path;
 		bool									_autoindex;
 		std::vector<std::string>				_index;
-		std::list<std::string>					_aliases;
 
 		Location &operator=(const Location &other);
 	public:
@@ -50,7 +48,6 @@ class Location {
 		void	set_name(std::string const& name);
 		void	set_limit_except(std::vector< std::string > rawString);
 		void	set_return(std::vector< std::string > rawString);
-		void	set_alias(std::vector< std::string > rawString);
 		void	set_root(std::vector< std::string > rawString);
 		void	set_autoindex(std::vector< std::string > rawString);
 		void	set_index(std::vector< std::string > rawString);
@@ -61,16 +58,14 @@ class Location {
 		std::string const&							get_name() const;
 		std::map<std::string, bool> const&			get_limit_except() const;
 		std::pair<unsigned int, std::string> const&	get_return() const;
-		std::string const&							get_root() const;
+		std::string const&							get_root(bool debug = false) const;
 		std::string const&							get_upload_path() const;
 		bool										get_autoindex() const;
 		std::vector<std::string> const&				get_index() const;
-		std::list<std::string> const&				get_aliases() const;
 
 		//--- Members ---//
 		bool				is_allowed(std::string const& method) const;
 		std::vector<Entry>	create_entries(std::string uri) const;
-		void				aliases_to_server(Server& server);
 
 		//--- Error management ---//
 		class Error : public std::exception {

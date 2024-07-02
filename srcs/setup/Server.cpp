@@ -9,19 +9,6 @@ Server::Server() : _request_size(100, 'M') {
 Server::Server( const Server & other ) {
 	for (std::list<Location>::const_iterator it = other.get_locations().begin(); it != other.get_locations().end(); ++it)
 		_locations.push_back(Location(*it, *this));
-	for (std::map<std::string, Location&>::const_iterator it_alias = other._aliases.begin(); it_alias != other._aliases.end(); ++it_alias)
-	{
-		std::list<Location>::iterator it_loc;
-		for (it_loc = _locations.begin(); it_loc != _locations.end(); ++it_loc)
-			if (it_loc->get_name() == it_alias->second.get_name())
-				break ;
-		if (it_loc == _locations.end())
-		{
-			std::cout << "couldnt find |" << it_alias->second.get_name() << "| in server copy\n";
-			throw Server::Error("something went wrong copying a server instance");
-		}
-		_aliases.insert(std::pair<std::string, Location&>(it_alias->first, *it_loc));
-	}
 	*this = other;
 }
 // THIS IS PRIVATE AND SHOULD NEVER BE USED
@@ -33,7 +20,6 @@ Server & Server::operator=(const Server & other){
 	_generic_root = other._generic_root;
 	// THESE USE REFERENCES
 	// _locations = other._locations;
-	// _aliases = other._aliases;
 	return (*this);
 }
 Server::~Server(){}
@@ -90,14 +76,6 @@ void	Server::set_error_page( std::vector< std::string > s ){
 }
 void	Server::set_location( Location const& loc_block){
 	_locations.push_back(loc_block);
-	_locations.back().aliases_to_server(*this);
-}
-// overwrites if s already exists
-void	Server::set_alias( std::string const& s, Location& loc){
-	std::map<std::string, Location&>::iterator it = _aliases.find(s);
-	if (it != _aliases.end())
-		_aliases.erase(it);
-	_aliases.insert(std::pair<std::string, Location&>(s, loc));
 }
 void	Server::set_generic_root( std::vector< std::string > s ){
 	if (s.size() != 1)
@@ -125,9 +103,6 @@ std::string const& Server::get_generic_root() const {
 }
 std::list<Location>	const& Server::get_locations() const {
 	return this->_locations;
-}
-std::map<std::string, Location&> const& Server::get_aliases() const {
-	return _aliases;
 }
 
 //--------------- Output debug ---------------//
@@ -157,10 +132,6 @@ std::ostream& operator<<( std::ostream& o, Server const& S){
 	o << "Locations(" << location_vec.size() << ") :\n";
 	for (std::list<Location>::const_iterator it = location_vec.begin(); it != location_vec.end(); ++it){
 		o << *it;
-	}
-	o << "aliases :\n";
-	for (std::map<std::string, Location&>::const_iterator it = S.get_aliases().begin(); it != S.get_aliases().end(); ++it){
-		o << "	" << (*it).first << " ~ " << (*it).second.get_name() << "\n";
 	}
 	o << std::endl;
 	return o;

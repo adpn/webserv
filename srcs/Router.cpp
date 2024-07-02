@@ -98,7 +98,7 @@ void Router::managePollout(size_t fdIndex) {
 	try {
 		executeRequest(_fds[fdIndex].fd);
 		removeClient(fdIndex);
-		--fdIndex; 
+		--fdIndex;
 	}
 	catch (std::exception const &e) {
 		std::cout << "Client disconnected after send failed: " << _fds[fdIndex].fd << std::endl;
@@ -149,7 +149,7 @@ void	Router::initSockets(std::list<Server> &servers) {
 	//Going through all servers
 	for (std::list<Server>::iterator it = servers.begin(); it != servers.end(); ++it) {
 		std::vector<unsigned int> ports = it->get_port();
-		
+
 		//Adding server pointers in the map
 		for (size_t j = 0; j < ports.size(); j++) {
 			portsMap[ports[j]].push_back(&(*it));
@@ -168,7 +168,7 @@ void	Router::initSockets(std::list<Server> &servers) {
 void	Router::closeSockets() {
 	for (size_t i = 0; i < _sockets.size(); i++) {
 		std::cout << "Closing port: " << _sockets[i].getPort() << " with socket fd: " << _sockets[i] << std::endl;
-		close(_sockets[i]);
+		close(_sockets[i].getFd());
 	}
 }
 

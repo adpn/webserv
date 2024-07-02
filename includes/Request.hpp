@@ -18,7 +18,7 @@ class Request
 		int							_fd;
 		string						_method;
 		string						_uri;
-		bool						_is_index;
+		bool						_is_dir;
 		string						_version;
 		string						_body;
 		string						_filename;
@@ -54,6 +54,7 @@ class Request
 		void defaultErrorPage(Response& response);
 
 		Location const*	find_location(string const& search) const;
+		Location const* search_locations(string const& search) const;
 		void			next_search_string(string& search) const;
 
 	public:

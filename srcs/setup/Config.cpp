@@ -34,7 +34,6 @@ const char *Config::Error::what() const throw(){
 void	add_location_directive(Location &LocationBlock, std::string loc_dir){
 	std::string	DirectivesName[7] = {"limit_except",
 										"return",
-										"alias",
 										"autoindex",
 										"index",
 										"root",
@@ -42,7 +41,6 @@ void	add_location_directive(Location &LocationBlock, std::string loc_dir){
 	void (Location::*DirectivesFonction[7])
 		(std::vector< std::string > rawString) = {&Location::set_limit_except,
 											&Location::set_return,
-											&Location::set_alias,
 											&Location::set_autoindex,
 											&Location::set_index,
 											&Location::set_root,
@@ -124,12 +122,16 @@ bool	Config::server_approved(Server const& server){
 	if (!server.get_port().size()
 		|| !server.get_request_size().first)
 		throw Config::Error("Data's missing.");
+	if (server.get_generic_root().empty())
+		for (std::list<Location>::const_iterator it = server.get_locations().begin(); it != server.get_locations().end(); ++it)
+			if (it->get_root(true).empty())
+				throw Config::Error("No root for location \"" + it->get_name() + "\"");
 	for (std::list<Server>::const_iterator it = _servers.begin(); it != _servers.end(); ++it){
 		open_ports = it->get_port();
 		for (size_t j = 0; j < open_ports.size(); j++){
 			for (size_t m = 0; m < nw_ports.size(); m++){
 				if (open_ports[j] == nw_ports[m])
-					std::cout << "/!\\ WARNING double port" << std::endl;		
+					std::cout << "/!\\ WARNING double port" << std::endl;
 					// return false;
 			}
 		}
@@ -241,18 +243,33 @@ void	Config::bufferize(){
 
 //--------------- Processing ---------------//
 
-// removes any leading and trailing '/', any leading '~' and any '..'
+// removes any leading and trailing '/', any leading '~' and simulates '..'
 std::string Config::process_path(std::string const& input)
 {
 	std::string ret(input);
 	ret.erase(0, ret.find_first_not_of("/~"));
 	ret.erase(ret.find_last_not_of('/') + 1);
-// does this '..' removal work ??
-	// if (ret == "..")
-	// 	return std::string();
-	// for (size_t pos = ret.find("/.."); pos != std::string::npos; pos = ret.find("/.."))
-	// 	ret.erase(pos, 3);
-	// for (size_t pos = ret.find("../"); pos != std::string::npos; pos = ret.find("../"))
-	// 	ret.erase(pos, 3);
+	size_t ddot_pos = ret.find("/../");
+	if (ddot_pos == std::string::npos && ret.size() >= 3 && !ret.compare(ret.size() - 3, 3, "/.."))
+		ddot_pos = ret.size() - 3;
+	while (ddot_pos != std::string::npos)
+	{
+		size_t last_slash_pos = std::string::npos;
+		if (ddot_pos)
+			last_slash_pos = ret.rfind('/', ddot_pos - 1);
+		if (last_slash_pos == std::string::npos)
+		{
+			last_slash_pos = 0;
+			ddot_pos++;
+		}
+		ret.erase(last_slash_pos, ddot_pos + 3 - last_slash_pos);
+		ddot_pos = ret.find("/../", last_slash_pos);
+		if (ddot_pos == std::string::npos && ret.size() >= 3 && !ret.compare(ret.size() - 3, 3, "/.."))
+			ddot_pos = ret.size() - 3;
+	}
+	if (ret.size() >= 3 && !ret.compare(0, 3, "../"))
+		ret.erase(0, 3);
+	if (ret == "..")
+		return std::string();
 	return ret;
 }

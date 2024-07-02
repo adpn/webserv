@@ -20,7 +20,6 @@ class Server {
 		std::map<unsigned int, std::string>	_error_page;
 		std::list<Location>					_locations;
 		std::string							_generic_root;
-		std::map<std::string, Location&>	_aliases;
 
 		Server & operator=(const Server & other);
 	public:
@@ -36,7 +35,6 @@ class Server {
 		void	set_error_page( std::vector< std::string > s );
 		void	set_generic_root( std::vector< std::string > s );
 		void	set_location( Location const& loc_block);
-		void	set_alias( std::string const& s, Location& loc);
 
 		//--- Getters ---//
 		std::vector<std::string> const&				get_name() const;
@@ -45,7 +43,6 @@ class Server {
 		std::map<unsigned int, std::string> const&	get_error_page() const;
 		std::string const&							get_generic_root() const;
 		std::list<Location> const&					get_locations() const;
-		std::map<std::string, Location&> const&		get_aliases() const;
 
 		//--- Error management ---//
 		class Error : public std::exception {

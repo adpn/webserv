@@ -17,12 +17,12 @@ Location::Location(Server& server)
 Location::Location(const Location &other)
 	: _server(other._server), _name(other._name), _limit_except(other._limit_except),
 	_return(other._return), _root(other._root), _upload_path(other._upload_path),
-	_autoindex(other._autoindex), _index(other._index), _aliases(other._aliases) {}
+	_autoindex(other._autoindex), _index(other._index) {}
 
 Location::Location(const Location &other, Server& server)
 	: _server(server), _name(other._name), _limit_except(other._limit_except),
 	_return(other._return), _root(other._root), _upload_path(other._upload_path),
-	_autoindex(other._autoindex), _index(other._index), _aliases(other._aliases) {}
+	_autoindex(other._autoindex), _index(other._index) {}
 
 // THIS IS PRIVATE AND SHOULD NEVER BE USED
 // ALSO DON'T DEFAULT CONSTRUCT
@@ -83,13 +83,6 @@ void	Location::set_autoindex(std::vector<std::string> s ){
 	throw Location::Error("Directive format not respected.");
 }
 
-void	Location::set_alias(std::vector< std::string > s){
-	if (!s.size())
-		throw Location::Error("Directive format not respected.");
-	for (size_t i = 0; i < s.size(); ++i)
-		_aliases.push_back(s[i]);
-}
-
 void	Location::set_index(std::vector< std::string > s){
 	if (!s.size())
 		throw Location::Error("Directive format not respected.");
@@ -139,12 +132,10 @@ std::vector<std::string> const& Location::get_index() const {
 	return this->_index;
 }
 
-std::list<std::string> const& Location::get_aliases() const {
-	return this->_aliases;
-}
-
 // returns a path without any leading or trailing '/'
-std::string const&	Location::get_root() const {
+std::string const&	Location::get_root(bool debug) const {
+	if (debug)
+		return _root;
 	if (_root.empty())
 		return _server.get_generic_root();
 	return _root;
@@ -166,13 +157,6 @@ bool Location::is_allowed(std::string const& method) const
 		return false;
 // @Dennis does this seem right to you?
 	return (*it).second;
-}
-
-void Location::aliases_to_server(Server& server)
-{
-	for (std::list<std::string>::const_iterator it = _aliases.begin(); it != _aliases.end(); ++it)
-		server.set_alias(*it, *this);
-	server.set_alias(_name, *this);
 }
 
 // throws if dir can't be opened
@@ -208,7 +192,7 @@ std::ostream& operator<<(std::ostream& o, Location const& l)
 {
 	o << "	location: " << l.get_name() << "\n";
 	o << "		server: " << l.get_server().get_name().front() << "\n";
-	o << "		root: " << l.get_root() << "\n";
+	o << "		root: " << l.get_root(true) << "\n";
 	o << "		limits: \n";
 	for (std::map<std::string, bool>::const_iterator it = l.get_limit_except().begin(); it != l.get_limit_except().end(); ++it)
 		o << "			" << (*it).first << " " << std::boolalpha << (*it).second << "\n";
