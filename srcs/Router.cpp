@@ -53,7 +53,6 @@ void Router::managePollin(size_t fdIndex)
 {
 	// case where the POLLIN is on a server fd
 	if (fdIndex < _serverFdsNumber) {
-		//std::cout << "POLLIN SERVER" << std::endl;
 		// Accept new client connection
 		struct sockaddr_in clientAddr;
 		socklen_t clientAddrLen = sizeof(clientAddr);
@@ -62,18 +61,15 @@ void Router::managePollin(size_t fdIndex)
 			std::cout << "Accept error" << std::endl;
 			return ;
 		}
-		//std::cout << "Client connected to fd : " << _fds[fdIndex].fd << std::endl;
-
 		// Add new client socket to fds
 		struct pollfd pfd;
 		pfd.fd = clientFd;
-		pfd.events = POLLIN; // Initially only enable POLLIN
+		pfd.events = POLLIN;
 		setClient(clientFd, _fds[fdIndex].fd);
 		_fds.push_back(pfd);
 
 	}
 	else {
-		//std::cout << "POLLIN CLIENT: " << _fds[fdIndex].fd << std::endl;
 		// case where the POLLIN is on a client fd
 		char buffer[BUFFER_SIZE];
 		ssize_t bytesReceived = recv(_fds[fdIndex].fd, buffer, sizeof(buffer) - 1, 0);
@@ -98,11 +94,9 @@ void Router::managePollin(size_t fdIndex)
 }
 
 void Router::managePollout(size_t fdIndex) {
-	//std::cout << "Ready to send data to client on fd " << _fds[fdIndex].fd << std::endl;
 	// Send data to client
 	try {
 		executeRequest(_fds[fdIndex].fd);
-		//std::cout << "Client disconnected after sending a response: " << _fds[fdIndex].fd << std::endl;
 		removeClient(fdIndex);
 		--fdIndex; 
 	}
@@ -116,10 +110,10 @@ void Router::managePollout(size_t fdIndex) {
 
 int Router::pollFds() {
 	// Last argument is timeout time
-	return poll(&_fds[0], _fds.size(), 10000);
+	return poll(&_fds[0], _fds.size(), 6000);
 }
 
-int	Router::readEvents() {
+void 	Router::readEvents() {
 	/*
 	fds = array of all fd
 	go through all the fds to catch received events, especially on servers fds to detect new connection
@@ -133,19 +127,16 @@ int	Router::readEvents() {
 			managePollout(i);
 		}
 	}
-	return 0;
 }
 
 // Init poll fds
 void Router::initServerFds() {
 	size_t i = 0;
 
-	std::cout << "Init poll fds:" << std::endl;
 	for (i = 0; i < _sockets.size(); i++) {
-		std::cout << "Adding socket " << _sockets[i] << " in fds" << std::endl;
 		struct pollfd pfd;
-		pfd.fd = _sockets[i]; // first elements are for servers sockets
-		pfd.events = POLLIN; // server sockets is just to check events, real communication is done with clients sockets
+		pfd.fd = _sockets[i];
+		pfd.events = POLLIN;
 		_fds.push_back(pfd);
 	}
 	_serverFdsNumber = i;
@@ -154,13 +145,12 @@ void Router::initServerFds() {
 }
 
 void	Router::initSockets(std::list<Server> &servers) {
-	std::cout << "Init sockets:" << std::endl;
 	std::map<unsigned int, std::vector<Server*> > portsMap;
 	//Going through all servers
 	for (std::list<Server>::iterator it = servers.begin(); it != servers.end(); ++it) {
 		std::vector<unsigned int> ports = it->get_port();
 		
-		//Adding server reference in the map
+		//Adding server pointers in the map
 		for (size_t j = 0; j < ports.size(); j++) {
 			portsMap[ports[j]].push_back(&(*it));
 		}
@@ -173,8 +163,6 @@ void	Router::initSockets(std::list<Server> &servers) {
 
 		_servers[socket.getFd()] = it->second;
 	}
-
-	std::cout << "End if init sockets" << std::endl << std::endl;
 }
 
 void	Router::closeSockets() {

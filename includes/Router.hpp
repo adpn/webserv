@@ -33,7 +33,7 @@ public:
 	void	initServerFds();
 	void	initSockets(std::list<Server> &servers);
 	int		pollFds();
-	int		readEvents();
+	void	readEvents();
 
 	class WrongFdException : public std::exception {
 	public:

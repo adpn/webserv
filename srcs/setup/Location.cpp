@@ -1,5 +1,4 @@
 #include <dirent.h>
-
 #include "Location.hpp"
 #include "Server.hpp"
 #include "Entry.hpp"
@@ -12,6 +11,7 @@ Location::Location(Server& server)
 	this->_limit_except["DELETE"] = false;
 	this->_autoindex = false;
 }
+
 Location::Location(const Location &other)
 	: _server(other._server), _name(other._name), _limit_except(other._limit_except),
 	_return(other._return), _root(other._root), _upload_path(other._upload_path),
@@ -25,16 +25,10 @@ Location::Location(const Location &other, Server& server)
 // THIS IS PRIVATE AND SHOULD NEVER BE USED
 // ALSO DON'T DEFAULT CONSTRUCT
 Location &Location::operator=(const Location &other){
-	// this->_name = other._name;
-	// this->_limit_except = other._limit_except;
-	// this->_return = other._return;
-	// this->_autoindex = other._autoindex;
-	// this->_index = other._index;
-	// this->_root = other._root;
-	// this->_aliases = other._aliases;
 	(void) other;
 	return *this;
 }
+
 Location::~Location() {}
 
 
@@ -59,6 +53,7 @@ void	Location::set_limit_except(std::vector<std::string> s){
 		}
 	}
 }
+
 void	Location::set_return(std::vector<std::string> s){
 	std::string status;
 	std::string path;
@@ -71,6 +66,7 @@ void	Location::set_return(std::vector<std::string> s){
 		throw Location::Error("Directive format not respected.");
 	this->_return = std::make_pair(atoi(s[0].c_str()), s[1]);
 }
+
 void	Location::set_autoindex(std::vector<std::string> s ){
 	if (s.size() != 1)
 		throw Location::Error("Directive format not respected.");
@@ -84,22 +80,26 @@ void	Location::set_autoindex(std::vector<std::string> s ){
 	}
 	throw Location::Error("Directive format not respected.");
 }
+
 void	Location::set_alias(std::vector< std::string > s){
 	if (!s.size())
 		throw Location::Error("Directive format not respected.");
 	for (size_t i = 0; i < s.size(); ++i)
 		_aliases.push_back(s[i]);
 }
+
 void	Location::set_index(std::vector< std::string > s){
 	if (!s.size())
 		throw Location::Error("Directive format not respected.");
 	this->_index = s;
 }
+
 void	Location::set_root(std::vector< std::string > s){
 	if (s.size() != 1)
 		throw Location::Error("Directive format not respected.");
 	this->_root = s.front();
 }
+
 void	Location::set_upload_path(std::vector< std::string > s){
 	if (s.size() != 1)
 		throw Location::Error("Directive format not respected.");
@@ -112,24 +112,31 @@ void	Location::set_upload_path(std::vector< std::string > s){
 Server const& Location::get_server() const {
 	return _server;
 }
+
 std::string const& Location::get_name() const {
 	return _name;
 }
+
 std::map<std::string, bool> const& Location::get_limit_except() const {
 	return this->_limit_except;
 }
+
 std::pair<unsigned int, std::string> const& Location::get_return() const {
 	return this->_return;
 }
+
 bool Location::get_autoindex() const {
 	return this->_autoindex;
 }
+
 std::vector<std::string> const& Location::get_index() const {
 	return this->_index;
 }
+
 std::list<std::string> const& Location::get_aliases() const {
 	return this->_aliases;
 }
+
 // returns a path without any leading or trailing '/'
 std::string	Location::get_root(bool print) const {
 	if (print)
@@ -142,8 +149,10 @@ std::string	Location::get_root(bool print) const {
 // check for .. here somewhere
 	ret.erase(0, ret.find_first_not_of("/~"));
 	ret.erase(ret.find_last_not_of('/') + 1);
+	std::cout << "Location " << _name << " root :" << ret << std::endl;
 	return ret;
 }
+
 // empty if upload not allowed on this resource
 // otherwise a path without any leading or trailing '/'
 std::string Location::get_upload_path(bool print) const {
@@ -170,6 +179,7 @@ bool Location::is_allowed(std::string const& method) const
 // @Dennis does this seem right to you?
 	return (*it).second;
 }
+
 void Location::aliases_to_server(Server& server)
 {
 	for (std::list<std::string>::const_iterator it = _aliases.begin(); it != _aliases.end(); ++it)
