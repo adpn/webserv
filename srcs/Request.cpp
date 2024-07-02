@@ -160,9 +160,10 @@ void Request::handleAutoindex(Response &response, Location const* location) {
 	oss << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n";
 	oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
 	oss << "    <link rel=\"icon\" href=\"/favicon.ico\" />\n";
-	// oss << "<link rel=\"stylesheet\" href=\"coucou.css\">";
+	oss << "<style> body { background-color: #f5f5f5; padding: 20px;} a, h2 {text-align: center; display: block;} ";
+	oss << ".centered-box { background-color: #fadcdc;padding: 20px;margin: 0 auto;max-width: 600px; border-radius: 10px;} </style>";
 	oss << "<title>Index of " << _uri << "</title>\n  </head>";
-	oss << "<body>\n";
+	oss << "<body>\n <div class=\"centered-box\">";
 	oss << "<h2>Index of " << _uri << "</h2>\n";
 	std::vector<Entry> entries = location->create_entries(_uri);
 
@@ -173,7 +174,7 @@ void Request::handleAutoindex(Response &response, Location const* location) {
 		oss <<  "\">" ;
 		oss << entries[i].name << "<br>";
 	}
-	oss << "</body>\n";
+	oss << "</div> </body>\n";
 	oss << "</html>\n";
 	response.setBody(oss.str());
 }

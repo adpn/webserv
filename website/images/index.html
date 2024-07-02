@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/favicon.ico" />
     <title>SpiderServ 🕸️ 💅</title>
-    <!-- <style>
-        /* Add your CSS styles here */
-    </style> -->
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <header>
@@ -27,6 +25,33 @@
             <br><br>
             <input type="submit" value="Upload">
         </form>
+
+		<br>
+		<input type="text" id="fileName" placeholder="Enter file name">
+		<button onclick="deleteFile()">Delete File</button>
+	
+		<script>
+			function deleteFile() {
+				const fileName = document.getElementById('fileName').value;
+				if (!fileName) {
+					alert("Please enter a file name");
+					return;
+				}
+	
+				const xhr = new XMLHttpRequest();
+				xhr.open("DELETE", "/" + fileName, true);
+				xhr.onreadystatechange = function () {
+					if (xhr.readyState === 4) {
+						if (xhr.status === 204) {
+							alert("File deleted successfully");
+						} else {
+							alert("Error deleting file: " + xhr.status);
+						}
+					}
+				};
+				xhr.send();
+			}
+		</script>
     </main>
 
     <footer>

@@ -3,6 +3,7 @@
 #define BUFFER_SIZE 1024
 
 Router::~Router() {
+	std::cout << std::endl;
 	closeSockets();
 }
 
