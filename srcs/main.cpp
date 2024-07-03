@@ -1,6 +1,5 @@
 #include <iostream> // cout
 #include <unistd.h>
-#include <vector>
 #include <csignal>
 #include <Config.hpp>
 #include <Router.hpp>

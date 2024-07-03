@@ -187,23 +187,6 @@ bool Response::fileToBody(string const& file)
 	return true;
 }
 
-// void Response::confirmationToBody(string const& message, Request const& request)
-// {
-// 	if (!request.isUser())
-// 		return ;
-// 	std::ostringstream oss;
-// 	oss << "<!DOCTYPE html>\n<html>\n<head>\n<title>upload_confirmation - webserv</title>\n";
-// 	oss << "<style>\nhtml{\nbackground-color: #64fc12;\n}\n\n";
-// 	oss << "body{\nmin-height: 100vh;\ndisplay: flex;\nalign-items: center;\n";
-// 	oss << "justify-content: space-around;\ncolor: #000000;\n}\n</style>\n</head>\n\n";
-// 	oss << "<body>\n<center>\n\t<h1 style=\"font-family:'Courier New', Courier, monospace\">";
-// 	oss << message;
-// 	if (message.empty())
-// 		oss << "All done !";
-// 	oss << "</h1>\n</center>\n</body>\n</html>\n";
-// 	_body = oss.str();
-// }
-
 /* MEMBERS */
 
 void	Response::sendResponse(int fd)
@@ -268,19 +251,15 @@ void Response::setHAllow()
 	if (!_location)
 		return ;
 	for (it = _location->get_limit_except().begin(); it != _location->get_limit_except().end(); ++it)
-	{
 		if (it->second)
 		{
 			value = it->first;
 			++it;
 			break ;
 		}
-	}
 	for (; it != _location->get_limit_except().end(); ++it)
-	{
 		if (it->second)
 			value.append("," + it->first);
-	}
 	_fields["Allow"] = value;
 }
 

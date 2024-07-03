@@ -4,7 +4,7 @@
 
 //--------------- Orthodox Canonical Form ---------------//
 // default _request_size
-Server::Server() : _request_size(100, 'M') {
+Server::Server() : _request_size(10000000) {
 }
 Server::Server( const Server & other ) {
 	for (std::list<Location>::const_iterator it = other.get_locations().begin(); it != other.get_locations().end(); ++it)
@@ -50,12 +50,23 @@ void	Server::set_port( std::vector< std::string > s ){
 void	Server::set_request_size( std::vector< std::string > s ){
 	std::string	authorized_units = "KM";
 	if (s.size() > 1
-		|| atof(s.front().c_str()) > INT_MAX
+		|| atof(s.front().c_str()) > LONG_MAX
 		|| s.front().find_first_not_of("0123456789") != s.front().size() - 1
 		|| authorized_units.find_first_of(s[0].back()) == NOTFOUND)
 		throw Server::Error("Request size format invalid.");
-	this->_request_size.first = atoi(s.front().c_str());
-	this->_request_size.second = s[0].back();
+	this->_request_size = atol(s.front().c_str());
+	int multiply;
+	switch (s[0].back())
+	{
+		case 'K':
+			multiply = 1000;
+			break;
+		case 'M':
+			multiply = 1000000;
+	}
+	if (LONG_MAX / multiply < _request_size)
+		throw Server::Error("Request size format invalid.");
+	_request_size *= multiply;
 }
 void	Server::set_name( std::vector< std::string > s ){
 	if (!s.size())
@@ -89,7 +100,7 @@ void	Server::set_generic_root( std::vector< std::string > s ){
 std::vector<unsigned int> const& Server::get_port() const {
 	return this->_port;
 }
-std::pair<unsigned int, char> const& Server::get_request_size() const {
+long Server::get_request_size() const {
 	return this->_request_size;
 }
 std::vector<std::string> const& Server::get_name() const {
@@ -121,7 +132,7 @@ std::ostream& operator<<( std::ostream& o, Server const& S){
 		if (it + 1 != port.end())
 			o << ", ";
 	}
-	o << "\n" << "Request size : " << S.get_request_size().first << S.get_request_size().second << "\n";
+	o << "\n" << "Request size : " << S.get_request_size() << "\n";
 	o << "Error page :\n";
 	std::map<unsigned int, std::string>	errors_page = S.get_error_page();
 	for (std::map<unsigned int, std::string>::iterator it = errors_page.begin(); it != errors_page.end(); it++){

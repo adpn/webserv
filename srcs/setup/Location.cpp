@@ -155,8 +155,7 @@ bool Location::is_allowed(std::string const& method) const
 	std::map<std::string, bool>::const_iterator it = _limit_except.find(method);
 	if (it == _limit_except.end())
 		return false;
-// @Dennis does this seem right to you?
-	return (*it).second;
+	return it->second;
 }
 
 // throws if dir can't be opened

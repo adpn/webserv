@@ -38,9 +38,7 @@ bool Request::isUser() const
 // sets _status if bad
 bool Request::isGoodSize()
 {
-	long max = _server->get_request_size().first;
-
-	if (!max || _body.empty())
+	if (!_server->get_request_size() || _body.empty())
 		return true;
 	if (_fields.find("Content-Length") == _fields.end())
 	{
@@ -48,15 +46,7 @@ bool Request::isGoodSize()
 		return false;
 	}
 
-	switch (_server->get_request_size().second)
-	{
-		case 'K':
-			max *= 1000;
-			break;
-		case 'M':
-			max *= 1000000;
-	}
-	if (_content_left > max)
+	if (_content_left > _server->get_request_size())
 	{
 		_status = 413;
 		return false;
@@ -209,7 +199,6 @@ void Request::handleGet(Response& response, Location const* location)
 		handleError(response, 404);
 }
 
-// only works with a multipart file upload request
 void Request::handlePost(Response& response, Location const* location)
 {
 	if (location->get_upload_path().empty())
@@ -241,9 +230,8 @@ void Request::handlePost(Response& response, Location const* location)
 
 void Request::handleDelete(Response& response, Location const* location)
 {
-	// check if resource exists? (404)
-	// check if resource is part of server (403 or 404 if we're not doing the last step)
-	// check if resource is a dir? (403?)
+	if (_is_dir)
+		return handleError(response, 403);
 	if (std::remove(getFile(location).c_str()))
 		return handleError(response, 404);
 	response.setStatus(204);
@@ -568,15 +556,14 @@ bool Request::parseField(string const& header)
 	return true;
 }
 
-// doesn't really check anything
 void Request::parseBody(string const& body)
 {
 	if (body.empty())
 		return ;
 	if (_method[0] != 'P' || !isValid())
 		return ;
-// check if a request is finished with content-length
-// (or an empty chunk at the end IF it is chunked (chunked in Transfer-Encoding header))
+	if (_content_left > _server->get_request_size())
+		return ;
 	if (isFin())
 		return ;
 	_body.append(body);
@@ -595,16 +582,9 @@ bool Request::checkFields()
 
 void Request::manageSpecialField(std::pair<string, string> const& pair)
 {
-	// if (!pair.first.compare("Content-Type"))
-	// {
-	// 	if (pair.second.find("multipart") != string::npos)
-	// 		boundary = pair.second.substr(pair.second.find("boundary") + 9, string::npos);
-	// 		// maybe replace the string::npos with a check for delimiters?
-	// }
 	if (_method[0] == 'P' && !pair.first.compare("Content-Length"))
 		_content_left = atol(pair.second.c_str());
 }
-
 
 void Request::prepare()
 {

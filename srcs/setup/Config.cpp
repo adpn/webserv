@@ -120,7 +120,7 @@ bool	Config::server_approved(Server const& server){
 	std::vector<unsigned int> nw_ports = server.get_port();
 
 	if (!server.get_port().size()
-		|| !server.get_request_size().first)
+		|| !server.get_request_size())
 		throw Config::Error("Data's missing.");
 	if (server.get_generic_root().empty())
 		for (std::list<Location>::const_iterator it = server.get_locations().begin(); it != server.get_locations().end(); ++it)

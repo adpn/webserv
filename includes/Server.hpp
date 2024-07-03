@@ -15,7 +15,7 @@ class Location;
 class Server {
 	private:
 		std::vector<unsigned int>			_port;
-		std::pair<unsigned int, char>		_request_size;
+		long								_request_size;
 		std::vector<std::string>			_name;
 		std::map<unsigned int, std::string>	_error_page;
 		std::list<Location>					_locations;
@@ -38,7 +38,7 @@ class Server {
 
 		//--- Getters ---//
 		std::vector<std::string> const&				get_name() const;
-		std::pair<unsigned int, char> const&		get_request_size() const;
+		long										get_request_size() const;
 		std::vector<unsigned int> const&			get_port() const;
 		std::map<unsigned int, std::string> const&	get_error_page() const;
 		std::string const&							get_generic_root() const;
