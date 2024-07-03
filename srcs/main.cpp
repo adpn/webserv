@@ -39,8 +39,7 @@ int main(int argc, char **argv)
 		std::signal(SIGINT, handleSig);
 
 		if (chdir("website")) {
-			std::cout << "Error: can't access website files" << std::endl;
-			return 1;
+			throw std::runtime_error("can't access website files");
 		}
 
 		std::cout << "Main loop start:" << std::endl;
@@ -48,19 +47,19 @@ int main(int argc, char **argv)
 		{
 
 			if (router.pollFds() == -1) {
-				if (checkSig())
-					return 0;
-				std::cout << "Error: poll fail" << std::endl;
-				return 1;
+				throw std::runtime_error("poll fail");
 			}
 
 			router.readEvents();
 		}
 	}
 	catch (std::exception const& e) {
+		if (checkSig())
+			exit(0);
 		std::cout << "Error: " << e.what() << std::endl;
-		return 1;
+		exit(1);
 	}
 
+	exit(0);
 	return 0;
 }
