@@ -38,7 +38,7 @@ bool Request::isUser() const
 // sets _status if bad
 bool Request::isGoodSize()
 {
-	if (!_server->get_request_size() || _body.empty())
+	if (!_server->get_request_size() || _method[0] != 'P')
 		return true;
 	if (_fields.find("Content-Length") == _fields.end())
 	{
@@ -46,7 +46,7 @@ bool Request::isGoodSize()
 		return false;
 	}
 
-	if (_content_left > _server->get_request_size())
+	if (_content_left > _server->get_request_size()) // make sure this isn't _content_left anymore ...
 	{
 		_status = 413;
 		return false;
@@ -278,8 +278,6 @@ bool Request::preHandleChecks(Response& response, Location const* location)
 {
 	if (!isValid())
 		handleError(response);
-	else if (!isGoodSize())
-		handleError(response);
 	else if (!location)
 		handleError(response, 404);
 	else if (!location->is_allowed(_method))
@@ -425,8 +423,11 @@ void Request::parse(string const& package)
 		return ;
 	if (!checkFields())
 		return ;
+	assignServer();
 	_status = 200;
-	if (!_fin_header)
+	if (_method[0] != 'P')
+		return ;
+	if (!isGoodSize())
 		return ;
 	std::ostringstream oss;
 	oss << iss.rdbuf();
@@ -561,8 +562,6 @@ void Request::parseBody(string const& body)
 	if (body.empty())
 		return ;
 	if (_method[0] != 'P' || !isValid())
-		return ;
-	if (_content_left > _server->get_request_size())
 		return ;
 	if (isFin())
 		return ;

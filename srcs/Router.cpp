@@ -187,7 +187,6 @@ bool Router::manageRequests(int fd, std::vector<Server *> servers, char const* b
 	if (!instance.isFin())
 		return false;
 	instance.prepare();
-	instance.assignServer();
 // std::cout << ">> finished a packet[" << fd << "]:\n"; instance.print(false); //debug
 	return true;
 }
