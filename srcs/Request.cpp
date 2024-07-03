@@ -46,7 +46,7 @@ bool Request::isGoodSize()
 		return false;
 	}
 
-	if (_content_left > _server->get_request_size()) // make sure this isn't _content_left anymore ...
+	if (atol(_fields["Content-Length"].c_str()) > _server->get_request_size())
 	{
 		_status = 413;
 		return false;
@@ -435,13 +435,17 @@ void Request::parse(string const& package)
 	if (!_fin_header)
 		return ;
 	if (!checkFields())
+	{
+		buffer(string(), iss);
 		return ;
+	}
 	assignServer();
 	_status = 200;
-	if (_method[0] != 'P')
+	if (_method[0] != 'P' || !isGoodSize())
+	{
+		buffer(string(), iss);
 		return ;
-	if (!isGoodSize())
-		return ;
+	}
 	std::ostringstream oss;
 	oss << iss.rdbuf();
 	parseBody(oss.str());
@@ -600,6 +604,8 @@ void Request::manageSpecialField(std::pair<string, string> const& pair)
 
 void Request::prepare()
 {
+	if (!isValid())
+		return ;
 	prepareBody();
 }
 
