@@ -21,6 +21,9 @@ void	CGI::_Executor(){
 
 	std::string str("/usr/bin/python3");
 	std::string file(this->_request.getFile(this->_location));
+	file.erase(file.find(".py") + 3);
+	if (access(file.c_str(), F_OK | X_OK) < 0)
+		exit(2);
 	char *cmd_tab[3] = {const_cast<char *>(str.c_str()), const_cast<char *>(file.c_str()), NULL};
 	std::string pathInfo("PATH_INFO=" + this->_request.getUri());
 	char *envp[] = {const_cast<char *>(pathInfo.c_str()), NULL};
@@ -79,7 +82,13 @@ void	CGI::_Manager(){
 		/* script error */
 		if (WEXITSTATUS(status)) {
 			close(this->_pipe_fd[0]);
-			_Error(500);
+			switch (WEXITSTATUS(status)){
+				case 2:
+					_Error(404);
+					break;
+				default:
+					_Error(500);
+			}
 		}
 
 		/* send output */

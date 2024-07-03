@@ -197,13 +197,26 @@ void Request::handleCGI(Response &response, Location const* location)
 	CGI cgi(response, location, *this);
 }
 
+bool CGIApproved(std::string uri){
+	size_t i;
+
+	if (uri.compare(0, 9, "/cgi-bin/"))
+		return false;
+	i = uri.find(".py");
+	if (i == std::string::npos || uri[i - 1] == '/')
+		return false;
+	if (uri[i + 3] && uri[i + 3] != '/')
+		return false;
+	return true;
+}
+
 void Request::handleGet(Response& response, Location const* location)
 {
 	if (location->get_return().first)
 		handleReturn(response, location);
 	else if (location->get_autoindex() && _is_dir)
 		handleAutoindex(response, location);
-	else if (!_uri.compare(0, 9, "/cgi-bin/") && _uri.size() > 3 && !_uri.compare(_uri.size() - 3, 3, ".py"))
+	else if (CGIApproved(_uri))
 		handleCGI(response, location);
 	else if (!response.fileToBody(getFile(location)))
 		handleError(response, 404);
