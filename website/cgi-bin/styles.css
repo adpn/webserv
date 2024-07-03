@@ -1,0 +1,51 @@
+@import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');
+
+body {
+    font-family: 'Permanent Marker', cursive;
+    background: linear-gradient(to bottom, #87CEEB, #f0f8ff);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-image: url('/images/spongebob-background.jpg'); /* Replace with a SpongeBob themed background */
+    background-size: cover;
+}
+
+.container {
+    text-align: center;
+    background-color: #FFDD00;
+    padding: 2rem;
+    border-radius: 20px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    border: 5px solid #FFA500;
+}
+
+.container:hover {
+	background-color: #393204;
+	transform: scale(3);
+}
+
+h1 {
+    margin-bottom: 2rem;
+    color: #FF4500;
+    text-shadow: 2px 2px #FF6347;
+}
+
+.execute-button {
+    background-color: #00BFFF;
+    color: #FFFFFF;
+    border: none;
+    padding: 1rem 2rem;
+    font-size: 1.5rem;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.execute-button:hover {
+    background-color: #1E90FF;
+    transform: scale(1.5);
+}
+
