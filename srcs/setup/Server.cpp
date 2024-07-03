@@ -4,7 +4,7 @@
 
 //--------------- Orthodox Canonical Form ---------------//
 // default _request_size
-Server::Server() : _request_size(10000000) {
+Server::Server() : _request_size(1000000) {
 }
 Server::Server( const Server & other ) {
 	for (std::list<Location>::const_iterator it = other.get_locations().begin(); it != other.get_locations().end(); ++it)
@@ -49,8 +49,11 @@ void	Server::set_port( std::vector< std::string > s ){
 }
 void	Server::set_request_size( std::vector< std::string > s ){
 	std::string	authorized_units = "KM";
-	if (s.size() > 1
-		|| atof(s.front().c_str()) > LONG_MAX
+	if (s.size() > 1)
+		throw Server::Error("Request size format invalid.");
+	if (s.front() == "0")
+		return (void)(_request_size = 0);
+	if (atof(s.front().c_str()) > LONG_MAX
 		|| s.front().find_first_not_of("0123456789") != s.front().size() - 1
 		|| authorized_units.find_first_of(s[0].back()) == NOTFOUND)
 		throw Server::Error("Request size format invalid.");
