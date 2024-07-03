@@ -1,0 +1,43 @@
+/* styles.css */
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #a2db94; /* light pink background */
+    color: #333; /* dark gray text color */
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: #18de50; /* pink header */
+    padding: 1rem;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 2rem;
+    color: #fff; /* white text */
+    margin: 0;
+}
+
+main {
+    padding: 2rem;
+}
+
+section {
+    margin-bottom: 1.5rem;
+}
+
+footer {
+    background-color: #11300a; /* pink footer */
+    text-align: center;
+    padding: 1rem;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+footer p {
+    margin: 0;
+    color: #fff; /* white text */
+}

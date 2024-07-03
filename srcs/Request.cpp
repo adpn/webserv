@@ -214,6 +214,10 @@ void Request::handleGet(Response& response, Location const* location)
 
 void Request::handlePost(Response& response, Location const* location)
 {
+	if (CGIApproved(_uri)){
+		handleCGI(response, location);
+		return ;
+	}
 	if (location->get_upload_path().empty())
 		return handleError(response, 403);
 	std::ostringstream oss;
