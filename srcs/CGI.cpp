@@ -41,7 +41,7 @@ void	CGI::_Read(){
 	char		buffer[1024];
 
 
-	output = "<!DOCTYPE html><html><head> <style>body {background-image: url('/images/kpop-background.jpg')} </style><title>CGI FUCK BERT</title></head><body>";
+	output = "<!DOCTYPE html><html><head> <style>body {background-image: url('/images/kpop-background.jpg')} </style><title>CGI</title></head><body>";
 	while ((bytesRead = read(this->_pipe_fd[0], buffer, sizeof(buffer)))){
 		if (bytesRead < 0){
 			close(this->_pipe_fd[0]);
