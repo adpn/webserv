@@ -226,7 +226,7 @@ void	Config::bufferize(){
 		if (!_brackets && server_block.size()){	// if server content not empty, add it
 			try {
 				add_server(server_block);
-				std::cout << this->_servers.back() << std::endl;
+// std::cout << this->_servers.back() << std::endl; // debug
 			}
 			catch (std::exception & e){
 				std::cout << "Server block rejected: " << e.what() << std::endl;

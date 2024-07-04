@@ -59,7 +59,7 @@ void Router::managePollin(size_t fdIndex)
 		socklen_t clientAddrLen = sizeof(clientAddr);
 		int clientFd = accept(_fds[fdIndex].fd, (struct sockaddr *)&clientAddr, &clientAddrLen);
 		if (clientFd == -1) {
-			std::cout << "Accept error" << std::endl;
+			std::cout << "Error: accepting connection" << std::endl;
 			return ;
 		}
 		// Add new client socket to fds
@@ -68,7 +68,6 @@ void Router::managePollin(size_t fdIndex)
 		pfd.events = POLLIN;
 		setClient(clientFd, _fds[fdIndex].fd);
 		_fds.push_back(pfd);
-
 	}
 	else {
 		// case where the POLLIN is on a client fd
@@ -76,8 +75,8 @@ void Router::managePollin(size_t fdIndex)
 		ssize_t bytesReceived = recv(_fds[fdIndex].fd, buffer, sizeof(buffer) - 1, 0);
 		if (bytesReceived > 0) {
 			buffer[bytesReceived] = '\0';
-			// std::cout << "Received from client: " << std::endl;
-			// std::cout << buffer << std::endl;
+// std::cout << "Received from client: " << std::endl; // debug
+// std::cout << buffer << std::endl; // debug
 			manageRequests(_fds[fdIndex].fd, getServerWithClientFd(_fds[fdIndex].fd), buffer, bytesReceived);
 
 			// manage client
@@ -85,7 +84,7 @@ void Router::managePollin(size_t fdIndex)
 		}
 		else {
 			// Connection closed by client
-			//std::cout << "Client disconnected " << _fds[fdIndex].fd << std::endl;
+//std::cout << "Client disconnected " << _fds[fdIndex].fd << std::endl; // debug
 
 			removeClient(fdIndex);
 			deleteRequest(_fds[fdIndex].fd);
@@ -142,7 +141,7 @@ void Router::initServerFds() {
 	}
 	_serverFdsNumber = i;
 
-	std::cout << "Total server fds : " << _serverFdsNumber << std::endl;
+// std::cout << "Total server fds : " << _serverFdsNumber << std::endl; // debug
 }
 
 void	Router::initSockets(std::list<Server> &servers) {

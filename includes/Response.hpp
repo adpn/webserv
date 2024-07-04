@@ -41,18 +41,17 @@ class Response
 		void	setBody(string const& body);
 		string	findContentType(string extension);
 		bool	fileToBody(string const& file);
-		// void	confirmationToBody(string const& message, Request const& request);
 
 		void	sendResponse(int fd);
 		string	wrapPackage() const;
-
-		// debugging
-		void print(bool do_body = true) const;
 
 		class SendFailException : public std::exception {
 		public:
 			const char* what() const throw();
 		};
+
+		// debug
+		void print(bool do_body = true) const;
 };
 
 #endif

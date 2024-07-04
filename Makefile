@@ -11,26 +11,31 @@ SRCS_DIR	= 	srcs
 BUILD_DIR 	= 	build
 #replace all smth of course
 SETUP_DIR	=   $(SRCS_DIR)/setup
+EXEC_DIR	=	$(SRCS_DIR)/execution
 
 # Define the source files
-MAIN_FILE	=	main.cpp \
-				Request.cpp \
-				Response.cpp \
-				Router.cpp \
-				Entry.cpp \
-				CGI.cpp
+MAIN_FILE	=	main.cpp
+
 SETUP_FILES	=	Socket.cpp \
 				Config.cpp \
 				Location.cpp \
 				Server.cpp
 
+EXEC_FILES =	Request.cpp \
+				Response.cpp \
+				Router.cpp \
+				Entry.cpp \
+				CGI.cpp
+
 # Defining the paths of the sources files
 SRC_MAIN	= 	$(addprefix $(SRCS_DIR)/, $(MAIN_FILE))
 SRC_SETUP  	=	$(addprefix $(SETUP_DIR)/, $(SETUP_FILES))
+SRC_EXEC  	=	$(addprefix $(EXEC_DIR)/, $(EXEC_FILES))
 
 # Deriving objects from .cpp files in the build directory
 OBJS 		= 	$(patsubst $(SRCS_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRC_MAIN)) \
-				$(patsubst $(SETUP_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRC_SETUP))
+				$(patsubst $(SETUP_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRC_SETUP)) \
+				$(patsubst $(EXEC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRC_EXEC))
 
 # Display toolbox
 RED			=	\x1b[31m
@@ -49,6 +54,10 @@ $(BUILD_DIR)/%.o: $(SRCS_DIR)/%.cpp
 	@$(CC) $(FLAGS) -c $< -o $@
 
 $(BUILD_DIR)/%.o: $(SETUP_DIR)/%.cpp
+	@mkdir -p $(BUILD_DIR)
+	@$(CC) $(FLAGS) -c $< -o $@
+
+$(BUILD_DIR)/%.o: $(EXEC_DIR)/%.cpp
 	@mkdir -p $(BUILD_DIR)
 	@$(CC) $(FLAGS) -c $< -o $@
 

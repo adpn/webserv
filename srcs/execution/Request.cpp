@@ -1,8 +1,3 @@
-#include "Request.hpp"
-#include "Response.hpp"
-#include "Server.hpp"
-#include "Location.hpp"
-#include "Entry.hpp"
 #include <CGI.hpp>
 #include <unistd.h>
 #include <dirent.h>
@@ -10,6 +5,12 @@
 #include <fstream>
 #include <cstdio>
 #include <sys/stat.h>
+
+#include "Request.hpp"
+#include "Response.hpp"
+#include "Server.hpp"
+#include "Location.hpp"
+#include "Entry.hpp"
 
 /* CONSTRUCTORS */
 
@@ -88,7 +89,6 @@ void	Request::assignServer() {
 	if (i != std::string::npos) {
 		host = host.substr(0, i);
 	}
-	//std::cout << "Host extracted: " << host << std::endl;
 	//Loop through servers
 	for (size_t i = 0; i < _servers.size(); i++) {
 		std::vector<string> names = _servers[i]->get_name();
@@ -98,12 +98,10 @@ void	Request::assignServer() {
 
 			if (names[j] == host) {
 				_server = _servers[i];
-				//std::cout << "Right server found" << std::endl;
 				return ;
 			}
 		}
 	}
-	//std::cout << "Host not found, default server" << std::endl;
 	_server = _servers[0];
 }
 
@@ -287,7 +285,7 @@ void Request::handle()
 	}
 	catch (std::exception const& e)
 	{
-		std::cout << "\n*\n* ERROR: request handling: " << e.what() << "\n*\n";
+		std::cout << "Error: request handling: " << e.what() << "\n";
 		handleError(response, 500);
 	}
 	if (!_is_cgi)
@@ -527,7 +525,7 @@ bool Request::parseUri(string const& uri)
 	return true;
 }
 
-// only allows HTTP
+// only allows HTTP/1.1
 bool Request::parseVersion(string const& version)
 {
 	if (version != "HTTP/1.1")

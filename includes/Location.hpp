@@ -78,7 +78,7 @@ class Location {
 		};
 };
 
-// debug print
+// debug
 std::ostream& operator<<(std::ostream& o, Location const& l);
 
 #endif

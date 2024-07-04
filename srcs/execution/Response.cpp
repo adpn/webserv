@@ -1,11 +1,12 @@
-#include "Response.hpp"
-#include "Request.hpp"
-#include "Location.hpp"
 #include <sstream>
 #include <fstream>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <ctime>
+
+#include "Response.hpp"
+#include "Request.hpp"
+#include "Location.hpp"
 
 /* Exceptions*/
 const char* Response::SendFailException::what() const throw() {
