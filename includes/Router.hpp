@@ -18,7 +18,6 @@ class Router {
 
 	std::vector<Server*> getServers(size_t fd);
 	std::vector<Server*> getServerWithClientFd(size_t clientFd);
-	void	setServer(size_t fd, Server* server);
 	void	setClient(size_t clientFd, size_t serverFd);
 	void	removeClient(size_t fdIndex);
 	void	managePollin(size_t fdIndex);

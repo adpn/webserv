@@ -88,7 +88,7 @@ class Request
 		string			getFile(Location const* location) const;
 		string			getIndexFile(Location const* location) const;
 
-		// debugging
+		// debug
 		void print(bool do_body = true) const;
 };
 

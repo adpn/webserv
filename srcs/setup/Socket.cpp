@@ -1,5 +1,6 @@
-#include "Socket.hpp"
 #include <iostream>
+
+#include "Socket.hpp"
 
 /* Exceptions */
 
@@ -37,7 +38,7 @@ Socket::Socket(int port) : _port(port) {
 		throw BoundFailException();
 
 	std::cout << "Created socket " << _fd;
-	std::cout << " with port: " << _port << std::endl; 
+	std::cout << " with port: " << _port << std::endl;
 	// Listen to socket connections
 	if (listen(_fd, MAX_CLIENTS) == -1)
 		throw ListenFailException();
@@ -45,13 +46,6 @@ Socket::Socket(int port) : _port(port) {
 
 Socket::Socket(const Socket& other) : _port(other._port) {
 	_fd = other._fd;
-	//std::cout << "Copy constructor socket " << _fd << " with port: " << _port << std::endl;
-}
-
-Socket::~Socket() {
-	// close(_fd);
-	// std::cout << "Destructor socket: " << _fd << std::endl;
-	// std::cout << "DESTRUCTOR CLOSES FD !!! SHOULD NOT BE CALLED BEFORE THE END OF THE PROGRAM" << std::endl;
 }
 
 Socket::operator int() const {

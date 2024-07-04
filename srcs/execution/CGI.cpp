@@ -18,7 +18,7 @@ void	CGI::_Executor(){
 	if (dup2(this->_pipe_fd[1], STDOUT) == -1)
 		exit(1);
 	close(this->_pipe_fd[0]);
-	
+
 	std::string str("/usr/bin/python3");
 	std::string file(this->_request.getFile(this->_location));
 	file.erase(file.find(".py") + 3);

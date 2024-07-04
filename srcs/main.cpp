@@ -1,4 +1,4 @@
-#include <iostream> // cout
+#include <iostream>
 #include <unistd.h>
 #include <csignal>
 #include <Config.hpp>
@@ -16,6 +16,7 @@ bool	checkSig(bool check = false) {
 
 void	handleSig(int sig) {
 	(void) sig;
+	std::cout << std::endl;
 	checkSig(true);
 }
 
@@ -40,8 +41,6 @@ int main(int argc, char **argv)
 		if (chdir("website")) {
 			throw std::runtime_error("can't access website files");
 		}
-
-		std::cout << "Main loop start:" << std::endl;
 		while (true)
 		{
 

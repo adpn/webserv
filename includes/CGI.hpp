@@ -15,7 +15,7 @@
 class CGI {
 	private:
 		int			_pipe_fd[2];
-	
+
 		Response&		_response;
 		Location const*	_location;
 		Request&		_request;

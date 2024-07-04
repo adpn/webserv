@@ -56,7 +56,7 @@ class Server {
 } ;
 
 
-// debug only
+// debug
 std::ostream& operator<<( std::ostream& o, Server const& S);
 template<typename T1, typename T2>
 std::ostream& operator<<(std::ostream& os, const std::pair<T1, T2>& p) {
