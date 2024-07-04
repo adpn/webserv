@@ -17,7 +17,7 @@ body {
     text-align: center;
     background-color: #FFDD00;
     padding: 2rem;
-    border-radius: 20px;
+    border-radius: 100px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
     border: 5px solid #FFA500;
 }
@@ -49,3 +49,7 @@ h1 {
     transform: scale(1.5);
 }
 
+.boxes {
+    display: flex;
+	gap: 20px;
+}
