@@ -189,10 +189,14 @@ void Request::handleCGI(Response &response, Location const* location)
 
 bool CGIApproved(std::string uri){
 	size_t i;
+	size_t j;
 
 	if (uri.compare(0, 9, "/cgi-bin/"))
 		return false;
 	i = uri.find(".py");
+	j = uri.find(".pl");
+	if (j < i)
+		i = j;
 	if (i == std::string::npos || uri[i - 1] == '/')
 		return false;
 	if (uri[i + 3] && uri[i + 3] != '/')

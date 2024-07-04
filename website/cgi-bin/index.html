@@ -7,16 +7,29 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Execute CGI Script</h1>
-        <a href="/cgi-bin/CGIget.py"><button class="execute-button">Run CGI Script</button></a>
-		<form action="/cgi-bin/CGIpost.py" method="post">
-			<label for="text">Enter text: </label>
-			<br>
-			<input type="text" id="text" name="text">
-			<br><br>
-			<input type="submit" value="Send">
-		</form>
-    </div>
+	<div class="boxes">
+		<div class="container">
+			<h1>Execute PY Script</h1>
+			<a href="/cgi-bin/CGIget.py"><button class="execute-button">Run CGI Script</button></a>
+			<form action="/cgi-bin/CGIpost.py" method="post">
+				<label for="text">Enter text: </label>
+				<br>
+				<input type="text" id="text" name="text">
+				<br><br>
+				<input type="submit" value="Send">
+			</form>
+		</div>
+		<div class="container">
+			<h1>Execute PL Script</h1>
+			<a href="/cgi-bin/CGIget.pl"><button class="execute-button">Run CGI Script</button></a>
+			<form action="/cgi-bin/CGIpost.pl" method="post">
+				<label for="text">Enter text: </label>
+				<br>
+				<input type="text" id="text" name="text">
+				<br><br>
+				<input type="submit" value="Send">
+			</form>
+		</div>
+	</div>
 </body>
 </html>

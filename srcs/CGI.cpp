@@ -14,14 +14,25 @@ void	CGI::_Error(unsigned int page_nb) {
 }
 
 void	CGI::_Executor(){
+	size_t i;
+	size_t j;
 
 	if (dup2(this->_pipe_fd[1], STDOUT) == -1)
 		exit(1);
 	close(this->_pipe_fd[0]);
 	
-	std::string str("/usr/bin/python3");
 	std::string file(this->_request.getFile(this->_location));
-	file.erase(file.find(".py") + 3);
+	i = file.find(".py");
+	j = file.find(".pl");
+	std::string str;
+	if (i < j){
+		file.erase(file.find(".py") + 3);
+		str = "/usr/bin/python3";
+	}
+	else {
+		file.erase(file.find(".pl") + 3);
+		str = "/usr/bin/perl";
+	}
 	if (access(file.c_str(), F_OK | X_OK) < 0)
 		exit(2);
 	char *cmd_tab[3] = {const_cast<char *>(str.c_str()), const_cast<char *>(file.c_str()), NULL};
