@@ -190,16 +190,25 @@ std::ostream& operator<<(std::ostream& o, Location const& l)
 {
 	o << "	location: " << l.get_name() << "\n";
 	o << "		server: " << l.get_server().get_name().front() << "\n";
-	o << "		root: " << l.get_root(true) << "\n";
-	o << "		limits: \n";
-	for (std::map<std::string, bool>::const_iterator it = l.get_limit_except().begin(); it != l.get_limit_except().end(); ++it)
+	if (!l.get_root(true).empty())
+		o << "		root: " << l.get_root(true) << "\n";
+	o << "		limits: ";
+	std::map<std::string, bool>::const_iterator it = l.get_limit_except().begin();
+	o << (*it).first << " " << std::boolalpha << (*it).second << "\n";
+	for (++it; it != l.get_limit_except().end(); ++it)
 		o << "			" << (*it).first << " " << std::boolalpha << (*it).second << "\n";
-	o << "		return: " << l.get_return().first << " " << l.get_return().second << "\n";
+	if (l.get_return().first)
+		o << "		return: " << l.get_return().first << " " << l.get_return().second << "\n";
 	o << "		autoindex: " << std::boolalpha << l.get_autoindex() << "\n";
-	o << "		index: \n";
-	for (size_t i = 0; i < l.get_index().size(); ++i)
-		o << "			" << l.get_index()[i] << "\n";
-	o << "		upload: " << l.get_upload_path() << "\n";
+	if (!l.get_index().empty())
+	{
+		o << "		index:  ";
+		o << l.get_index()[0] << "\n";
+		for (size_t i = 1; i < l.get_index().size(); ++i)
+			o << "			" << l.get_index()[i] << "\n";
+	}
+	if (!l.get_upload_path().empty())
+		o << "		upload: " << l.get_upload_path() << "\n";
 	o << std::endl;
 	return o;
 }

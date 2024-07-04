@@ -136,11 +136,14 @@ std::ostream& operator<<( std::ostream& o, Server const& S) {
 			o << ", ";
 	}
 	o << "\n" << "Request size : " << S.get_request_size() << "\n";
-	o << "Error page :\n";
-	std::map<unsigned int, std::string>	errors_page = S.get_error_page();
-	for (std::map<unsigned int, std::string>::iterator it = errors_page.begin(); it != errors_page.end(); it++)
-		o << "	" << *it << "\n";
-	o << "Generic root : " << S.get_generic_root() << "\n";
+	if (!S.get_error_page().empty())
+	{
+		o << "Error page :\n";
+		for (std::map<unsigned int, std::string>::const_iterator it = S.get_error_page().begin(); it != S.get_error_page().end(); it++)
+			o << "	" << *it << "\n";
+	}
+	if (!S.get_generic_root().empty())
+		o << "Generic root : " << S.get_generic_root() << "\n";
 	std::list<Location> const& location_vec = S.get_locations();
 	o << "Locations(" << location_vec.size() << ") :\n";
 	for (std::list<Location>::const_iterator it = location_vec.begin(); it != location_vec.end(); ++it)
