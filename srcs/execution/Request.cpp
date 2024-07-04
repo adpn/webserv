@@ -113,9 +113,9 @@ void Request::defaultErrorPage(Response& response)
 		return ;
 	oss.str("");
 	oss << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n";
-	oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
-	oss << "    <link rel=\"icon\" href=\"/favicon.ico\" />\n	<title></title>\n    <!-- <style>\n";
-	oss << "        /* Add your CSS styles here */\n    </style> -->\n</head>\n<body>\n    <br><b>ERROR: ";
+	oss << "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
+	oss << "<link rel=\"icon\" href=\"/favicon.ico\" />\n	<title></title>\n";
+	oss << "</head>\n<body>\n    <br><b>ERROR: ";
 	oss << _status << " " << response.getReason() << "\n</b></body>\n</html>\n";
 	response.setBody(oss.str());
 	response.setField("Content-Type: text/html");
@@ -153,8 +153,8 @@ void Request::handleAutoindex(Response &response, Location const* location)
 	response.setField("Content-Type: text/html");
 	std::ostringstream oss;
 	oss << "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n";
-	oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
-	oss << "    <link rel=\"icon\" href=\"/favicon.ico\" />\n";
+	oss << "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
+	oss << "<link rel=\"icon\" href=\"/favicon.ico\" />\n";
 	oss << "<style> body { background-color: #f5f5f5; padding: 20px;} a, h2 {text-align: center; display: block;} ";
 	oss << ".centered-box { background-color: #fadcdc;padding: 20px;margin: 0 auto;max-width: 600px; border-radius: 10px;} </style>";
 	oss << "<title>Index of " << _uri << "</title>\n  </head>";
@@ -407,7 +407,6 @@ bool Request::getline_crlf(std::istringstream& iss, string& buf) const
 	return true;
 }
 
-// a 'Host' header is required
 void Request::parse(string const& package)
 {
 	if (_fin_header)
@@ -499,7 +498,6 @@ bool Request::parseMethod(string const& method)
 	return true;
 }
 
-// basic parsing, don't allow general "*" (n/a for GET, POST or DELETE)
 bool Request::parseUri(string const& uri)
 {
 	if (uri.empty() || uri[0] != '/')

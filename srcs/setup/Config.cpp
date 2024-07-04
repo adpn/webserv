@@ -135,7 +135,7 @@ bool	Config::server_approved(Server const& server) {
 void	Config::add_server(std::string server_block) {
 	size_t	next_sep;
 	size_t	stop_location;
-	Server	server;	// create a new server
+	Server	server;
 
 	while (server_block.size()) {
 		next_sep = server_block.find_first_of(";{}");
