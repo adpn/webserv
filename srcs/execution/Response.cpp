@@ -156,7 +156,7 @@ string Response::findContentType(string file) {
 	return "application/octet-stream";
 }
 
-// returns false if 'file' couldn't be opened, or if it's a dir
+// returns false if 'file' couldn't be opened, or if 'file' is a dir
 bool Response::fileToBody(string const& file)
 {
 	{
@@ -216,7 +216,6 @@ void Response::setHContentLength()
 	_fields.insert(std::pair<string, string>("Content-Length", oss.str()));
 }
 
-//HTTP format example: "Tue, 15 Nov 1994 08:12:31 GMT"
 void Response::setHDate()
 {
 	std::time_t time = std::time(NULL);

@@ -33,7 +33,7 @@ Socket::Socket(int port) : _port(port) {
 	serverAddr.sin_addr.s_addr = INADDR_ANY; //take all IP
 	serverAddr.sin_port = htons(port); //which port we will listen to
 
-	//Link socket with settings ?
+	//Link socket with settings
 	if (bind(_fd, reinterpret_cast<struct sockaddr *>(&serverAddr), sizeof(serverAddr)) == -1)
 		throw BoundFailException();
 

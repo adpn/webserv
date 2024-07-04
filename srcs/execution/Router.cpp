@@ -13,7 +13,6 @@ const char* Router::WrongFdException::what() const throw() {
 }
 /* Getters and setters */
 
-// REAL FD AS INPUT NOT FDS INDEX
 std::vector<Server*> Router::getServers(size_t fd) {
 	if (fd < 3)
 		throw WrongFdException();
@@ -23,7 +22,6 @@ std::vector<Server*> Router::getServers(size_t fd) {
 	return (*it).second;
 }
 
-// REAL FD AS INPUT NOT FDS INDEX
 std::vector<Server*> Router::getServerWithClientFd(size_t clientFd) {
 	if (clientFd < 3)
 		throw WrongFdException();
@@ -33,7 +31,6 @@ std::vector<Server*> Router::getServerWithClientFd(size_t clientFd) {
 	return (*it).second;
 }
 
-// REAL FD AS INPUT NOT FDS INDEX
 void	Router::setClient(size_t clientFd, size_t serverFd) {
 	if (clientFd < 3)
 		throw WrongFdException();
@@ -48,13 +45,13 @@ void	Router::removeClient(size_t fdIndex) {
 	close(_fds[fdIndex].fd);
 	_fds.erase(_fds.begin() + fdIndex);
 }
+
 /* Method functions */
 
 void Router::managePollin(size_t fdIndex)
 {
 	// case where the POLLIN is on a server fd
 	if (fdIndex < _serverFdsNumber) {
-		// Accept new client connection
 		struct sockaddr_in clientAddr;
 		socklen_t clientAddrLen = sizeof(clientAddr);
 		int clientFd = accept(_fds[fdIndex].fd, (struct sockaddr *)&clientAddr, &clientAddrLen);
@@ -62,7 +59,6 @@ void Router::managePollin(size_t fdIndex)
 			std::cout << "Error: accepting connection" << std::endl;
 			return ;
 		}
-		// Add new client socket to fds
 		struct pollfd pfd;
 		pfd.fd = clientFd;
 		pfd.events = POLLIN;
@@ -76,9 +72,7 @@ void Router::managePollin(size_t fdIndex)
 		if (bytesReceived > 0) {
 			buffer[bytesReceived] = '\0';
 			manageRequests(_fds[fdIndex].fd, getServerWithClientFd(_fds[fdIndex].fd), buffer, bytesReceived);
-
-			// manage client
-			_fds[fdIndex].events |= POLLOUT; // Enable POLLOUT to send data
+			_fds[fdIndex].events |= POLLOUT;
 		}
 		else {
 			// Connection closed by client
@@ -90,7 +84,6 @@ void Router::managePollin(size_t fdIndex)
 }
 
 void Router::managePollout(size_t fdIndex) {
-	// Send data to client
 	try {
 		executeRequest(_fds[fdIndex].fd);
 		removeClient(fdIndex);
@@ -105,7 +98,6 @@ void Router::managePollout(size_t fdIndex) {
 }
 
 int Router::pollFds() {
-	// Last argument is timeout time
 	return poll(&_fds[0], _fds.size(), 6000);
 }
 
@@ -125,7 +117,6 @@ void 	Router::readEvents() {
 	}
 }
 
-// Init poll fds
 void Router::initServerFds() {
 	size_t i = 0;
 
@@ -144,17 +135,14 @@ void	Router::initSockets(std::list<Server> &servers) {
 	for (std::list<Server>::iterator it = servers.begin(); it != servers.end(); ++it) {
 		std::vector<unsigned int> ports = it->get_port();
 
-		//Adding server pointers in the map
 		for (size_t j = 0; j < ports.size(); j++) {
 			portsMap[ports[j]].push_back(&(*it));
 		}
 	}
 
-	//Creating all the sockets
 	for (std::map<unsigned int, std::vector<Server*> >::iterator it = portsMap.begin(); it != portsMap.end(); it++) {
 		Socket socket(it->first);
 		_sockets.push_back(socket);
-
 		_servers[socket.getFd()] = it->second;
 	}
 }

@@ -407,7 +407,6 @@ bool Request::getline_crlf(std::istringstream& iss, string& buf) const
 	return true;
 }
 
-// a 'Host' header is required
 void Request::parse(string const& package)
 {
 	if (_fin_header)
@@ -499,7 +498,6 @@ bool Request::parseMethod(string const& method)
 	return true;
 }
 
-// basic parsing, don't allow general "*" (n/a for GET, POST or DELETE)
 bool Request::parseUri(string const& uri)
 {
 	if (uri.empty() || uri[0] != '/')

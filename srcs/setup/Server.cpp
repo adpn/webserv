@@ -38,25 +38,27 @@ void	Server::set_port( std::vector< std::string > s ) {
 	for (size_t i = 0; i < s.size(); i++) {
 		if (s[i].find_first_not_of("0123456789") != NOTFOUND
 			|| atof(s[i].c_str()) > 65535)
-			throw Server::Error("Port format invalid.");
+			throw Server::Error("port format invalid.");
 		// common port
-		for (size_t j = 0; j < this->_port.size(); j++) {
+		size_t j;
+		for (j = 0; j < this->_port.size(); j++) {
 			if (this->_port[j] == static_cast<unsigned int>(atoi(s[i].c_str())))
-				return ;
+				throw Server::Error("duplicate port.") ;
 		}
-		this->_port.push_back(atoi(s[i].c_str()));
+		if (j == this->_port.size())
+			this->_port.push_back(atoi(s[i].c_str()));
 	}
 }
 void	Server::set_request_size( std::vector< std::string > s ) {
 	std::string	authorized_units = "KM";
 	if (s.size() > 1)
-		throw Server::Error("Request size format invalid.");
+		throw Server::Error("request size format invalid.");
 	if (s.front() == "0")
 		return (void)(_request_size = 0);
 	if (atof(s.front().c_str()) > LONG_MAX
 		|| s.front().find_first_not_of("0123456789") != s.front().size() - 1
 		|| authorized_units.find_first_of(s[0].back()) == NOTFOUND)
-		throw Server::Error("Request size format invalid.");
+		throw Server::Error("request size format invalid.");
 	this->_request_size = atol(s.front().c_str());
 	int multiply;
 	switch (s[0].back())
@@ -68,23 +70,23 @@ void	Server::set_request_size( std::vector< std::string > s ) {
 			multiply = 1000000;
 	}
 	if (LONG_MAX / multiply < _request_size)
-		throw Server::Error("Request size format invalid.");
+		throw Server::Error("request size format invalid.");
 	_request_size *= multiply;
 }
 void	Server::set_name( std::vector< std::string > s ) {
 	if (!s.size())
-		throw Server::Error("No name found.");
+		throw Server::Error("no name found.");
 	for (size_t i = 0; i < s.size(); i++)
 		this->_name.push_back(s[i]);
 }
 void	Server::set_error_page( std::vector< std::string > s ) {
 	if (s.size() < 2)
-		throw Server::Error("No error page found");
+		throw Server::Error("no error page found");
 	for (size_t i = 0; i < s.size() - 1; i++) {
 		if (s.size() < 2
 			|| s[i].find_first_not_of("0123456789") != NOTFOUND
 			|| atof(s[i].c_str()) > 599)
-			throw Server::Error("Error page number invalid.");
+			throw Server::Error("error page number invalid.");
 		this->_error_page[atoi(s[i].c_str())] = s.back();
 	}
 }
@@ -93,7 +95,7 @@ void	Server::set_location( Location const& loc_block) {
 }
 void	Server::set_generic_root( std::vector< std::string > s ) {
 	if (s.size() != 1)
-		throw Server::Error("Generic root invalid.");
+		throw Server::Error("generic root invalid.");
 	this->_generic_root = Config::process_path(s.front());
 	if (this->_generic_root.empty())
 		this->_generic_root = ".";

@@ -47,7 +47,7 @@ void	Location::set_limit_except(std::vector<std::string> s) {
 	for (size_t j = 0; j < s.size(); j++) {
 		for (i = 0; i < 4; i++) {
 			if (i == 3)
-				throw Location::Error("Directive format not respected.");
+				throw Location::Error("limit_except format not respected.");
 			if (authorized_method[i] == s[j]) {
 				this->_limit_except[authorized_method[i]] = true;
 				break ;
@@ -61,17 +61,17 @@ void	Location::set_return(std::vector<std::string> s) {
 	std::string path;
 
 	if (s.size() != 2)
-		throw Location::Error("Directive format not respected.");
+		throw Location::Error("return format not respected.");
 	status = s.front();
 	if (status.find_first_not_of("0123456789") != std::string::npos
 			|| atof(status.c_str()) > 599)
-		throw Location::Error("Directive format not respected.");
+		throw Location::Error("return format not respected.");
 	this->_return = std::make_pair(atoi(s[0].c_str()), s[1]);
 }
 
 void	Location::set_autoindex(std::vector<std::string> s ) {
 	if (s.size() != 1)
-		throw Location::Error("Directive format not respected.");
+		throw Location::Error("autoindex format not respected.");
 	std::string	authorized_value[2] = {"off", "on"};
 	size_t i;
 	for (i = 0; i < 2; i++)
@@ -79,18 +79,18 @@ void	Location::set_autoindex(std::vector<std::string> s ) {
 			this->_autoindex = (i ? true : false);
 			return ;
 		}
-	throw Location::Error("Directive format not respected.");
+	throw Location::Error("autoindex format not respected.");
 }
 
 void	Location::set_index(std::vector< std::string > s) {
 	if (!s.size())
-		throw Location::Error("Directive format not respected.");
+		throw Location::Error("index format not respected.");
 	this->_index = s;
 }
 
 void	Location::set_root(std::vector< std::string > s) {
 	if (s.size() != 1)
-		throw Location::Error("Directive format not respected.");
+		throw Location::Error("root format not respected.");
 	this->_root = Config::process_path(s.front());
 	if (this->_root.empty())
 		this->_root = ".";
@@ -98,7 +98,7 @@ void	Location::set_root(std::vector< std::string > s) {
 
 void	Location::set_upload_path(std::vector< std::string > s) {
 	if (s.size() != 1)
-		throw Location::Error("Directive format not respected.");
+		throw Location::Error("upload_path format not respected.");
 	this->_upload_path = Config::process_path(s.front());
 	if (this->_upload_path.empty())
 		this->_upload_path = ".";

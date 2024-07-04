@@ -135,7 +135,7 @@ bool	Config::server_approved(Server const& server) {
 void	Config::add_server(std::string server_block) {
 	size_t	next_sep;
 	size_t	stop_location;
-	Server	server;	// create a new server
+	Server	server;
 
 	while (server_block.size()) {
 		next_sep = server_block.find_first_of(";{}");
@@ -221,7 +221,7 @@ void	Config::bufferize() {
 		if (!_brackets && server_block.size()) {	// if server content not empty, add it
 			try {
 				add_server(server_block);
-// std::cout << this->_servers.back() << std::endl; // debug // do we keep this?
+				std::cout << this->_servers.back() << std::endl;
 			}
 			catch (std::exception & e) {
 				std::cout << "Server block rejected: " << e.what() << std::endl;
