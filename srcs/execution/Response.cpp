@@ -156,34 +156,22 @@ string Response::findContentType(string file) {
 	return "application/octet-stream";
 }
 
-// returns false if 'file' couldn't be opened
+// returns false if 'file' couldn't be opened, or if it's a dir
 bool Response::fileToBody(string const& file)
 {
-// std::cout << "FILE: trying to open the file " << file << " .. "; // debug
 	{
 		struct stat buf;
 		if (stat(file.c_str(), &buf))
-		{
-// std::cout << "failed: stat failed\n"; // debug
 			return false;
-		}
 		if (S_ISDIR(buf.st_mode))
-		{
-// std::cout << "failed: is dir\n"; // debug
 			return false;
-		}
 	}
 	std::ifstream ifs(file.c_str());
 	if (!ifs.good())
-	{
-// std::cout << "failed: bad stream\n"; // debug
 		return false;
-	}
 	std::ostringstream oss;
 	oss << ifs.rdbuf();
 	_body = oss.str();
-// std::cout << "succeeded\n"; // debug
-
 	setField("Content-Type:" + findContentType(file));
 	return true;
 }

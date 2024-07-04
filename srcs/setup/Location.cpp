@@ -26,7 +26,7 @@ Location::Location(const Location &other, Server& server)
 
 // THIS IS PRIVATE AND SHOULD NEVER BE USED
 // ALSO DON'T DEFAULT CONSTRUCT
-Location &Location::operator=(const Location &other){
+Location &Location::operator=(const Location &other) {
 	(void) other;
 	return *this;
 }
@@ -36,19 +36,19 @@ Location::~Location() {}
 
 
 //--------------- Setters ---------------//
-void	Location::set_name(std::string const& name){
+void	Location::set_name(std::string const& name) {
 	_name = name;
 }
 
-void	Location::set_limit_except(std::vector<std::string> s){
+void	Location::set_limit_except(std::vector<std::string> s) {
 	std::string	authorized_method[3] = {"GET", "POST", "DELETE"};
 	size_t i;
 
-	for (size_t j = 0; j < s.size(); j++){
-		for (i = 0; i < 4; i++){
+	for (size_t j = 0; j < s.size(); j++) {
+		for (i = 0; i < 4; i++) {
 			if (i == 3)
 				throw Location::Error("Directive format not respected.");
-			if (authorized_method[i] == s[j]){
+			if (authorized_method[i] == s[j]) {
 				this->_limit_except[authorized_method[i]] = true;
 				break ;
 			}
@@ -56,7 +56,7 @@ void	Location::set_limit_except(std::vector<std::string> s){
 	}
 }
 
-void	Location::set_return(std::vector<std::string> s){
+void	Location::set_return(std::vector<std::string> s) {
 	std::string status;
 	std::string path;
 
@@ -69,27 +69,26 @@ void	Location::set_return(std::vector<std::string> s){
 	this->_return = std::make_pair(atoi(s[0].c_str()), s[1]);
 }
 
-void	Location::set_autoindex(std::vector<std::string> s ){
+void	Location::set_autoindex(std::vector<std::string> s ) {
 	if (s.size() != 1)
 		throw Location::Error("Directive format not respected.");
 	std::string	authorized_value[2] = {"off", "on"};
 	size_t i;
-	for (i = 0; i < 2; i++){
-		if (authorized_value[i] == s.front()){
+	for (i = 0; i < 2; i++)
+		if (authorized_value[i] == s.front()) {
 			this->_autoindex = (i ? true : false);
 			return ;
 		}
-	}
 	throw Location::Error("Directive format not respected.");
 }
 
-void	Location::set_index(std::vector< std::string > s){
+void	Location::set_index(std::vector< std::string > s) {
 	if (!s.size())
 		throw Location::Error("Directive format not respected.");
 	this->_index = s;
 }
 
-void	Location::set_root(std::vector< std::string > s){
+void	Location::set_root(std::vector< std::string > s) {
 	if (s.size() != 1)
 		throw Location::Error("Directive format not respected.");
 	this->_root = Config::process_path(s.front());
@@ -97,7 +96,7 @@ void	Location::set_root(std::vector< std::string > s){
 		this->_root = ".";
 }
 
-void	Location::set_upload_path(std::vector< std::string > s){
+void	Location::set_upload_path(std::vector< std::string > s) {
 	if (s.size() != 1)
 		throw Location::Error("Directive format not respected.");
 	this->_upload_path = Config::process_path(s.front());
@@ -178,9 +177,9 @@ std::vector<Entry> Location::create_entries(std::string uri) const {
 
 
 //--------------- Error management ---------------//
-Location::Error::Error(std::string message) : _msg(message){}
-Location::Error::~Error() throw(){};
-const char *Location::Error::what() const throw(){
+Location::Error::Error(std::string message) : _msg(message) {}
+Location::Error::~Error() throw() {};
+const char *Location::Error::what() const throw() {
 	return this->_msg.c_str();
 }
 

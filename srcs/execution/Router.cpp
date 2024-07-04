@@ -75,8 +75,6 @@ void Router::managePollin(size_t fdIndex)
 		ssize_t bytesReceived = recv(_fds[fdIndex].fd, buffer, sizeof(buffer) - 1, 0);
 		if (bytesReceived > 0) {
 			buffer[bytesReceived] = '\0';
-// std::cout << "Received from client: " << std::endl; // debug
-// std::cout << buffer << std::endl; // debug
 			manageRequests(_fds[fdIndex].fd, getServerWithClientFd(_fds[fdIndex].fd), buffer, bytesReceived);
 
 			// manage client
@@ -84,8 +82,6 @@ void Router::managePollin(size_t fdIndex)
 		}
 		else {
 			// Connection closed by client
-//std::cout << "Client disconnected " << _fds[fdIndex].fd << std::endl; // debug
-
 			removeClient(fdIndex);
 			deleteRequest(_fds[fdIndex].fd);
 			--fdIndex;
@@ -140,8 +136,6 @@ void Router::initServerFds() {
 		_fds.push_back(pfd);
 	}
 	_serverFdsNumber = i;
-
-// std::cout << "Total server fds : " << _serverFdsNumber << std::endl; // debug
 }
 
 void	Router::initSockets(std::list<Server> &servers) {
@@ -182,11 +176,9 @@ bool Router::manageRequests(int fd, std::vector<Server *> servers, char const* b
 	std::map<int, Request>::iterator it = (_requests.insert(std::pair<int, Request>(fd, Request(fd, servers)))).first;
 	Request& instance = (*it).second;
 	instance.parse(package);
-// std::cout << ">> parsed a packet[" << fd << "], " << instance._content_left << "b left\n"; //debug
 	if (!instance.isFin())
 		return false;
 	instance.prepare();
-// std::cout << ">> finished a packet[" << fd << "]:\n"; instance.print(false); //debug
 	return true;
 }
 

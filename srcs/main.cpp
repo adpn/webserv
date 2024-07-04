@@ -23,7 +23,7 @@ void	handleSig(int sig) {
 int main(int argc, char **argv)
 {
 	std::string conf_path = "configuration_files/2servers.conf";
-	switch (argc){
+	switch (argc) {
 		case 2:
 			conf_path = argv[1];
 		case 1:

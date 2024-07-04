@@ -3,7 +3,7 @@
 #include "CGI.hpp"
 
 CGI::CGI(Response &response, Location const *location, Request &request)
-	: _response(response), _location(location), _request(request){
+	: _response(response), _location(location), _request(request) {
 		_Handle();
 }
 
@@ -13,7 +13,7 @@ void	CGI::_Error(unsigned int page_nb) {
 	exit(1);
 }
 
-void	CGI::_Executor(){
+void	CGI::_Executor() {
 
 	if (dup2(this->_pipe_fd[1], STDOUT) == -1)
 		exit(1);
@@ -35,15 +35,15 @@ void	CGI::_Executor(){
 	exit(1);
 }
 
-void	CGI::_Read(){
+void	CGI::_Read() {
 	size_t		bytesRead;
 	std::string	output;
 	char		buffer[1024];
 
 
 	output = "<!DOCTYPE html><html><head> <style>body {background-image: url('/images/kpop-background.jpg')} </style><title>CGI FUCK BERT</title></head><body>";
-	while ((bytesRead = read(this->_pipe_fd[0], buffer, sizeof(buffer)))){
-		if (bytesRead < 0){
+	while ((bytesRead = read(this->_pipe_fd[0], buffer, sizeof(buffer)))) {
+		if (bytesRead < 0) {
 			close(this->_pipe_fd[0]);
 			_Error(500);
 		}
@@ -58,7 +58,7 @@ void	CGI::_Read(){
 	this->_response.sendResponse(this->_request.getFd());
 }
 
-void	CGI::_Manager(){
+void	CGI::_Manager() {
 		int			status;
 		std::time_t	beg_time = std::time(NULL);
 		pid_t		pid_executor;
@@ -76,18 +76,17 @@ void	CGI::_Manager(){
 		close(this->_pipe_fd[1]);
 
 		/* timeout */
-		while (!waitpid(pid_executor, &status, WNOHANG)){
-			if (std::time(nullptr) - beg_time > TIMEOUT){
+		while (!waitpid(pid_executor, &status, WNOHANG))
+			if (std::time(nullptr) - beg_time > TIMEOUT) {
 				kill(pid_executor, SIGKILL);
 				close(this->_pipe_fd[0]);
 				_Error(508);
 			}
-		}
 
 		/* script error */
 		if (WEXITSTATUS(status)) {
 			close(this->_pipe_fd[0]);
-			switch (WEXITSTATUS(status)){
+			switch (WEXITSTATUS(status)) {
 				case 2:
 					_Error(404);
 					break;
@@ -107,7 +106,7 @@ void CGI::_Handle() {
 	this->_request.setCGI();
 	/* fork : non_blocking cgi */
 	pid_manager = fork();
-	if (pid_manager < 0){
+	if (pid_manager < 0) {
 		this->_request.handleError(this->_response, 500);
 		this->_response.sendResponse(this->_request.getFd());
 	}

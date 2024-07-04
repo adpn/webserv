@@ -185,7 +185,7 @@ void Request::handleCGI(Response &response, Location const* location)
 	CGI cgi(response, location, *this);
 }
 
-bool CGIApproved(std::string uri){
+bool CGIApproved(std::string uri) {
 	size_t i;
 
 	if (uri.compare(0, 9, "/cgi-bin/"))
@@ -212,10 +212,8 @@ void Request::handleGet(Response& response, Location const* location)
 
 void Request::handlePost(Response& response, Location const* location)
 {
-	if (CGIApproved(_uri)){
-		handleCGI(response, location);
-		return ;
-	}
+	if (CGIApproved(_uri))
+		return handleCGI(response, location);
 	if (location->get_upload_path().empty())
 		return handleError(response, 403);
 	std::ostringstream oss;
@@ -319,18 +317,6 @@ Location const* Request::getLocation()
 			if (S_ISDIR(buf.st_mode))
 				_is_dir = true;
 	}
-// debug start
-// std::cout << "location search for " << _uri << ": found ";
-// if (ret)
-// {
-// std::cout << ret->get_name();
-// if (_is_dir)
-// std::cout << ", (dir)";
-// std::cout << "\n";
-// }
-// else
-// std::cout << "NULL\n";
-// debug end
 	return ret;
 }
 
