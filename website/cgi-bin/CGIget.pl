@@ -4,8 +4,7 @@ use warnings;
 my $value = 1;  # Perl uses 1 for true and 0 for false
 
 if ($value) {
-    print "Hello Bert\n";
-    print "Hello Denis\n";
+    print "Hello everybody\n";
 }
 
 # while (1) {

@@ -2,8 +2,7 @@ import os
 
 value = True
 if (value):
-	print("Hello Bert")
-	print("Hello Denis")
+	print("Hello everybody")
 
 
 # while (True):
